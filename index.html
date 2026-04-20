@@ -2,15 +2,16 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Brainrot Multiplayer Online</title>
+    <title>Brainrot Online Multiplayer</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; font-family: sans-serif; background: #111; color: white; }
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #111; color: white; }
         #menu { position: absolute; width: 100%; height: 100%; z-index: 100; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.9); }
-        .window { background: #222; padding: 30px; border-radius: 15px; border: 3px solid #00b06f; text-align: center; }
+        .window { background: #222; padding: 30px; border-radius: 15px; border: 3px solid #00b06f; text-align: center; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
         input { padding: 12px; margin: 10px; border-radius: 5px; border: none; width: 250px; font-size: 16px; background: #333; color: white; }
-        button { padding: 12px 30px; background: #00b06f; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        #hud { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 10px; z-index: 50; pointer-events: none; }
+        button { padding: 12px 30px; background: #00b06f; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 18px; }
+        button:hover { background: #008f5a; }
+        #hud { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 10px; z-index: 50; pointer-events: none; border: 1px solid #444; }
         .hidden { display: none !important; }
         #status { font-size: 12px; margin-top: 5px; color: #ffcc00; }
     </style>
@@ -19,17 +20,18 @@
 
     <div id="menu">
         <div class="window">
-            <h1 style="color: #00b06f;">BRAINROT ONLINE</h1>
-            <input type="text" id="nick-input" placeholder="Ник (английский)..."><br>
-            <input type="text" id="friend-id-input" placeholder="ID друга (необязательно)"><br>
+            <h1 style="color: #00b06f; margin-bottom: 20px;">BRAINROT ONLINE</h1>
+            <input type="text" id="nick-input" placeholder="Твой ник (английский)..."><br>
+            <input type="text" id="friend-id-input" placeholder="ID друга (для входа к нему)"><br>
             <button id="start-btn">ИГРАТЬ</button>
+            <p style="font-size: 12px; color: #888; margin-top: 15px;">Выключи VPN, если выдает ошибку Network!</p>
         </div>
     </div>
 
     <div id="hud" class="hidden">
         <div>НИК: <span id="display-nick">?</span></div>
         <div>ТВОЙ ID: <span id="display-id" style="color: #ffcc00;">...</span></div>
-        <div id="status">Статус: Загрузка...</div>
+        <div id="status">Статус: Подключение...</div>
     </div>
 
     <script type="importmap">
@@ -52,18 +54,25 @@
         let velocity = new THREE.Vector3();
 
         const startBtn = document.getElementById('start-btn');
+        const statusEl = document.getElementById('status');
 
-        // СЕТЕВАЯ ЛОГИКА
+        // СЕТЕВАЯ ЛОГИКА (PeerJS)
         function initNet(nick) {
             const cleanNick = nick.replace(/[^a-zA-Z0-9]/g, "");
             myID = cleanNick + "-" + Math.floor(Math.random() * 9000 + 1000);
             document.getElementById('display-id').innerText = myID;
             document.getElementById('display-nick').innerText = cleanNick;
 
-            peer = new Peer(myID);
+            // Настройка серверов для обхода VPN/Брандмауэров
+            peer = new Peer(myID, {
+                config: {'iceServers': [
+                    { url: 'stun:stun.l.google.com:19302' },
+                    { url: 'stun:stun1.l.google.com:19302' }
+                ]}
+            });
 
-            peer.on('open', () => {
-                document.getElementById('status').innerText = "Статус: В сети. Жду друга.";
+            peer.on('open', (id) => {
+                statusEl.innerText = "Статус: В сети. Жду подключения...";
                 const targetID = document.getElementById('friend-id-input').value.trim();
                 if(targetID) connectTo(targetID);
             });
@@ -71,8 +80,9 @@
             peer.on('connection', (c) => setupConnection(c));
             
             peer.on('error', (err) => {
-                document.getElementById('status').innerText = "Ошибка: " + err.type;
-                console.error(err);
+                statusEl.innerText = "Ошибка: " + err.type;
+                statusEl.style.color = "#ff4444";
+                console.error("PeerJS Error:", err);
             });
         }
 
@@ -84,14 +94,23 @@
         function setupConnection(c) {
             conn = c;
             conn.on('open', () => {
-                document.getElementById('status').innerText = "Статус: СОЕДИНЕНО!";
-                document.getElementById('status').style.color = "#00ff00";
+                statusEl.innerText = "Статус: СОЕДИНЕНО!";
+                statusEl.style.color = "#00ff00";
+                
+                // Цикл отправки координат
                 setInterval(() => {
                     if(conn && conn.open) {
-                        conn.send({id: myID, x: pivot.position.x, y: pivot.position.y, z: pivot.position.z, ry: pivot.rotation.y});
+                        conn.send({
+                            id: myID, 
+                            x: pivot.position.x, 
+                            y: pivot.position.y, 
+                            z: pivot.position.z, 
+                            ry: pivot.rotation.y
+                        });
                     }
-                }, 40);
+                }, 50);
             });
+
             conn.on('data', (data) => syncPlayer(data));
         }
 
@@ -104,14 +123,15 @@
                 scene.add(group);
                 otherPlayers[data.id] = group;
             }
-            otherPlayers[data.id].position.lerp(new THREE.Vector3(data.x, data.y, data.z), 0.4);
+            // Плавное движение
+            otherPlayers[data.id].position.lerp(new THREE.Vector3(data.x, data.y, data.z), 0.3);
             otherPlayers[data.id].rotation.y = data.ry;
         }
 
-        // ИГРА
+        // ОСНОВНАЯ ИГРА
         startBtn.onclick = () => {
             const nick = document.getElementById('nick-input').value.trim();
-            if(!nick) return alert("Введи ник!");
+            if(!nick) return alert("Введи ник латиницей!");
             document.getElementById('menu').classList.add('hidden');
             document.getElementById('hud').classList.remove('hidden');
             initNet(nick);
@@ -129,6 +149,7 @@
             pivot = new THREE.Group();
             scene.add(pivot);
 
+            // Модель локального игрока (Красный)
             const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.4, 0.5), new THREE.MeshStandardMaterial({color: 0xff4444}));
             body.position.y = 0.7;
             playerModel = new THREE.Group();
@@ -138,10 +159,11 @@
             controls = new PointerLockControls(pivot, document.body);
             document.body.addEventListener('click', () => controls.lock());
 
-            scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-            const floor = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), new THREE.MeshStandardMaterial({color: 0x222222}));
+            scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+            const floor = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({color: 0x333333}));
             floor.rotation.x = -Math.PI/2;
             scene.add(floor);
+            scene.add(new THREE.GridHelper(200, 100, 0x00b06f, 0x555555));
 
             window.onkeydown = (e) => {
                 if(e.code === 'KeyW') moveForward = true;
@@ -159,11 +181,11 @@
             function animate() {
                 requestAnimationFrame(animate);
                 if (controls.isLocked) {
-                    const dt = 0.016;
-                    if (moveForward) controls.moveForward(10 * dt);
-                    if (moveBackward) controls.moveForward(-10 * dt);
-                    if (moveLeft) controls.moveRight(-10 * dt);
-                    if (moveRight) controls.moveRight(10 * dt);
+                    const speed = 0.15;
+                    if (moveForward) controls.moveForward(speed);
+                    if (moveBackward) controls.moveForward(-speed);
+                    if (moveLeft) controls.moveRight(-speed);
+                    if (moveRight) controls.moveRight(speed);
 
                     playerModel.position.copy(pivot.position);
                     playerModel.rotation.y = pivot.rotation.y;
