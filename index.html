@@ -2,15 +2,31 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Brainrot Online - Private World</title>
-    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+    <title>DanBlox Tycoon & Chat</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #000; color: #fff; }
-        #menu { position: absolute; width: 100%; height: 100%; z-index: 100; display: flex; align-items: center; justify-content: center; background: #111; }
-        .window { background: #222; padding: 40px; border-radius: 15px; border: 2px solid #ff00ff; text-align: center; box-shadow: 0 0 20px #ff00ff55; }
-        input { padding: 12px; margin: 10px; border-radius: 5px; width: 250px; background: #000; color: #ff00ff; border: 1px solid #ff00ff; font-weight: bold; }
-        button { padding: 12px 30px; background: #ff00ff; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 18px; }
-        #hud { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 10px; z-index: 50; border: 1px solid #ff00ff; }
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; background: #000; }
+        
+        /* Меню входа */
+        #menu { position: absolute; width: 100%; height: 100%; z-index: 1000; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #1a1a1a 0%, #000 100%); }
+        .window { background: #111; padding: 40px; border: 3px solid #00ff00; border-radius: 20px; text-align: center; color: #fff; box-shadow: 0 0 30px #00ff0033; }
+        input#nick-input { padding: 15px; margin: 10px; width: 280px; background: #222; color: #0f0; border: 1px solid #0f0; border-radius: 8px; font-size: 16px; outline: none; }
+        button#start-btn { padding: 15px 40px; background: #0f0; color: #000; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 20px; }
+
+        /* Боковая панель справа */
+        #sidebar { position: absolute; right: 10px; top: 10px; bottom: 10px; width: 250px; z-index: 500; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .panel { background: rgba(0, 0, 0, 0.7); border: 1px solid #00ff00; border-radius: 10px; padding: 10px; color: #0f0; pointer-events: auto; }
+        
+        /* Список игроков */
+        #player-list { flex: 1; overflow-y: auto; font-size: 14px; }
+        .player-item { padding: 5px; border-bottom: 1px solid #00ff0033; }
+
+        /* Чат */
+        #chat-box { flex: 2; display: flex; flex-direction: column; }
+        #chat-messages { flex: 1; overflow-y: auto; font-size: 13px; margin-bottom: 5px; color: #fff; }
+        #chat-input { background: #222; border: 1px solid #00ff00; color: #fff; padding: 8px; border-radius: 5px; outline: none; }
+
         .hidden { display: none !important; }
     </style>
 </head>
@@ -18,16 +34,21 @@
 
     <div id="menu">
         <div class="window">
-            <h1 style="color: #ff00ff;">BRAINROT: PRIVATE</h1>
-            <input type="text" id="nick-input" placeholder="НИК (ЛАТИНИЦА)..."><br>
-            <button id="start-btn">ВОЙТИ В МИР</button>
-            <p style="font-size: 12px; color: #666; margin-top: 15px;">Теперь это твоя личная комната!</p>
+            <h1 style="color: #0f0; letter-spacing: 2px;">DANBLOX ONLINE</h1>
+            <input type="text" id="nick-input" placeholder="НИК (ENG)..." maxlength="12"><br>
+            <button id="start-btn">ИГРАТЬ</button>
         </div>
     </div>
 
-    <div id="hud" class="hidden">
-        <div>НИК: <span id="display-nick" style="color:#ff00ff">?</span></div>
-        <div id="status">СТАТУС: ОНЛАЙН</div>
+    <div id="sidebar" class="hidden">
+        <div class="panel">
+            <b style="font-size: 16px;">ОНЛАЙН: <span id="online-count">0</span></b>
+            <div id="player-list"></div>
+        </div>
+        <div class="panel" id="chat-box">
+            <div id="chat-messages"></div>
+            <input type="text" id="chat-input" placeholder="Сообщение...">
+        </div>
     </div>
 
     <script type="importmap">
@@ -43,141 +64,202 @@
         import * as THREE from 'three';
         import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
-        let scene, camera, renderer, controls, pivot, playerModel;
-        let gun, playersRef, myID, myNick;
-        let otherPlayers = {}; 
-        let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
-        let gameReady = false;
+        const firebaseConfig = {
+            apiKey: "AIzaSyAocmcoBH2Q8_QENuE9AuaGwtDOSSg-WpE",
+            authDomain: "danblox-e209f.firebaseapp.com",
+            databaseURL: "https://danblox-e209f-default-rtdb.firebaseio.com",
+            projectId: "danblox-e209f",
+            storageBucket: "danblox-e209f.firebasestorage.app",
+            messagingSenderId: "828099060847",
+            appId: "1:828099060847:web:9bb0bebc8c02833ce7d99a"
+        };
 
-        const startBtn = document.getElementById('start-btn');
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const playersRef = db.ref('players');
+        const chatRef = db.ref('chat');
+
+        let scene, camera, renderer, controls, pivot, myModel;
+        let myID = 'u' + Math.floor(Math.random() * 1000000);
+        let myNick, otherPlayers = {}, otherBases = {};
+        let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false, canJump = true;
+        let velocity = new THREE.Vector3();
+        let camDist = 12;
+        let myBase = null;
+
+        // Создание человека
+        function createHuman(color) {
+            const group = new THREE.Group();
+            const mat = new THREE.MeshStandardMaterial({ color: color });
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), mat); head.position.y = 1.6; group.add(head);
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1, 0.4), mat); body.position.y = 0.8; group.add(body);
+            const armL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.8, 0.3), mat); armL.position.set(-0.6, 0.8, 0); group.add(armL);
+            const armR = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.8, 0.3), mat); armR.position.set(0.6, 0.8, 0); group.add(armR);
+            const legL = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.8, 0.35), mat); legL.position.set(-0.2, 0.2, 0); group.add(legL);
+            const legR = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.8, 0.35), mat); legR.position.set(0.2, 0.2, 0); group.add(legR);
+            return group;
+        }
+
+        // Создание базы
+        function createBase(id, nick, pos) {
+            const group = new THREE.Group();
+            group.position.set(pos.x, 0, pos.z);
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0x444444 });
+            const wallB = new THREE.Mesh(new THREE.BoxGeometry(8, 5, 0.5), wallMat); wallB.position.set(0, 2.5, -4); group.add(wallB);
+            const sideL = new THREE.Mesh(new THREE.BoxGeometry(0.5, 5, 8), wallMat); sideL.position.set(-4, 2.5, 0); group.add(sideL);
+            const sideR = new THREE.Mesh(new THREE.BoxGeometry(0.5, 5, 8), wallMat); sideR.position.set(4, 2.5, 0); group.add(sideR);
+            const laserMat = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.5 });
+            const lasers = new THREE.Mesh(new THREE.BoxGeometry(7.5, 5, 0.1), laserMat); lasers.position.set(0, 2.5, 4); group.add(lasers);
+            const pad = new THREE.Mesh(new THREE.BoxGeometry(2, 0.1, 2), new THREE.MeshStandardMaterial({color:0xffff00})); pad.position.set(0, 0.05, 0); group.add(pad);
+            scene.add(group);
+            return { group, lasers, pad, ownerID: id };
+        }
 
         function initNet(nick) {
-            myNick = nick.replace(/[^a-zA-Z0-9]/g, "");
-            // Уникальный ID для каждой сессии
-            myID = 'danvr_' + Math.random().toString(36).substr(2, 9);
-            document.getElementById('display-nick').innerText = myNick;
+            myNick = nick;
+            const basePos = { x: (Math.random()-0.5)*100, z: (Math.random()-0.5)*100 };
+            myBase = createBase(myID, myNick, basePos);
+            pivot.position.set(basePos.x, 0, basePos.z + 7);
 
-            // Используем уникальное имя узла, чтобы не видеть чужих игроков
-            gun = Gun(['https://gun-maniac.herokuapp.com/gun', 'https://relay.peer.ooo/gun']);
-            
-            // "danvr_secret_room" - это твоя личная комната. Чужаки сюда не попадут.
-            playersRef = gun.get('danvr_secret_room_v1').get('players');
+            // Таймер лазеров
+            setTimeout(() => { if(myBase) myBase.lasers.visible = false; }, 20000);
 
-            // Получаем данные
-            playersRef.map().on((data, id) => {
-                if(!data || id === myID || !gameReady) return;
-                syncPlayer(id, data);
+            // Слушатель игроков и списка
+            playersRef.on('value', (snap) => {
+                const data = snap.val() || {};
+                const listElem = document.getElementById('player-list');
+                listElem.innerHTML = '';
+                let count = 0;
+
+                Object.keys(data).forEach(id => {
+                    count++;
+                    const p = data[id];
+                    // Обновляем список справа
+                    listElem.innerHTML += `<div class="player-item">${id === myID ? '⭐ ' : ''}${p.nick}</div>`;
+
+                    if(id === myID) return;
+                    if(!otherPlayers[id]) {
+                        otherPlayers[id] = createHuman(0x0088ff);
+                        scene.add(otherPlayers[id]);
+                        otherBases[id] = createBase(id, p.nick, p.basePos);
+                    }
+                    otherPlayers[id].position.lerp(new THREE.Vector3(p.x, p.y, p.z), 0.2);
+                    otherPlayers[id].rotation.y = p.r;
+                    if(otherBases[id]) otherBases[id].lasers.visible = p.laserOn;
+                });
+                document.getElementById('online-count').innerText = count;
+
+                // Удаление вышедших
+                Object.keys(otherPlayers).forEach(id => {
+                    if(!data[id]) {
+                        scene.remove(otherPlayers[id]);
+                        if(otherBases[id]) scene.remove(otherBases[id].group);
+                        delete otherPlayers[id];
+                        delete otherBases[id];
+                    }
+                });
             });
 
-            // Отправка координат (каждые 40мс для плавности)
-            setInterval(() => {
-                if(gameReady && pivot) {
-                    playersRef.get(myID).put({
-                        n: myNick,
-                        x: Number(pivot.position.x.toFixed(2)),
-                        y: Number(pivot.position.y.toFixed(2)),
-                        z: Number(pivot.position.z.toFixed(2)),
-                        r: Number(pivot.rotation.y.toFixed(2)),
-                        t: Date.now() // Метка времени
-                    });
-                }
-            }, 40);
+            // Слушатель чата
+            chatRef.limitToLast(15).on('child_added', (snap) => {
+                const msg = snap.val();
+                const chatMessages = document.getElementById('chat-messages');
+                chatMessages.innerHTML += `<div><b>${msg.user}:</b> ${msg.text}</div>`;
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            });
 
-            // Удаление пропавших (через 3 секунды)
-            setInterval(() => {
-                const now = Date.now();
-                for(let id in otherPlayers) {
-                    if(now - otherPlayers[id].lastUpdate > 3000) {
-                        scene.remove(otherPlayers[id].mesh);
-                        delete otherPlayers[id];
-                    }
-                }
-            }, 1000);
+            playersRef.child(myID).onDisconnect().remove();
         }
 
-        function syncPlayer(id, data) {
-            if(!scene) return;
-
-            if(!otherPlayers[id]) {
-                const geometry = new THREE.BoxGeometry(1, 2, 1);
-                const material = new THREE.MeshStandardMaterial({color: 0x00ffff});
-                const m = new THREE.Mesh(geometry, material);
-                m.position.y = 1;
-                scene.add(m);
-                otherPlayers[id] = { mesh: m, lastUpdate: Date.now() };
+        // Отправка сообщений
+        document.getElementById('chat-input').onkeydown = (e) => {
+            if(e.code === 'Enter' && e.target.value.trim() !== '') {
+                chatRef.push({ user: myNick, text: e.target.value.trim() });
+                e.target.value = '';
             }
-            
-            // Если данные новые, двигаем куб
-            if(data.t > otherPlayers[id].lastUpdate) {
-                otherPlayers[id].mesh.position.set(data.x, data.y, data.z);
-                otherPlayers[id].mesh.rotation.y = data.r;
-                otherPlayers[id].lastUpdate = data.t;
-            }
-        }
+        };
 
-        startBtn.onclick = () => {
+        document.getElementById('start-btn').onclick = () => {
             const nick = document.getElementById('nick-input').value.trim();
-            if(!nick) return alert("ВВЕДИ НИК!");
+            if(!nick) return;
             document.getElementById('menu').classList.add('hidden');
-            document.getElementById('hud').classList.remove('hidden');
+            document.getElementById('sidebar').classList.remove('hidden');
             initGame();
             initNet(nick);
         };
 
         function initGame() {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x110011);
+            scene.background = new THREE.Color(0x87CEEB);
             camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
 
-            pivot = new THREE.Group();
-            scene.add(pivot);
+            const ground = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), new THREE.MeshStandardMaterial({color: 0x228B22}));
+            ground.rotation.x = -Math.PI/2; scene.add(ground);
 
-            const body = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), new THREE.MeshStandardMaterial({color: 0xff00ff}));
-            body.position.y = 1;
-            playerModel = new THREE.Group(); 
-            playerModel.add(body);
-            scene.add(playerModel);
+            pivot = new THREE.Group(); scene.add(pivot);
+            myModel = createHuman(0x00ff00); scene.add(myModel);
 
             controls = new PointerLockControls(pivot, document.body);
-            document.body.addEventListener('click', () => controls.lock());
+            document.body.addEventListener('click', () => { if(!document.activeElement.id.includes('chat')) controls.lock(); });
+            window.addEventListener('wheel', (e) => { camDist = Math.max(5, Math.min(30, camDist + e.deltaY * 0.05)); });
 
-            scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-            scene.add(new THREE.GridHelper(200, 50, 0xff00ff, 0x330033));
+            scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+            const sun = new THREE.DirectionalLight(0xffffff, 1); sun.position.set(50,50,50); scene.add(sun);
 
-            window.onkeydown = (e) => { 
-                if(e.code === 'KeyW') moveForward = true; 
-                if(e.code === 'KeyS') moveBackward = true; 
-                if(e.code === 'KeyA') moveLeft = true; 
-                if(e.code === 'KeyD') moveRight = true; 
+            window.onkeydown = (e) => {
+                if(document.activeElement.id === 'chat-input') return; // Не ходить во время чата
+                if(e.code==='KeyW') moveForward=true; if(e.code==='KeyS') moveBackward=true;
+                if(e.code==='KeyA') moveLeft=true; if(e.code==='KeyD') moveRight=true;
+                if(e.code==='Space' && canJump) { velocity.y = 0.25; canJump = false; }
             };
-            window.onkeyup = (e) => { 
-                if(e.code === 'KeyW') moveForward = false; 
-                if(e.code === 'KeyS') moveBackward = false; 
-                if(e.code === 'KeyA') moveLeft = false; 
-                if(e.code === 'KeyD') moveRight = false; 
+            window.onkeyup = (e) => {
+                if(e.code==='KeyW') moveForward=false; if(e.code==='KeyS') moveBackward=false;
+                if(e.code==='KeyA') moveLeft=false; if(e.code==='KeyD') moveRight=false;
             };
-
-            gameReady = true;
 
             function animate() {
                 requestAnimationFrame(animate);
-                if (controls.isLocked) {
-                    const speed = 0.2;
-                    if (moveForward) controls.moveForward(speed);
-                    if (moveBackward) controls.moveForward(-speed);
-                    if (moveLeft) controls.moveRight(-speed);
-                    if (moveRight) controls.moveRight(speed);
-                    
-                    playerModel.position.copy(pivot.position);
-                    playerModel.rotation.y = pivot.rotation.y;
-                    
-                    const camPos = new THREE.Vector3(0, 5, 10).applyMatrix4(pivot.matrixWorld);
-                    camera.position.lerp(camPos, 0.1);
-                    camera.lookAt(pivot.position.x, pivot.position.y + 1, pivot.position.z);
+                if(controls.isLocked) {
+                    const speed = 0.18;
+                    if(moveForward) controls.moveForward(speed); if(moveBackward) controls.moveForward(-speed);
+                    if(moveLeft) controls.moveRight(-speed); if(moveRight) controls.moveRight(speed);
+
+                    pivot.position.y += velocity.y;
+                    if(pivot.position.y > 0) { velocity.y -= 0.01; } 
+                    else { pivot.position.y = 0; canJump = true; velocity.y = 0; }
+
+                    // Коллизия с лазерами
+                    Object.values(otherBases).forEach(base => {
+                        if(base.lasers.visible) {
+                            if(pivot.position.distanceTo(base.group.position) < 5) 
+                                pivot.position.add(pivot.position.clone().sub(base.group.position).normalize().multiplyScalar(0.5));
+                        }
+                    });
+
+                    // Активация своей кнопки
+                    if(myBase && pivot.position.distanceTo(myBase.group.position) < 1.5) {
+                        if(!myBase.lasers.visible) {
+                            myBase.lasers.visible = true;
+                            setTimeout(() => { if(myBase) myBase.lasers.visible = false; }, 60000);
+                        }
+                    }
+
+                    myModel.position.copy(pivot.position);
+                    myModel.rotation.y = pivot.rotation.y;
+
+                    playersRef.child(myID).set({
+                        x: pivot.position.x, y: pivot.position.y, z: pivot.position.z,
+                        r: pivot.rotation.y, nick: myNick,
+                        laserOn: myBase.lasers.visible,
+                        basePos: { x: myBase.group.position.x, z: myBase.group.position.z }
+                    });
                 }
+                const camPos = new THREE.Vector3(0, camDist/2, camDist).applyMatrix4(pivot.matrixWorld);
+                camera.position.lerp(camPos, 0.1);
+                camera.lookAt(pivot.position.x, pivot.position.y + 1, pivot.position.z);
                 renderer.render(scene, camera);
             }
             animate();
