@@ -2,23 +2,27 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>DanBlox - Pro Tycoon</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DanBlox - Steal Tycoon</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #000; }
-        #menu { position: absolute; width: 100%; height: 100%; z-index: 1000; display: flex; align-items: center; justify-content: center; background: #000; }
-        .window { background: #111; padding: 30px; border: 3px solid #00ff00; border-radius: 20px; text-align: center; color: #fff; }
-        input { padding: 12px; margin: 10px; width: 250px; background: #222; color: #0f0; border: 1px solid #0f0; outline: none; }
-        button { padding: 12px 30px; background: #0f0; color: #000; border: none; cursor: pointer; font-weight: bold; border-radius: 5px; }
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #000; touch-action: none; }
+        #stats-ui { position: absolute; top: 10px; left: 10px; font-size: 20px; color: #0f0; z-index: 10; font-weight: bold; }
+        #menu { position: absolute; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; background: #000; }
+        .window { background: #111; padding: 20px; border: 3px solid #0f0; border-radius: 15px; text-align: center; color: #fff; }
+        input { padding: 10px; margin: 10px; background: #222; color: #0f0; border: 1px solid #0f0; }
         
-        #sidebar { position: absolute; right: 10px; top: 10px; bottom: 10px; width: 260px; z-index: 500; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-        .panel { background: rgba(0, 0, 0, 0.8); border: 2px solid #00ff00; border-radius: 10px; padding: 10px; color: #0f0; pointer-events: auto; }
-        #player-list { max-height: 100px; overflow-y: auto; font-size: 14px; border-bottom: 1px solid #0f03; }
-        #chat-messages { height: 200px; overflow-y: auto; font-size: 13px; color: #fff; margin-bottom: 5px; }
-        
-        #stats-ui { position: absolute; top: 10px; left: 10px; font-size: 24px; font-weight: bold; color: #0f0; text-shadow: 2px 2px #000; }
-        #buy-ui, #sell-ui { position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%); display: none; z-index: 600; text-align: center; }
+        /* Мобильное управление */
+        #controls { position: absolute; bottom: 20px; left: 20px; display: flex; flex-direction: column; gap: 5px; z-index: 100; pointer-events: auto; }
+        .row { display: flex; gap: 5px; justify-content: center; }
+        .btn { width: 50px; height: 50px; background: rgba(255,255,255,0.2); border: 2px solid #fff; color: #fff; display: flex; align-items: center; justify-content: center; border-radius: 10px; user-select: none; }
+        #action-btns { position: absolute; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 100; }
+        .act-btn { width: 70px; height: 70px; border-radius: 50%; background: #0f0; color: #000; font-weight: bold; border: none; }
+
+        #sidebar { position: absolute; right: 10px; top: 10px; width: 200px; color: #0f0; pointer-events: none; font-size: 12px; }
+        .panel { background: rgba(0,0,0,0.7); border: 1px solid #0f0; padding: 10px; pointer-events: auto; }
+        #chat-messages { height: 100px; overflow-y: auto; color: #fff; }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -28,40 +32,35 @@
 
     <div id="menu">
         <div class="window">
-            <h1 style="color: #0f0;">DANBLOX TYCOON</h1>
-            <input type="text" id="nick-input" placeholder="НИК (ENG)..." maxlength="12"><br>
-            <p>Стартовый баланс: 25$</p>
-            <button id="start-btn">ВОЙТИ В ИГРУ</button>
+            <h1 style="color: #0f0;">DANBLOX STEAL</h1>
+            <input type="text" id="nick-input" placeholder="НИК..." maxlength="10"><br>
+            <button onclick="startGame()" style="padding: 10px 20px; background: #0f0; border: none; font-weight: bold;">ИГРАТЬ</button>
         </div>
     </div>
 
-    <div id="buy-ui" class="panel">
-        <div id="buy-text">КУПИТЬ РОБОТА</div>
-        <button id="buy-btn">КУПИТЬ (E)</button>
+    <div id="controls" class="hidden">
+        <div class="row"><div class="btn" id="btn-w">W</div></div>
+        <div class="row">
+            <div class="btn" id="btn-a">A</div>
+            <div class="btn" id="btn-s">S</div>
+            <div class="btn" id="btn-d">D</div>
+        </div>
     </div>
 
-    <div id="sell-ui" class="panel">
-        <button id="sell-btn" style="background: #ff4444;">ПРОДАТЬ РОБОТА (R)</button>
+    <div id="action-btns" class="hidden">
+        <button class="act-btn" id="btn-e">E</button>
+        <button class="act-btn" id="btn-space" style="background: #0088ff;">JUMP</button>
     </div>
 
     <div id="sidebar" class="hidden">
         <div class="panel">
-            <b>ИГРОКИ: <span id="online-count">0</span></b>
-            <div id="player-list"></div>
-        </div>
-        <div class="panel">
             <div id="chat-messages"></div>
-            <input type="text" id="chat-input" style="width:90%; background:#222; border:1px solid #0f0; color:#fff;" placeholder="Чат...">
+            <input type="text" id="chat-input" style="width: 100%;" placeholder="Enter...">
         </div>
     </div>
 
     <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/"
-            }
-        }
+        { "imports": { "three": "https://unpkg.com/three@0.158.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/" } }
     </script>
 
     <script type="module">
@@ -81,240 +80,244 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const playersRef = db.ref('players');
-        const chatRef = db.ref('chat');
 
         let scene, camera, renderer, controls, pivot, myModel;
         let myID = 'u' + Math.floor(Math.random() * 1000000);
         let myNick, myCash = 25, otherPlayers = {}, otherBases = {}, robots = [];
-        let moveF = false, moveB = false, moveL = false, moveR = false, canJump = true, velocity = new THREE.Vector3();
-        let myBasePos = { x: 0, z: 0 }, myBaseObj = null;
-        let currentNearBot = null, currentNearOwnedBot = null;
-        
+        let move = { w: false, a: false, s: false, d: false }, canJump = true, velocity = new THREE.Vector3();
+        let myBasePos, myBaseObj, stolenBot = null;
+        let walls = [];
+
         const BOT_TYPES = {
-            blue: { color: 0x00aaff, price: 25, income: 1, name: "Обычный" },
-            green: { color: 0x00ff00, price: 100, income: 5, name: "Продвинутый" },
-            red: { color: 0xff0000, price: 250, income: 10, name: "Элитный" },
-            purple: { color: 0xaa00ff, price: 500, income: 20, name: "Ультра" }
+            blue: { color: 0x00aaff, price: 25, inc: 1, name: "Blue" },
+            green: { color: 0x00ff00, price: 100, inc: 5, name: "Green" },
+            red: { color: 0xff0000, price: 250, inc: 10, name: "Red" },
+            purple: { color: 0xaa00ff, price: 500, inc: 20, name: "Ultra" }
         };
 
-        function createNickLabel(text, color = '#0f0') {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 256; canvas.height = 64;
-            ctx.font = 'bold 28px Arial';
-            ctx.fillStyle = color; ctx.textAlign = 'center';
-            ctx.fillText(text, 128, 45);
-            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas) }));
-            sprite.scale.set(3, 0.75, 1);
-            return sprite;
-        }
-
         function createHuman(color, nick) {
-            const group = new THREE.Group();
-            const mat = new THREE.MeshStandardMaterial({ color: color });
-            const head = new THREE.Mesh(new THREE.BoxGeometry(0.6,0.6,0.6), mat); head.position.y = 1.6; group.add(head);
-            const body = new THREE.Mesh(new THREE.BoxGeometry(0.8,1,0.4), mat); body.position.y = 0.8; group.add(body);
-            const legL = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.8,0.3), mat); legL.position.set(-0.25,0,0); group.add(legL);
-            const legR = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.8,0.3), mat); legR.position.set(0.25,0,0); group.add(legR);
-            const label = createNickLabel(nick, '#fff'); label.position.y = 2.5; group.add(label);
-            return group;
+            const g = new THREE.Group();
+            const m = new THREE.MeshStandardMaterial({ color: color });
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1, 0.4), m); body.position.y = 0.8; g.add(body);
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), m); head.position.y = 1.6; g.add(head);
+            const leg = new THREE.BoxGeometry(0.3, 0.8, 0.3);
+            const l = new THREE.Mesh(leg, m); l.position.set(-0.25, 0.2, 0); g.add(l);
+            const r = new THREE.Mesh(leg, m); r.position.set(0.25, 0.2, 0); g.add(r);
+            return g;
         }
 
-        function createBase(nick, pos) {
-            const group = new THREE.Group(); group.position.set(pos.x, 0, pos.z);
-            const floor = new THREE.Mesh(new THREE.BoxGeometry(20, 0.2, 20), new THREE.MeshStandardMaterial({color: 0x333333}));
-            group.add(floor);
-            
-            // 5 Слотов для роботов
+        function createBase(nick, pos, isMine) {
+            const g = new THREE.Group(); g.position.set(pos.x, 0, pos.z);
+            const floor = new THREE.Mesh(new THREE.BoxGeometry(20, 0.2, 20), new THREE.MeshStandardMaterial({color: 0x222}));
+            g.add(floor);
+
+            // Стены (Твердые)
+            const wMat = new THREE.MeshStandardMaterial({color: 0x444});
+            const backW = new THREE.Mesh(new THREE.BoxGeometry(20, 6, 0.5), wMat); backW.position.set(0, 3, -10); g.add(backW);
+            const leftW = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6, 20), wMat); leftW.position.set(-10, 3, 0); g.add(leftW);
+            const rightW = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6, 20), wMat); rightW.position.set(10, 3, 0); g.add(rightW);
+            walls.push(backW, leftW, rightW); // Для коллизий
+
+            // Лазер
+            const laser = new THREE.Mesh(new THREE.BoxGeometry(19, 6, 0.1), new THREE.MeshBasicMaterial({color: 0xff0000, transparent: true, opacity: 0}));
+            laser.position.set(0, 3, 10); g.add(laser);
+
+            // Кнопка закрытия
+            const pad = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.2, 1.5), new THREE.MeshStandardMaterial({color: 0xffff00}));
+            pad.position.set(8, 0.2, 8); g.add(pad);
+
             const slots = [];
             for(let i=0; i<5; i++) {
-                const slot = new THREE.Mesh(new THREE.BoxGeometry(3, 0.1, 3), new THREE.MeshStandardMaterial({color: 0x444}));
-                slot.position.set(-6 + (i*3), 0.2, -5);
-                group.add(slot);
-                slots.push({ pos: new THREE.Vector3(pos.x - 6 + (i*3), 0, pos.z - 5), occupied: false, bot: null });
+                slots.push({ pos: new THREE.Vector3(pos.x - 6 + (i*3), 0.5, pos.z - 5), occupied: false, bot: null });
             }
 
-            const sign = createNickLabel("BASE: " + nick); sign.position.set(0, 5, 0); group.add(sign);
-            scene.add(group);
-            return { group, slots };
+            scene.add(g);
+            return { group: g, slots, laser, laserActive: false, ownerNick: nick };
         }
 
-        function initNet(nick) {
-            myNick = nick;
-            playersRef.once('value', (snap) => {
-                let startPos = { x: (Math.random()-0.5)*200, z: (Math.random()-0.5)*200 };
-                myBasePos = startPos;
-                myModel = createHuman(0x00ff00, myNick); scene.add(myModel);
-                myBaseObj = createBase(myNick, myBasePos);
-                pivot.position.set(myBasePos.x, 0, myBasePos.z + 12);
-            });
+        window.startGame = () => {
+            myNick = document.getElementById('nick-input').value.trim() || "Noob";
+            document.getElementById('menu').classList.add('hidden');
+            ['stats-ui', 'controls', 'action-btns', 'sidebar'].forEach(id => document.getElementById(id).classList.remove('hidden'));
+            
+            initThree();
+            myBasePos = { x: (Math.random()-0.5)*100, z: (Math.random()-0.5)*100 };
+            myBaseObj = createBase(myNick, myBasePos, true);
+            myModel = createHuman(0x00ff00, myNick); scene.add(myModel);
+            pivot.position.set(myBasePos.x, 0, myBasePos.z + 15);
 
-            playersRef.on('value', (snap) => {
-                const data = snap.val() || {};
-                const pList = document.getElementById('player-list');
-                pList.innerHTML = '';
+            // Firebase Sync
+            playersRef.child(myID).onDisconnect().remove();
+            playersRef.on('value', s => {
+                const data = s.val() || {};
+                document.getElementById('online-count'); 
                 Object.keys(data).forEach(id => {
-                    pList.innerHTML += `<div>${data[id].nick}: ${data[id].cash}$</div>`;
                     if(id === myID) return;
                     if(!otherPlayers[id]) {
-                        otherPlayers[id] = createHuman(0x0088ff, data[id].nick); scene.add(otherPlayers[id]);
-                        otherBases[id] = createBase(data[id].nick, data[id].basePos);
+                        otherPlayers[id] = createHuman(0x0088ff, data[id].n); scene.add(otherPlayers[id]);
+                        otherBases[id] = createBase(data[id].n, data[id].bp, false);
                     }
                     otherPlayers[id].position.lerp(new THREE.Vector3(data[id].x, data[id].y, data[id].z), 0.2);
+                    otherBases[id].laser.material.opacity = data[id].la ? 0.5 : 0;
+                    otherBases[id].laserActive = data[id].la;
                 });
-                document.getElementById('online-count').innerText = Object.keys(data).length;
             });
 
-            chatRef.limitToLast(10).on('child_added', s => {
-                const m = s.val();
-                const box = document.getElementById('chat-messages');
-                box.innerHTML += `<div><b>${m.u}:</b> ${m.t}</div>`;
-                box.scrollTop = box.scrollHeight;
-            });
-            playersRef.child(myID).onDisconnect().remove();
-
-            // Доход от роботов каждую секунду
             setInterval(() => {
-                let income = 0;
-                myBaseObj.slots.forEach(s => { if(s.bot) income += s.bot.income; });
-                if(income > 0) {
-                    myCash += income;
-                    document.getElementById('cash-val').innerText = myCash;
-                }
+                let inc = 0;
+                myBaseObj.slots.forEach(s => { if(s.bot) inc += s.bot.income; });
+                myCash += inc;
+                document.getElementById('cash-val').innerText = myCash;
             }, 1000);
-        }
+        };
 
-        function initGame() {
+        function initThree() {
             scene = new THREE.Scene(); scene.background = new THREE.Color(0x87CEEB);
             camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
 
-            const ground = new THREE.Mesh(new THREE.PlaneGeometry(1000,1000), new THREE.MeshStandardMaterial({color:0x1a5e1a}));
-            ground.rotation.x = -Math.PI/2; scene.add(ground);
-            
-            const road = new THREE.Mesh(new THREE.PlaneGeometry(12, 1000), new THREE.MeshBasicMaterial({color: 0xcc0000}));
-            road.rotation.x = -Math.PI/2; road.position.y = 0.02; scene.add(road);
+            const gr = new THREE.Mesh(new THREE.PlaneGeometry(1000,1000), new THREE.MeshStandardMaterial({color: 0x115511}));
+            gr.rotation.x = -Math.PI/2; scene.add(gr);
+
+            const road = new THREE.Mesh(new THREE.PlaneGeometry(15, 100), new THREE.MeshBasicMaterial({color: 0xff0000}));
+            road.rotation.x = -Math.PI/2; road.position.y = 0.05; scene.add(road);
 
             scene.add(new THREE.AmbientLight(0xffffff, 0.8));
             pivot = new THREE.Group(); scene.add(pivot);
             controls = new PointerLockControls(pivot, document.body);
-            document.body.addEventListener('click', () => { if(!document.activeElement.id.includes('chat')) controls.lock(); });
 
-            // Спавн роботов разных типов
-            setInterval(() => {
-                const keys = Object.keys(BOT_TYPES);
-                const typeKey = keys[Math.floor(Math.random() * keys.length)];
-                const config = BOT_TYPES[typeKey];
-                
-                const bot = createHuman(config.color, config.name, true);
-                bot.position.set(0, 0, -300);
-                bot.config = config;
-                bot.income = config.income;
-                bot.targetSlot = null;
-                scene.add(bot);
-                robots.push(bot);
-            }, 7000);
-
-            window.onkeydown = (e) => {
-                if(document.activeElement.id==='chat-input') return;
-                if(e.code==='KeyW') moveF=true; if(e.code==='KeyS') moveB=true;
-                if(e.code==='KeyA') moveL=true; if(e.code==='KeyD') moveR=true;
-                if(e.code==='Space' && canJump) { velocity.y = 0.25; canJump = false; }
-                
-                // Покупка
-                if(e.code==='KeyE' && currentNearBot) {
-                    const slot = myBaseObj.slots.find(s => !s.occupied);
-                    if(slot && myCash >= currentNearBot.config.price) {
-                        myCash -= currentNearBot.config.price;
-                        document.getElementById('cash-val').innerText = myCash;
-                        slot.occupied = true;
-                        slot.bot = currentNearBot;
-                        currentNearBot.targetSlot = slot;
-                        document.getElementById('buy-ui').style.display = 'none';
-                    }
-                }
-                // Продажа
-                if(e.code==='KeyR' && currentNearOwnedBot) {
-                    const slot = myBaseObj.slots.find(s => s.bot === currentNearOwnedBot);
-                    if(slot) {
-                        myCash += Math.floor(currentNearOwnedBot.config.price / 2);
-                        document.getElementById('cash-val').innerText = myCash;
-                        scene.remove(currentNearOwnedBot);
-                        slot.occupied = false;
-                        slot.bot = null;
-                        document.getElementById('sell-ui').style.display = 'none';
-                    }
-                }
+            // Кнопки управления (Touch)
+            const setupBtn = (id, key) => {
+                const el = document.getElementById(id);
+                el.ontouchstart = () => { if(key==='space') { if(canJump) velocity.y=0.25; canJump=false; } else move[key] = true; };
+                el.ontouchend = () => move[key] = false;
             };
-            window.onkeyup = (e) => {
-                if(e.code==='KeyW') moveF=false; if(e.code==='KeyS') moveB=false;
-                if(e.code==='KeyA') moveL=false; if(e.code==='KeyD') moveR=false;
-            };
+            setupBtn('btn-w', 'w'); setupBtn('btn-a', 'a'); setupBtn('btn-s', 's'); setupBtn('btn-d', 'd');
+            document.getElementById('btn-e').ontouchstart = () => handleAction();
+            document.getElementById('btn-space').ontouchstart = () => { if(canJump) velocity.y=0.25; canJump=false; };
 
-            document.getElementById('chat-input').onkeydown = (e) => {
-                if(e.code==='Enter' && e.target.value.trim()){
-                    chatRef.push({ u: myNick, t: e.target.value }); e.target.value = '';
-                }
-            };
-
-            function animate() {
-                requestAnimationFrame(animate);
-                if(controls.isLocked) {
-                    if(moveF) controls.moveForward(0.2); if(moveB) controls.moveForward(-0.2);
-                    if(moveL) controls.moveRight(-0.2); if(moveR) controls.moveRight(0.2);
-                    pivot.position.y += velocity.y;
-                    if(pivot.position.y > 0) velocity.y -= 0.01; else { pivot.position.y=0; canJump=true; velocity.y=0; }
-                    
-                    if(myModel) {
-                        myModel.position.copy(pivot.position);
-                        myModel.rotation.y = pivot.rotation.y;
-                        playersRef.child(myID).set({
-                            x: pivot.position.x, y: pivot.position.y, z: pivot.position.z,
-                            r: pivot.rotation.y, nick: myNick, cash: myCash, basePos: myBasePos
-                        });
-                    }
-
-                    document.getElementById('buy-ui').style.display = 'none';
-                    document.getElementById('sell-ui').style.display = 'none';
-                    currentNearBot = null;
-                    currentNearOwnedBot = null;
-
-                    robots.forEach((bot, i) => {
-                        if(!bot.targetSlot) {
-                            bot.position.z += 0.25; // Уменьшенная скорость
-                            if(bot.position.z > 300) { scene.remove(bot); robots.splice(i,1); }
-                            if(pivot.position.distanceTo(bot.position) < 6) {
-                                document.getElementById('buy-text').innerText = `${bot.config.name}: ${bot.config.price}$`;
-                                document.getElementById('buy-ui').style.display = 'block';
-                                currentNearBot = bot;
-                            }
-                        } else {
-                            bot.position.lerp(bot.targetSlot.pos, 0.05);
-                            // Проверка на близость к своему роботу для продажи
-                            if(pivot.position.distanceTo(bot.position) < 4) {
-                                document.getElementById('sell-ui').style.display = 'block';
-                                currentNearOwnedBot = bot;
-                            }
-                        }
-                    });
-                }
-                const cPos = new THREE.Vector3(0, 8, 15).applyMatrix4(pivot.matrixWorld);
-                camera.position.lerp(cPos, 0.1); camera.lookAt(pivot.position.x, pivot.position.y+1, pivot.position.z);
-                renderer.render(scene, camera);
-            }
+            setInterval(spawnRoadBot, 8000);
             animate();
         }
 
-        document.getElementById('start-btn').onclick = () => {
-            const n = document.getElementById('nick-input').value.trim();
-            if(!n) return;
-            document.getElementById('menu').classList.add('hidden');
-            document.getElementById('sidebar').classList.remove('hidden');
-            document.getElementById('stats-ui').classList.remove('hidden');
-            initGame(); initNet(n);
-        };
+        function spawnRoadBot() {
+            const type = Object.values(BOT_TYPES)[Math.floor(Math.random()*4)];
+            const bot = createHuman(type.color, "");
+            bot.position.set(0, 0, -50);
+            bot.info = type;
+            bot.owner = null;
+            scene.add(bot);
+            robots.push(bot);
+        }
+
+        function handleAction() {
+            // Если мы уже несем кого-то, ничего не делаем
+            if(stolenBot) return;
+
+            // Ищем робота для кражи или покупки
+            robots.forEach(bot => {
+                if(pivot.position.distanceTo(bot.position) < 5) {
+                    const myFreeSlot = myBaseObj.slots.find(s => !s.occupied);
+                    if(!myFreeSlot) return;
+
+                    if(!bot.owner) { // Покупка
+                        if(myCash >= bot.info.price) {
+                            myCash -= bot.info.price;
+                            bot.owner = myID;
+                            bot.targetSlot = myFreeSlot;
+                            myFreeSlot.occupied = true; myFreeSlot.bot = bot;
+                        }
+                    } else if(bot.owner !== myID) { // Кража
+                        stolenBot = bot;
+                        bot.originalOwner = bot.owner;
+                        bot.owner = "stolen";
+                    }
+                }
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Физика и движение
+            if(move.w) controls.moveForward(0.15); if(move.s) controls.moveForward(-0.15);
+            if(move.a) controls.moveRight(-0.15); if(move.d) controls.moveRight(0.15);
+            
+            pivot.position.y += velocity.y;
+            if(pivot.position.y > 0) velocity.y -= 0.01; else { pivot.position.y=0; canJump=true; velocity.y=0; }
+
+            // Коллизия со стенами и лазерами
+            Object.values(otherBases).forEach(base => {
+                const dist = pivot.position.distanceTo(base.group.position);
+                if(dist < 11) {
+                    if(base.laserActive && pivot.position.z > base.group.position.z + 9.5) {
+                        pivot.position.set(0, 5, 0); // Смерть от лазера
+                    }
+                }
+                // Желтая кнопка
+                if(myBaseObj && pivot.position.distanceTo(myBaseObj.group.position.clone().add(new THREE.Vector3(8,0,8))) < 2) {
+                    myBaseObj.laserActive = true;
+                    myBaseObj.laser.material.opacity = 0.5;
+                    setTimeout(() => { myBaseObj.laserActive = false; myBaseObj.laser.material.opacity = 0; }, 60000);
+                }
+            });
+
+            // Роботы
+            robots.forEach((bot, i) => {
+                if(!bot.owner) {
+                    bot.position.z += 0.1; // Медленно идут по дороге
+                    if(bot.position.z > 50) { scene.remove(bot); robots.splice(i,1); }
+                } else if(bot.owner === myID || bot.owner === "other") {
+                    if(bot.targetSlot) bot.position.lerp(bot.targetSlot.pos, 0.1);
+                } else if(bot.owner === "stolen") {
+                    // Робот на голове у вора
+                    bot.position.set(pivot.position.x, pivot.position.y + 2.5, pivot.position.z);
+                    
+                    // Донесли до своей базы?
+                    if(pivot.position.distanceTo(myBaseObj.group.position) < 8) {
+                        const slot = myBaseObj.slots.find(s => !s.occupied);
+                        if(slot) {
+                            bot.owner = myID;
+                            bot.targetSlot = slot;
+                            slot.occupied = true; slot.bot = bot;
+                            stolenBot = null;
+                        }
+                    }
+                }
+            });
+
+            // Если нас коснулся владелец украденного робота
+            if(stolenBot) {
+                Object.keys(otherPlayers).forEach(id => {
+                    if(id === stolenBot.originalOwner && pivot.position.distanceTo(otherPlayers[id].position) < 3) {
+                        // Возврат робота
+                        const ownerBase = otherBases[id];
+                        const slot = ownerBase.slots.find(s => !s.occupied);
+                        if(slot) {
+                            stolenBot.owner = id;
+                            stolenBot.targetSlot = slot;
+                            slot.occupied = true; slot.bot = stolenBot;
+                        } else { scene.remove(stolenBot); }
+                        stolenBot = null;
+                    }
+                });
+            }
+
+            if(myModel) {
+                myModel.position.copy(pivot.position);
+                myModel.rotation.y = pivot.rotation.y;
+                playersRef.child(myID).update({
+                    x: pivot.position.x, y: pivot.position.y, z: pivot.position.z,
+                    la: myBaseObj ? myBaseObj.laserActive : false, n: myNick, cash: myCash, bp: myBasePos
+                });
+            }
+
+            camera.position.set(pivot.position.x, pivot.position.y + 10, pivot.position.z + 20);
+            camera.lookAt(pivot.position);
+            renderer.render(scene, camera);
+        }
     </script>
 </body>
 </html>
