@@ -2,31 +2,22 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>DanBlox Tycoon & Chat</title>
+    <title>DanBlox - Mega Tycoon</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; background: #000; }
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #000; }
+        #menu { position: absolute; width: 100%; height: 100%; z-index: 1000; display: flex; align-items: center; justify-content: center; background: #000; }
+        .window { background: #111; padding: 30px; border: 3px solid #00ff00; border-radius: 20px; text-align: center; color: #fff; }
+        input { padding: 12px; margin: 10px; width: 250px; background: #222; color: #0f0; border: 1px solid #0f0; outline: none; }
+        button { padding: 12px 30px; background: #0f0; color: #000; border: none; cursor: pointer; font-weight: bold; }
         
-        /* Меню входа */
-        #menu { position: absolute; width: 100%; height: 100%; z-index: 1000; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #1a1a1a 0%, #000 100%); }
-        .window { background: #111; padding: 40px; border: 3px solid #00ff00; border-radius: 20px; text-align: center; color: #fff; box-shadow: 0 0 30px #00ff0033; }
-        input#nick-input { padding: 15px; margin: 10px; width: 280px; background: #222; color: #0f0; border: 1px solid #0f0; border-radius: 8px; font-size: 16px; outline: none; }
-        button#start-btn { padding: 15px 40px; background: #0f0; color: #000; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 20px; }
-
-        /* Боковая панель справа */
-        #sidebar { position: absolute; right: 10px; top: 10px; bottom: 10px; width: 250px; z-index: 500; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-        .panel { background: rgba(0, 0, 0, 0.7); border: 1px solid #00ff00; border-radius: 10px; padding: 10px; color: #0f0; pointer-events: auto; }
-        
-        /* Список игроков */
-        #player-list { flex: 1; overflow-y: auto; font-size: 14px; }
-        .player-item { padding: 5px; border-bottom: 1px solid #00ff0033; }
-
-        /* Чат */
-        #chat-box { flex: 2; display: flex; flex-direction: column; }
-        #chat-messages { flex: 1; overflow-y: auto; font-size: 13px; margin-bottom: 5px; color: #fff; }
-        #chat-input { background: #222; border: 1px solid #00ff00; color: #fff; padding: 8px; border-radius: 5px; outline: none; }
-
+        /* Исправленный сайдбар с прокруткой */
+        #sidebar { position: absolute; right: 10px; top: 10px; bottom: 10px; width: 260px; z-index: 500; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .panel { background: rgba(0, 0, 0, 0.8); border: 2px solid #00ff00; border-radius: 10px; padding: 10px; color: #0f0; pointer-events: auto; }
+        #player-list { max-height: 150px; overflow-y: auto; font-size: 14px; border-bottom: 1px solid #0f03; }
+        #chat-messages { height: 300px; overflow-y: auto; font-size: 13px; color: #fff; margin-bottom: 5px; }
+        #chat-input { width: 90%; background: #222; border: 1px solid #0f0; color: #fff; padding: 5px; }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -34,20 +25,20 @@
 
     <div id="menu">
         <div class="window">
-            <h1 style="color: #0f0; letter-spacing: 2px;">DANBLOX ONLINE</h1>
+            <h1 style="color: #0f0;">DANBLOX TYCOON</h1>
             <input type="text" id="nick-input" placeholder="НИК (ENG)..." maxlength="12"><br>
-            <button id="start-btn">ИГРАТЬ</button>
+            <button id="start-btn">ВОЙТИ</button>
         </div>
     </div>
 
     <div id="sidebar" class="hidden">
         <div class="panel">
-            <b style="font-size: 16px;">ОНЛАЙН: <span id="online-count">0</span></b>
+            <b>ИГРОКИ: <span id="online-count">0</span></b>
             <div id="player-list"></div>
         </div>
-        <div class="panel" id="chat-box">
+        <div class="panel">
             <div id="chat-messages"></div>
-            <input type="text" id="chat-input" placeholder="Сообщение...">
+            <input type="text" id="chat-input" placeholder="Нажми Enter...">
         </div>
     </div>
 
@@ -85,132 +76,139 @@
         let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false, canJump = true;
         let velocity = new THREE.Vector3();
         let camDist = 12;
-        let myBase = null;
+        let myBasePos = { x: (Math.random()-0.5)*120, z: (Math.random()-0.5)*120 };
 
-        // Создание человека
-        function createHuman(color) {
+        // Создание текста (Ника)
+        function createNickLabel(text) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 256; canvas.height = 64;
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(0, 0, 256, 64);
+            ctx.font = 'bold 30px Arial';
+            ctx.fillStyle = '#00ff00';
+            ctx.textAlign = 'center';
+            ctx.fillText(text, 128, 45);
+            const tex = new THREE.CanvasTexture(canvas);
+            const mat = new THREE.SpriteMaterial({ map: tex });
+            const sprite = new THREE.Sprite(mat);
+            sprite.scale.set(3, 0.75, 1);
+            return sprite;
+        }
+
+        function createHuman(color, nick) {
             const group = new THREE.Group();
             const mat = new THREE.MeshStandardMaterial({ color: color });
-            const head = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), mat); head.position.y = 1.6; group.add(head);
-            const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1, 0.4), mat); body.position.y = 0.8; group.add(body);
-            const armL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.8, 0.3), mat); armL.position.set(-0.6, 0.8, 0); group.add(armL);
-            const armR = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.8, 0.3), mat); armR.position.set(0.6, 0.8, 0); group.add(armR);
-            const legL = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.8, 0.35), mat); legL.position.set(-0.2, 0.2, 0); group.add(legL);
-            const legR = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.8, 0.35), mat); legR.position.set(0.2, 0.2, 0); group.add(legR);
+            // Тело
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.6,0.6,0.6), mat); head.position.y = 1.6; group.add(head);
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.8,1,0.4), mat); body.position.y = 0.8; group.add(body);
+            // Ноги/Руки
+            const armL = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.8,0.3), mat); armL.position.set(-0.6,0.8,0); group.add(armL);
+            const armR = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.8,0.3), mat); armR.position.set(0.6,0.8,0); group.add(armR);
+            const legL = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.8,0.3), mat); legL.position.set(-0.25,0,0); group.add(legL);
+            const legR = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.8,0.3), mat); legR.position.set(0.25,0,0); group.add(legR);
+            
+            const label = createNickLabel(nick);
+            label.position.y = 2.5;
+            group.add(label);
             return group;
         }
 
-        // Создание базы
-        function createBase(id, nick, pos) {
+        function createBase(nick, pos) {
             const group = new THREE.Group();
             group.position.set(pos.x, 0, pos.z);
-            const wallMat = new THREE.MeshStandardMaterial({ color: 0x444444 });
-            const wallB = new THREE.Mesh(new THREE.BoxGeometry(8, 5, 0.5), wallMat); wallB.position.set(0, 2.5, -4); group.add(wallB);
-            const sideL = new THREE.Mesh(new THREE.BoxGeometry(0.5, 5, 8), wallMat); sideL.position.set(-4, 2.5, 0); group.add(sideL);
-            const sideR = new THREE.Mesh(new THREE.BoxGeometry(0.5, 5, 8), wallMat); sideR.position.set(4, 2.5, 0); group.add(sideR);
-            const laserMat = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.5 });
-            const lasers = new THREE.Mesh(new THREE.BoxGeometry(7.5, 5, 0.1), laserMat); lasers.position.set(0, 2.5, 4); group.add(lasers);
-            const pad = new THREE.Mesh(new THREE.BoxGeometry(2, 0.1, 2), new THREE.MeshStandardMaterial({color:0xffff00})); pad.position.set(0, 0.05, 0); group.add(pad);
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+            const bWall = new THREE.Mesh(new THREE.BoxGeometry(10, 5, 0.5), wallMat); bWall.position.z = -5; group.add(bWall);
+            const lWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 5, 10), wallMat); lWall.position.x = -5; group.add(lWall);
+            const rWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 5, 10), wallMat); rWall.position.x = 5; group.add(rWall);
+            
+            const laser = new THREE.Mesh(new THREE.BoxGeometry(9.5, 5, 0.1), new THREE.MeshBasicMaterial({color:0xff0000, transparent:true, opacity:0.4}));
+            laser.position.z = 5; group.add(laser);
+
+            const sign = createNickLabel("BASE: " + nick);
+            sign.position.set(0, 6, 5); group.add(sign);
+
+            const pad = new THREE.Mesh(new THREE.BoxGeometry(2,0.1,2), new THREE.MeshStandardMaterial({color:0xffff00}));
+            group.add(pad);
+
             scene.add(group);
-            return { group, lasers, pad, ownerID: id };
+            return { group, laser, pad };
         }
 
         function initNet(nick) {
             myNick = nick;
-            const basePos = { x: (Math.random()-0.5)*100, z: (Math.random()-0.5)*100 };
-            myBase = createBase(myID, myNick, basePos);
-            pivot.position.set(basePos.x, 0, basePos.z + 7);
+            myModel = createHuman(0x00ff00, myNick);
+            scene.add(myModel);
+            const myBase = createBase(myNick, myBasePos);
+            pivot.position.set(myBasePos.x, 0, myBasePos.z + 8);
 
-            // Таймер лазеров
-            setTimeout(() => { if(myBase) myBase.lasers.visible = false; }, 20000);
-
-            // Слушатель игроков и списка
             playersRef.on('value', (snap) => {
                 const data = snap.val() || {};
-                const listElem = document.getElementById('player-list');
-                listElem.innerHTML = '';
+                const list = document.getElementById('player-list');
+                list.innerHTML = '';
                 let count = 0;
 
                 Object.keys(data).forEach(id => {
                     count++;
-                    const p = data[id];
-                    // Обновляем список справа
-                    listElem.innerHTML += `<div class="player-item">${id === myID ? '⭐ ' : ''}${p.nick}</div>`;
-
+                    list.innerHTML += `<div class="player-item">${data[id].nick}</div>`;
                     if(id === myID) return;
+                    
                     if(!otherPlayers[id]) {
-                        otherPlayers[id] = createHuman(0x0088ff);
+                        otherPlayers[id] = createHuman(0x0088ff, data[id].nick);
                         scene.add(otherPlayers[id]);
-                        otherBases[id] = createBase(id, p.nick, p.basePos);
+                        otherBases[id] = createBase(data[id].nick, data[id].basePos);
                     }
-                    otherPlayers[id].position.lerp(new THREE.Vector3(p.x, p.y, p.z), 0.2);
-                    otherPlayers[id].rotation.y = p.r;
-                    if(otherBases[id]) otherBases[id].lasers.visible = p.laserOn;
+                    otherPlayers[id].position.lerp(new THREE.Vector3(data[id].x, data[id].y, data[id].z), 0.2);
+                    otherPlayers[id].rotation.y = data[id].r;
+                    otherBases[id].laser.visible = data[id].laser;
                 });
                 document.getElementById('online-count').innerText = count;
-
-                // Удаление вышедших
+                
                 Object.keys(otherPlayers).forEach(id => {
                     if(!data[id]) {
-                        scene.remove(otherPlayers[id]);
-                        if(otherBases[id]) scene.remove(otherBases[id].group);
-                        delete otherPlayers[id];
-                        delete otherBases[id];
+                        scene.remove(otherPlayers[id]); scene.remove(otherBases[id].group);
+                        delete otherPlayers[id]; delete otherBases[id];
                     }
                 });
             });
 
-            // Слушатель чата
-            chatRef.limitToLast(15).on('child_added', (snap) => {
-                const msg = snap.val();
-                const chatMessages = document.getElementById('chat-messages');
-                chatMessages.innerHTML += `<div><b>${msg.user}:</b> ${msg.text}</div>`;
-                chatMessages.scrollTop = chatMessages.scrollHeight;
+            chatRef.limitToLast(10).on('child_added', (s) => {
+                const m = s.val();
+                const box = document.getElementById('chat-messages');
+                box.innerHTML += `<div><b>${m.u}:</b> ${m.t}</div>`;
+                box.scrollTop = box.scrollHeight;
             });
 
             playersRef.child(myID).onDisconnect().remove();
         }
 
-        // Отправка сообщений
-        document.getElementById('chat-input').onkeydown = (e) => {
-            if(e.code === 'Enter' && e.target.value.trim() !== '') {
-                chatRef.push({ user: myNick, text: e.target.value.trim() });
-                e.target.value = '';
-            }
-        };
-
         document.getElementById('start-btn').onclick = () => {
-            const nick = document.getElementById('nick-input').value.trim();
-            if(!nick) return;
+            const n = document.getElementById('nick-input').value.trim();
+            if(!n) return;
             document.getElementById('menu').classList.add('hidden');
             document.getElementById('sidebar').classList.remove('hidden');
-            initGame();
-            initNet(nick);
+            initGame(); initNet(n);
         };
 
         function initGame() {
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x87CEEB);
+            scene = new THREE.Scene(); scene.background = new THREE.Color(0x87CEEB);
             camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
 
-            const ground = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), new THREE.MeshStandardMaterial({color: 0x228B22}));
-            ground.rotation.x = -Math.PI/2; scene.add(ground);
+            const gr = new THREE.Mesh(new THREE.PlaneGeometry(500,500), new THREE.MeshStandardMaterial({color:0x228B22}));
+            gr.rotation.x = -Math.PI/2; scene.add(gr);
+            scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+            const sun = new THREE.DirectionalLight(0xffffff, 1); sun.position.set(10,20,10); scene.add(sun);
 
             pivot = new THREE.Group(); scene.add(pivot);
-            myModel = createHuman(0x00ff00); scene.add(myModel);
-
             controls = new PointerLockControls(pivot, document.body);
             document.body.addEventListener('click', () => { if(!document.activeElement.id.includes('chat')) controls.lock(); });
-            window.addEventListener('wheel', (e) => { camDist = Math.max(5, Math.min(30, camDist + e.deltaY * 0.05)); });
-
-            scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-            const sun = new THREE.DirectionalLight(0xffffff, 1); sun.position.set(50,50,50); scene.add(sun);
+            window.onwheel = (e) => camDist = Math.max(5, Math.min(35, camDist + e.deltaY*0.05));
 
             window.onkeydown = (e) => {
-                if(document.activeElement.id === 'chat-input') return; // Не ходить во время чата
+                if(document.activeElement.id==='chat-input') return;
                 if(e.code==='KeyW') moveForward=true; if(e.code==='KeyS') moveBackward=true;
                 if(e.code==='KeyA') moveLeft=true; if(e.code==='KeyD') moveRight=true;
                 if(e.code==='Space' && canJump) { velocity.y = 0.25; canJump = false; }
@@ -220,46 +218,31 @@
                 if(e.code==='KeyA') moveLeft=false; if(e.code==='KeyD') moveRight=false;
             };
 
+            document.getElementById('chat-input').onkeydown = (e) => {
+                if(e.code==='Enter' && e.target.value.trim()){
+                    chatRef.push({ u: myNick, t: e.target.value }); e.target.value = '';
+                }
+            };
+
             function animate() {
                 requestAnimationFrame(animate);
                 if(controls.isLocked) {
-                    const speed = 0.18;
-                    if(moveForward) controls.moveForward(speed); if(moveBackward) controls.moveForward(-speed);
-                    if(moveLeft) controls.moveRight(-speed); if(moveRight) controls.moveRight(speed);
-
+                    const s = 0.2;
+                    if(moveForward) controls.moveForward(s); if(moveBackward) controls.moveForward(-s);
+                    if(moveLeft) controls.moveRight(-s); if(moveRight) controls.moveRight(s);
                     pivot.position.y += velocity.y;
-                    if(pivot.position.y > 0) { velocity.y -= 0.01; } 
-                    else { pivot.position.y = 0; canJump = true; velocity.y = 0; }
-
-                    // Коллизия с лазерами
-                    Object.values(otherBases).forEach(base => {
-                        if(base.lasers.visible) {
-                            if(pivot.position.distanceTo(base.group.position) < 5) 
-                                pivot.position.add(pivot.position.clone().sub(base.group.position).normalize().multiplyScalar(0.5));
-                        }
-                    });
-
-                    // Активация своей кнопки
-                    if(myBase && pivot.position.distanceTo(myBase.group.position) < 1.5) {
-                        if(!myBase.lasers.visible) {
-                            myBase.lasers.visible = true;
-                            setTimeout(() => { if(myBase) myBase.lasers.visible = false; }, 60000);
-                        }
-                    }
-
+                    if(pivot.position.y > 0) velocity.y -= 0.01; else { pivot.position.y=0; canJump=true; velocity.y=0; }
+                    
                     myModel.position.copy(pivot.position);
                     myModel.rotation.y = pivot.rotation.y;
 
                     playersRef.child(myID).set({
                         x: pivot.position.x, y: pivot.position.y, z: pivot.position.z,
-                        r: pivot.rotation.y, nick: myNick,
-                        laserOn: myBase.lasers.visible,
-                        basePos: { x: myBase.group.position.x, z: myBase.group.position.z }
+                        r: pivot.rotation.y, nick: myNick, basePos: myBasePos, laser: true
                     });
                 }
-                const camPos = new THREE.Vector3(0, camDist/2, camDist).applyMatrix4(pivot.matrixWorld);
-                camera.position.lerp(camPos, 0.1);
-                camera.lookAt(pivot.position.x, pivot.position.y + 1, pivot.position.z);
+                const cPos = new THREE.Vector3(0, camDist/2, camDist).applyMatrix4(pivot.matrixWorld);
+                camera.position.lerp(cPos, 0.1); camera.lookAt(pivot.position.x, pivot.position.y+1, pivot.position.z);
                 renderer.render(scene, camera);
             }
             animate();
