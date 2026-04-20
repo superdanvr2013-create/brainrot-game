@@ -2,18 +2,15 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Brainrot Multiplayer - Ultra Fix</title>
-    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.3.2/dist/peerjs.min.js"></script>
+    <title>Brainrot Online - Gun.js Edition</title>
+    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #000; color: #fff; }
-        #menu { position: absolute; width: 100%; height: 100%; z-index: 100; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #222 0%, #000 100%); }
-        .window { background: #1a1a1a; padding: 40px; border-radius: 20px; border: 2px solid #00ff88; text-align: center; box-shadow: 0 0 30px rgba(0,255,136,0.2); }
-        input { padding: 15px; margin: 10px; border-radius: 8px; border: 1px solid #333; width: 280px; font-size: 16px; background: #000; color: #00ff88; outline: none; }
-        input:focus { border-color: #00ff88; box-shadow: 0 0 10px rgba(0,255,136,0.3); }
-        button { padding: 15px 40px; background: #00ff88; color: #000; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 20px; transition: 0.3s; margin-top: 10px; }
-        button:hover { background: #00cc6e; transform: scale(1.05); }
-        #hud { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.85); padding: 20px; border-radius: 12px; border: 1px solid #333; z-index: 50; pointer-events: none; }
-        #status { color: #ffcc00; font-weight: bold; margin-top: 5px; }
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #000; color: #fff; }
+        #menu { position: absolute; width: 100%; height: 100%; z-index: 100; display: flex; align-items: center; justify-content: center; background: #111; }
+        .window { background: #222; padding: 40px; border-radius: 15px; border: 2px solid #00ff88; text-align: center; }
+        input { padding: 12px; margin: 10px; border-radius: 5px; width: 250px; background: #000; color: #00ff88; border: 1px solid #444; }
+        button { padding: 12px 30px; background: #00ff88; color: #000; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        #hud { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 10px; z-index: 50; border: 1px solid #00ff88; }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -21,18 +18,16 @@
 
     <div id="menu">
         <div class="window">
-            <h1 style="color: #00ff88; letter-spacing: 2px; margin-top: 0;">BRAINROT ONLINE</h1>
-            <input type="text" id="nick-input" placeholder="ТВОЙ НИК (ENG)..."><br>
-            <input type="text" id="friend-id-input" placeholder="ID ДРУГА (ЕСЛИ ЕСТЬ)"><br>
-            <button id="start-btn">ПОДКЛЮЧИТЬСЯ</button>
-            <p style="font-size: 12px; color: #666; margin-top: 20px;">Версия: 1.3.2 STABLE</p>
+            <h1 style="color: #00ff88;">BRAINROT GUN-EDITION</h1>
+            <input type="text" id="nick-input" placeholder="Твой ник (ENG)..."><br>
+            <button id="start-btn">ЗАПУСТИТЬ МИР</button>
+            <p style="font-size: 11px; color: #666; margin-top: 15px;">PeerJS заменен на Gun.js для стабильности</p>
         </div>
     </div>
 
     <div id="hud" class="hidden">
-        <div style="color: #00ff88; font-size: 18px; margin-bottom: 10px;">СИСТЕМА АКТИВНА</div>
-        <div>ID: <span id="display-id" style="color: #fff;">...</span></div>
-        <div id="status">СТАТУС: ИНИЦИАЛИЗАЦИЯ</div>
+        <div>НИК: <span id="display-nick">?</span></div>
+        <div id="status">СТАТУС: В СЕТИ</div>
     </div>
 
     <script type="importmap">
@@ -49,84 +44,74 @@
         import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
         let scene, camera, renderer, controls, pivot, playerModel;
-        let peer, conn, myID;
+        let gun, playersRef, myID, myNick;
         let otherPlayers = {}; 
         let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
 
         const startBtn = document.getElementById('start-btn');
-        const statusEl = document.getElementById('status');
 
+        // СЕТЬ ЧЕРЕЗ GUN.JS
         function initNet(nick) {
-            const cleanNick = nick.replace(/[^a-zA-Z0-9]/g, "");
-            myID = cleanNick + "-" + Math.floor(Math.random() * 8999 + 1000);
-            document.getElementById('display-id').innerText = myID;
+            myNick = nick.replace(/[^a-zA-Z0-9]/g, "");
+            myID = 'user_' + Math.random().toString(36).substr(2, 9);
+            document.getElementById('display-nick').innerText = myNick;
 
-            // Используем автоматический выбор сервера (наиболее надежный вариант)
-            peer = new Peer(myID);
+            // Используем публичные relay-серверы Gun.js
+            gun = Gun([
+                'https://gun-maniac.herokuapp.com/gun',
+                'https://relay.peer.ooo/gun'
+            ]);
+            playersRef = gun.get('brainrot-world-v1').get('players');
 
-            peer.on('open', (id) => {
-                statusEl.innerText = "СТАТУС: В СЕТИ (ЖДУ)";
-                statusEl.style.color = "#00ff88";
-                const targetID = document.getElementById('friend-id-input').value.trim();
-                if(targetID) connectTo(targetID);
+            // Слушаем изменения других игроков
+            playersRef.map().on((data, id) => {
+                if(!data || id === myID) return;
+                syncPlayer(id, data);
             });
 
-            peer.on('connection', (c) => setupConnection(c));
-            
-            peer.on('error', (err) => {
-                console.error("Сетевая ошибка:", err.type);
-                statusEl.innerText = "ОШИБКА: " + err.type.toUpperCase();
-                statusEl.style.color = "#ff4444";
-                
-                // Если ошибка — пробуем пересоздать peer через 3 секунды
-                if(err.type === 'network' || err.type === 'server-error') {
-                    setTimeout(() => initNet(nick), 3000);
+            // Отправляем свои координаты каждые 50мс
+            setInterval(() => {
+                if(pivot) {
+                    playersRef.get(myID).put({
+                        nick: myNick,
+                        x: pivot.position.x,
+                        y: pivot.position.y,
+                        z: pivot.position.z,
+                        ry: pivot.rotation.y,
+                        lastSeen: Date.now()
+                    });
                 }
-            });
-        }
+            }, 50);
 
-        function connectTo(id) {
-            const c = peer.connect(id.trim(), { reliable: true });
-            setupConnection(c);
-        }
-
-        function setupConnection(c) {
-            conn = c;
-            conn.on('open', () => {
-                statusEl.innerText = "СТАТУС: СОЕДИНЕНО!";
-                statusEl.style.color = "#00ff88";
-                setInterval(() => {
-                    if(conn && conn.open) {
-                        conn.send({
-                            id: myID, 
-                            x: pivot.position.x, 
-                            y: pivot.position.y, 
-                            z: pivot.position.z, 
-                            ry: pivot.rotation.y
-                        });
+            // Удаляем старых игроков (кто вышел)
+            setInterval(() => {
+                const now = Date.now();
+                for(let id in otherPlayers) {
+                    if(now - otherPlayers[id].lastUpdate > 5000) {
+                        scene.remove(otherPlayers[id].mesh);
+                        delete otherPlayers[id];
                     }
-                }, 50);
-            });
-            conn.on('data', (data) => syncPlayer(data));
+                }
+            }, 2000);
         }
 
-        function syncPlayer(data) {
-            if(!otherPlayers[data.id]) {
+        function syncPlayer(id, data) {
+            if(!otherPlayers[id]) {
                 const geometry = new THREE.BoxGeometry(1, 2, 1);
                 const material = new THREE.MeshStandardMaterial({color: 0x0088ff});
                 const m = new THREE.Mesh(geometry, material);
                 m.position.y = 1;
-                const g = new THREE.Group(); g.add(m);
-                scene.add(g);
-                otherPlayers[data.id] = g;
+                scene.add(m);
+                otherPlayers[id] = { mesh: m, lastUpdate: Date.now() };
             }
-            otherPlayers[data.id].position.lerp(new THREE.Vector3(data.x, data.y, data.z), 0.2);
-            otherPlayers[data.id].rotation.y = data.ry;
+            otherPlayers[id].mesh.position.lerp(new THREE.Vector3(data.x, data.y, data.z), 0.2);
+            otherPlayers[id].mesh.rotation.y = data.ry;
+            otherPlayers[id].lastUpdate = Date.now();
         }
 
         startBtn.onclick = () => {
             const nick = document.getElementById('nick-input').value.trim();
-            if(!nick) return alert("ВВЕДИТЕ НИК!");
+            if(!nick) return alert("ENTER NICK!");
             document.getElementById('menu').classList.add('hidden');
             document.getElementById('hud').classList.remove('hidden');
             initNet(nick);
@@ -146,20 +131,14 @@
 
             const body = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), new THREE.MeshStandardMaterial({color: 0x00ff88}));
             body.position.y = 1;
-            playerModel = new THREE.Group(); 
-            playerModel.add(body);
+            playerModel = new THREE.Group(); playerModel.add(body);
             scene.add(playerModel);
 
             controls = new PointerLockControls(pivot, document.body);
             document.body.addEventListener('click', () => controls.lock());
 
-            scene.add(new THREE.AmbientLight(0xffffff, 0.4));
-            const light = new THREE.DirectionalLight(0xffffff, 0.8);
-            light.position.set(10, 20, 10);
-            scene.add(light);
-
-            const grid = new THREE.GridHelper(200, 40, 0x00ff88, 0x222222);
-            scene.add(grid);
+            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+            scene.add(new THREE.GridHelper(200, 50, 0x00ff88, 0x222222));
 
             window.onkeydown = (e) => {
                 if(e.code === 'KeyW') moveForward = true;
