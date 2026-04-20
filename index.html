@@ -2,42 +2,45 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Roblox Web Multiplayer</title>
+    <title>Brainrot Multiplayer Online</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #111; color: white; }
-        #menu { position: absolute; width: 100%; height: 100%; z-index: 100; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.9); }
-        .window { background: #222; padding: 30px; border-radius: 15px; border: 2px solid #00b06f; text-align: center; }
-        input { padding: 12px; margin: 10px; border-radius: 5px; border: none; width: 250px; font-size: 16px; }
-        button { padding: 12px 30px; background: #00b06f; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #111; color: white; }
+        #menu { position: absolute; width: 100%; height: 100%; z-index: 100; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.85); }
+        .window { background: #222; padding: 30px; border-radius: 15px; border: 3px solid #00b06f; text-align: center; box-shadow: 0 0 20px rgba(0,176,111,0.3); }
+        input { padding: 12px; margin: 10px; border-radius: 5px; border: 2px solid #444; width: 250px; font-size: 16px; background: #333; color: white; }
+        input:focus { border-color: #00b06f; outline: none; }
+        button { padding: 12px 30px; background: #00b06f; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 18px; transition: 0.2s; }
+        button:hover { background: #008f5a; transform: scale(1.05); }
         
-        /* Табличка с ID */
-        #debug-info { 
+        #hud { 
             position: absolute; top: 20px; left: 20px; 
-            background: rgba(0,0,0,0.8); padding: 15px; 
-            border-radius: 10px; border: 1px solid #00b06f;
-            z-index: 50; font-family: monospace;
+            background: rgba(0,0,0,0.7); padding: 15px; 
+            border-radius: 10px; border: 1px solid #555;
+            z-index: 50; font-family: monospace; pointer-events: none;
         }
         .hidden { display: none !important; }
-        #player-label { color: #00ff88; font-weight: bold; }
+        .status-ok { color: #00ff88; }
+        .status-wait { color: #ffcc00; }
+        .status-err { color: #ff4444; }
     </style>
 </head>
 <body>
 
     <div id="menu">
         <div class="window">
-            <h1>BRAINROT ONLINE</h1>
-            <input type="text" id="nick-input" placeholder="Твой ник (на англ)..." maxlength="10"><br>
-            <input type="text" id="friend-id-input" placeholder="ID друга (если хочешь подключиться)"><br>
-            <button id="start-btn">ЗАПУСТИТЬ ИГРУ</button>
-            <p style="font-size: 12px; color: #888; margin-top: 15px;">После входа твой ID появится в углу экрана</p>
+            <h1 style="color: #00b06f; margin-top: 0;">BRAINROT ONLINE</h1>
+            <input type="text" id="nick-input" placeholder="Твой ник..." maxlength="10"><br>
+            <input type="text" id="friend-id-input" placeholder="ID друга (для входа к нему)"><br>
+            <button id="start-btn">ВОЙТИ В МИР</button>
+            <p style="font-size: 13px; color: #aaa; margin-top: 15px;">Чтобы играть вместе, второй должен ввести ID первого</p>
         </div>
     </div>
 
-    <div id="debug-info" class="hidden">
-        <div>ВАШ НИК: <span id="my-nick-display">?</span></div>
-        <div style="margin-top:5px; color: #ffcc00;">ВАШ ID: <span id="my-id-display">Загрузка...</span></div>
-        <div id="status" style="margin-top:5px; font-size: 12px;">Статус: Ожидание...</div>
+    <div id="hud" class="hidden">
+        <div>НИК: <span id="display-nick">?</span></div>
+        <div style="margin-top:5px;">ТВОЙ ID: <span id="display-id" style="color: #ffcc00;">...</span></div>
+        <div id="status" class="status-wait" style="margin-top:5px;">Статус: Инициализация...</div>
     </div>
 
     <script type="importmap">
@@ -62,40 +65,48 @@
 
         const startBtn = document.getElementById('start-btn');
 
-        // Логика мультиплеера
-        function setupPeer(nick) {
+        // --- МУЛЬТИПЛЕЕР ---
+        function initNet(nick) {
             myID = nick + "-" + Math.floor(Math.random() * 9000 + 1000);
-            document.getElementById('my-id-display').innerText = myID;
-            document.getElementById('my-nick-display').innerText = nick;
+            document.getElementById('display-id').innerText = myID;
+            document.getElementById('display-nick').innerText = nick;
 
             peer = new Peer(myID);
 
             peer.on('open', (id) => {
-                console.log('Мой ID:', id);
-                const friendID = document.getElementById('friend-id-input').value;
-                if(friendID) connectTo(friendID);
+                document.getElementById('status').innerText = "Статус: Жду подключения...";
+                const targetID = document.getElementById('friend-id-input').value.trim();
+                if(targetID) {
+                    document.getElementById('status').innerText = "Статус: Подключаюсь к " + targetID;
+                    connectTo(targetID);
+                }
             });
 
             peer.on('connection', (c) => {
-                handleConnection(c);
+                setupConnection(c);
+            });
+
+            peer.on('error', (err) => {
+                document.getElementById('status').innerText = "Ошибка: " + err.type;
+                document.getElementById('status').className = "status-err";
             });
         }
 
         function connectTo(id) {
             const c = peer.connect(id);
-            handleConnection(c);
+            setupConnection(c);
         }
 
-        function handleConnection(c) {
+        function setupConnection(c) {
             conn = c;
             conn.on('open', () => {
-                document.getElementById('status').innerText = "Статус: СВЯЗЬ УСТАНОВЛЕНА!";
-                document.getElementById('status').style.color = "#00ff00";
+                document.getElementById('status').innerText = "Статус: СОЕДИНЕНО!";
+                document.getElementById('status').className = "status-ok";
                 
-                // Отправляем свои координаты каждые 50мс
                 setInterval(() => {
-                    if(conn.open) {
+                    if(conn && conn.open) {
                         conn.send({
+                            type: 'move',
                             id: myID,
                             x: pivot.position.x,
                             y: pivot.position.y,
@@ -103,97 +114,101 @@
                             ry: pivot.rotation.y
                         });
                     }
-                }, 50);
+                }, 30);
             });
 
             conn.on('data', (data) => {
-                syncPlayer(data);
+                if(data.type === 'move') syncRemotePlayer(data);
+            });
+
+            conn.on('close', () => {
+                document.getElementById('status').innerText = "Статус: Игрок вышел";
+                document.getElementById('status').className = "status-wait";
             });
         }
 
-        function syncPlayer(data) {
+        function syncRemotePlayer(data) {
             if(!otherPlayers[data.id]) {
-                const model = createBacon(0x3366ff); // Другой игрок будет синим
-                scene.add(model);
-                otherPlayers[data.id] = model;
+                const material = new THREE.MeshStandardMaterial({color: 0x0077ff});
+                const group = createBaconModel(material);
+                scene.add(group);
+                otherPlayers[data.id] = group;
             }
-            otherPlayers[data.id].position.set(data.x, data.y, data.z);
-            otherPlayers[data.id].rotation.y = data.ry;
+            const p = otherPlayers[data.id];
+            p.position.lerp(new THREE.Vector3(data.x, data.y, data.z), 0.5);
+            p.rotation.y = data.ry;
         }
 
-        // --- ДВИЖОК ИГРЫ ---
+        // --- ИГРОВОЕ ЯДРО ---
         startBtn.onclick = () => {
-            const nick = document.getElementById('nick-input').value;
-            if(!nick) return alert("Введи ник!");
+            const nick = document.getElementById('nick-input').value.trim();
+            if(!nick) return alert("Введите ник!");
             
             document.getElementById('menu').classList.add('hidden');
-            document.getElementById('debug-info').classList.remove('hidden');
+            document.getElementById('hud').classList.remove('hidden');
             
-            setupPeer(nick);
-            initGame();
+            initNet(nick);
+            initScene();
         };
 
-        function initGame() {
+        function createBaconModel(material) {
+            const group = new THREE.Group();
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.4, 0.5), material);
+            body.position.y = 0.7;
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), new THREE.MeshStandardMaterial({color: 0xffdbac}));
+            head.position.y = 1.7;
+            group.add(body, head);
+            return group;
+        }
+
+        function initScene() {
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x87ceeb);
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.shadowMap.enabled = true;
             document.body.appendChild(renderer.domElement);
 
             pivot = new THREE.Group();
             scene.add(pivot);
 
-            playerModel = createBacon(0xde1b1b);
+            playerModel = createBaconModel(new THREE.MeshStandardMaterial({color: 0xff4444}));
             scene.add(playerModel);
 
             controls = new PointerLockControls(pivot, document.body);
             document.body.addEventListener('click', () => controls.lock());
 
-            const sun = new THREE.DirectionalLight(0xffffff, 1);
-            sun.position.set(10, 20, 10);
-            scene.add(sun, new THREE.AmbientLight(0xffffff, 0.6));
+            scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+            const light = new THREE.DirectionalLight(0xffffff, 0.8);
+            light.position.set(5, 10, 5);
+            scene.add(light);
 
-            const floor = new THREE.Mesh(new THREE.PlaneGeometry(100,100), new THREE.MeshStandardMaterial({color: 0x4caf50}));
-            floor.rotation.x = -Math.PI / 2;
+            const grid = new THREE.GridHelper(100, 50, 0x00b06f, 0x444444);
+            scene.add(grid);
+            
+            const floor = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), new THREE.MeshStandardMaterial({color: 0x222222}));
+            floor.rotation.x = -Math.PI/2;
             scene.add(floor);
 
-            setupInput();
-            loop();
-        }
-
-        function createBacon(color) {
-            const group = new THREE.Group();
-            const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.4, 0.5), new THREE.MeshStandardMaterial({color: color}));
-            body.position.y = 1;
-            const head = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), new THREE.MeshStandardMaterial({color: 0xffdbac}));
-            head.position.y = 2;
-            group.add(body, head);
-            return group;
-        }
-
-        function setupInput() {
-            document.onkeydown = (e) => {
+            window.onkeydown = (e) => {
                 if(e.code === 'KeyW') moveForward = true;
                 if(e.code === 'KeyS') moveBackward = true;
                 if(e.code === 'KeyA') moveLeft = true;
                 if(e.code === 'KeyD') moveRight = true;
                 if(e.code === 'Space' && pivot.position.y < 0.1) velocity.y = 10;
             };
-            document.onkeyup = (e) => {
+            window.onkeyup = (e) => {
                 if(e.code === 'KeyW') moveForward = false;
                 if(e.code === 'KeyS') moveBackward = false;
                 if(e.code === 'KeyA') moveLeft = false;
                 if(e.code === 'KeyD') moveRight = false;
             };
-            document.onwheel = (e) => {
-                zoomDistance = Math.min(Math.max(zoomDistance + e.deltaY * 0.01, 4), 15);
-            };
+
+            animate();
         }
 
-        function loop() {
-            requestAnimationFrame(loop);
+        function animate() {
+            requestAnimationFrame(animate);
             if (controls.isLocked) {
                 const dt = 0.016;
                 velocity.x -= velocity.x * 10 * dt;
@@ -208,15 +223,14 @@
                 controls.moveRight(-velocity.x * dt);
                 controls.moveForward(-velocity.z * dt);
                 pivot.position.y += velocity.y * dt;
-
                 if (pivot.position.y < 0) { pivot.position.y = 0; velocity.y = 0; }
 
                 playerModel.position.copy(pivot.position);
                 playerModel.rotation.y = pivot.rotation.y;
 
-                const camOffset = new THREE.Vector3(0, 2, zoomDistance).applyMatrix4(pivot.matrixWorld);
-                camera.position.lerp(camOffset, 0.1);
-                camera.lookAt(pivot.position.x, pivot.position.y + 1.5, pivot.position.z);
+                const cp = new THREE.Vector3(0, 2, zoomDistance).applyMatrix4(pivot.matrixWorld);
+                camera.position.lerp(cp, 0.1);
+                camera.lookAt(pivot.position.x, pivot.position.y + 1, pivot.position.z);
             }
             renderer.render(scene, camera);
         }
