@@ -2,21 +2,25 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>DanBlox Online</title>
+    <title>DanBlox - Mega Tycoon</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; font-family: sans-serif; background: #000; }
-        #menu { position: absolute; width: 100%; height: 100%; z-index: 1000; display: flex; align-items: center; justify-content: center; background: #111; }
-        .window { background: #222; padding: 40px; border: 3px solid #0f0; border-radius: 20px; text-align: center; color: #fff; }
-        input { padding: 15px; margin: 10px; width: 250px; background: #000; color: #0f0; border: 1px solid #0f0; outline: none; }
-        button { padding: 15px 30px; background: #0f0; color: #000; border: none; cursor: pointer; font-weight: bold; border-radius: 5px; }
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #000; }
+        #menu { position: absolute; width: 100%; height: 100%; z-index: 1000; display: flex; align-items: center; justify-content: center; background: #000; }
+        .window { background: #111; padding: 30px; border: 3px solid #00ff00; border-radius: 20px; text-align: center; color: #fff; }
+        input { padding: 12px; margin: 10px; width: 250px; background: #222; color: #0f0; border: 1px solid #0f0; outline: none; }
+        button { padding: 12px 30px; background: #0f0; color: #000; border: none; cursor: pointer; font-weight: bold; }
         
-        #sidebar { position: absolute; right: 10px; top: 10px; bottom: 10px; width: 250px; z-index: 500; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-        .panel { background: rgba(0, 0, 0, 0.8); border: 2px solid #0f0; border-radius: 10px; padding: 10px; color: #0f0; pointer-events: auto; }
-        #player-list { max-height: 120px; overflow-y: auto; margin-top: 5px; border-top: 1px solid #0f04; }
-        #chat-messages { height: 250px; overflow-y: auto; color: #fff; font-size: 14px; margin-bottom: 5px; }
-        #buy-ui { position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%); display: none; }
+        #sidebar { position: absolute; right: 10px; top: 10px; bottom: 10px; width: 260px; z-index: 500; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .panel { background: rgba(0, 0, 0, 0.8); border: 2px solid #00ff00; border-radius: 10px; padding: 10px; color: #0f0; pointer-events: auto; }
+        #player-list { max-height: 150px; overflow-y: auto; font-size: 14px; border-bottom: 1px solid #0f03; }
+        #chat-messages { height: 300px; overflow-y: auto; font-size: 13px; color: #fff; margin-bottom: 5px; }
+        #chat-input { width: 90%; background: #222; border: 1px solid #0f0; color: #fff; padding: 5px; }
+        
+        /* Кнопка покупки робота */
+        #buy-ui { position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%); display: none; z-index: 600; }
+        
         .hidden { display: none !important; }
     </style>
 </head>
@@ -24,14 +28,14 @@
 
     <div id="menu">
         <div class="window">
-            <h1 style="color: #0f0;">DANBLOX ONLINE</h1>
-            <input type="text" id="nick-input" placeholder="ТВОЙ НИК..." maxlength="12"><br>
-            <button id="start-btn">ИГРАТЬ</button>
+            <h1 style="color: #0f0;">DANBLOX TYCOON</h1>
+            <input type="text" id="nick-input" placeholder="НИК (ENG)..." maxlength="12"><br>
+            <button id="start-btn">ВОЙТИ</button>
         </div>
     </div>
 
     <div id="buy-ui" class="panel">
-        <button id="buy-bot-btn" style="width:100%">КУПИТЬ РОБОТА (E)</button>
+        <button id="buy-bot-btn">КУПИТЬ РОБОТА (E)</button>
     </div>
 
     <div id="sidebar" class="hidden">
@@ -41,17 +45,17 @@
         </div>
         <div class="panel">
             <div id="chat-messages"></div>
-            <input type="text" id="chat-input" style="width:90%; background:#000; color:#fff; border:1px solid #0f0;" placeholder="Чат...">
+            <input type="text" id="chat-input" placeholder="Нажми Enter...">
         </div>
     </div>
 
     <script type="importmap">
-    {
-        "imports": {
-            "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
-            "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/"
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/"
+            }
         }
-    }
     </script>
 
     <script type="module">
@@ -76,125 +80,111 @@
         let scene, camera, renderer, controls, pivot, myModel;
         let myID = 'u' + Math.floor(Math.random() * 1000000);
         let myNick, otherPlayers = {}, otherBases = {}, robots = [];
-        let moveF, moveB, moveL, moveR, canJump = true, velocity = new THREE.Vector3();
-        let myBasePos = { x: (Math.random()-0.5)*180, z: (Math.random()-0.5)*180 };
+        let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false, canJump = true;
+        let velocity = new THREE.Vector3();
+        let camDist = 12;
+        let myBasePos = { x: 0, z: 0 };
+        let currentNearBot = null;
 
-        function createHuman(color) {
-            const g = new THREE.Group();
-            const m = new THREE.MeshStandardMaterial({ color: color });
-            const h = new THREE.Mesh(new THREE.BoxGeometry(0.6,0.6,0.6), m); h.position.y = 1.6; g.add(h);
-            const b = new THREE.Mesh(new THREE.BoxGeometry(0.8,1,0.4), m); b.position.y = 0.8; g.add(b);
-            const l = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.8,0.3), m); l.position.set(-0.25,0.2,0); g.add(l);
-            const r = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.8,0.3), m); r.position.set(0.25,0.2,0); g.add(r);
-            return g;
+        function createNickLabel(text) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 256; canvas.height = 64;
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(0, 0, 256, 64);
+            ctx.font = 'bold 30px Arial';
+            ctx.fillStyle = '#00ff00';
+            ctx.textAlign = 'center';
+            ctx.fillText(text, 128, 45);
+            const tex = new THREE.CanvasTexture(canvas);
+            const mat = new THREE.SpriteMaterial({ map: tex });
+            const sprite = new THREE.Sprite(mat);
+            sprite.scale.set(3, 0.75, 1);
+            return sprite;
         }
 
-        function createBase(pos) {
-            const g = new THREE.Group(); g.position.set(pos.x, 0, pos.z);
-            const w = new THREE.Mesh(new THREE.BoxGeometry(10, 5, 0.5), new THREE.MeshStandardMaterial({color:0x444}));
-            w.position.z = -5; g.add(w);
-            scene.add(g); return g;
+        function createHuman(color, nick, isBot = false) {
+            const group = new THREE.Group();
+            const mat = new THREE.MeshStandardMaterial({ color: isBot ? 0xff0000 : color });
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.6,0.6,0.6), mat); head.position.y = 1.6; group.add(head);
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.8,1,0.4), mat); body.position.y = 0.8; group.add(body);
+            const armL = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.8,0.3), mat); armL.position.set(-0.6,0.8,0); group.add(armL);
+            const armR = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.8,0.3), mat); armR.position.set(0.6,0.8,0); group.add(armR);
+            const legL = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.8,0.3), mat); legL.position.set(-0.25,0,0); group.add(legL);
+            const legR = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.8,0.3), mat); legR.position.set(0.25,0,0); group.add(legR);
+            const label = createNickLabel(nick); label.position.y = 2.5; group.add(label);
+            return group;
+        }
+
+        function createBase(nick, pos) {
+            const group = new THREE.Group();
+            group.position.set(pos.x, 0, pos.z);
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+            const bWall = new THREE.Mesh(new THREE.BoxGeometry(10, 5, 0.5), wallMat); bWall.position.z = -5; group.add(bWall);
+            const lWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 5, 10), wallMat); lWall.position.x = -5; group.add(lWall);
+            const rWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 5, 10), wallMat); rWall.position.x = 5; group.add(rWall);
+            const laser = new THREE.Mesh(new THREE.BoxGeometry(9.5, 5, 0.1), new THREE.MeshBasicMaterial({color:0xff0000, transparent:true, opacity:0.4}));
+            laser.position.z = 5; group.add(laser);
+            const sign = createNickLabel("BASE: " + nick); sign.position.set(0, 6, 5); group.add(sign);
+            const pad = new THREE.Mesh(new THREE.BoxGeometry(2,0.1,2), new THREE.MeshStandardMaterial({color:0xffff00})); group.add(pad);
+            scene.add(group);
+            return { group, laser, pad };
         }
 
         function initNet(nick) {
             myNick = nick;
-            createBase(myBasePos);
-            pivot.position.set(myBasePos.x, 0, myBasePos.z + 8);
+            // БЕЗОПАСНЫЙ СПАВН: Проверяем другие базы
+            playersRef.once('value', (snap) => {
+                const players = snap.val() || {};
+                let startPos = { x: (Math.random()-0.5)*120, z: (Math.random()-0.5)*120 };
+                // Если рядом есть чужая база, отодвигаем свою
+                Object.values(players).forEach(p => {
+                    if (p.basePos) {
+                        let d = Math.sqrt((p.basePos.x - startPos.x)**2 + (p.basePos.z - startPos.z)**2);
+                        if (d < 25) { startPos.x += 30; startPos.z += 30; }
+                    }
+                });
+                myBasePos = startPos;
+                myModel = createHuman(0x00ff00, myNick);
+                scene.add(myModel);
+                createBase(myNick, myBasePos);
+                pivot.position.set(myBasePos.x, 0, myBasePos.z + 8);
+            });
 
-            playersRef.on('value', snap => {
+            playersRef.on('value', (snap) => {
                 const data = snap.val() || {};
-                const list = document.getElementById('player-list');
-                list.innerHTML = '';
+                const list = document.getElementById('online-count');
+                const pList = document.getElementById('player-list');
+                pList.innerHTML = '';
+                let count = 0;
                 Object.keys(data).forEach(id => {
-                    list.innerHTML += `<div>${data[id].nick}</div>`;
+                    count++;
+                    pList.innerHTML += `<div>${data[id].nick}</div>`;
                     if(id === myID) return;
                     if(!otherPlayers[id]) {
-                        otherPlayers[id] = createHuman(0x0088ff);
+                        otherPlayers[id] = createHuman(0x0088ff, data[id].nick);
                         scene.add(otherPlayers[id]);
-                        if(data[id].bx) otherBases[id] = createBase({x: data[id].bx, z: data[id].bz});
+                        otherBases[id] = createBase(data[id].nick, data[id].basePos);
                     }
                     otherPlayers[id].position.lerp(new THREE.Vector3(data[id].x, data[id].y, data[id].z), 0.2);
+                    otherPlayers[id].rotation.y = data[id].r;
                 });
-                document.getElementById('online-count').innerText = Object.keys(data).length;
+                list.innerText = count;
+                Object.keys(otherPlayers).forEach(id => {
+                    if(!data[id]) {
+                        scene.remove(otherPlayers[id]); scene.remove(otherBases[id].group);
+                        delete otherPlayers[id]; delete otherBases[id];
+                    }
+                });
             });
 
             chatRef.limitToLast(10).on('child_added', s => {
                 const m = s.val();
-                const b = document.getElementById('chat-messages');
-                b.innerHTML += `<div><b>${m.u}:</b> ${m.t}</div>`;
-                b.scrollTop = b.scrollHeight;
+                const box = document.getElementById('chat-messages');
+                box.innerHTML += `<div><b>${m.u}:</b> ${m.t}</div>`;
+                box.scrollTop = box.scrollHeight;
             });
             playersRef.child(myID).onDisconnect().remove();
-        }
-
-        function initGame() {
-            scene = new THREE.Scene(); scene.background = new THREE.Color(0x87CEEB);
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            document.body.appendChild(renderer.domElement);
-
-            const floor = new THREE.Mesh(new THREE.PlaneGeometry(1000,1000), new THREE.MeshStandardMaterial({color:0x228B22}));
-            floor.rotation.x = -Math.PI/2; scene.add(floor);
-
-            const road = new THREE.Mesh(new THREE.PlaneGeometry(10, 1000), new THREE.MeshBasicMaterial({color:0xff0000}));
-            road.rotation.x = -Math.PI/2; road.position.y = 0.02; scene.add(road);
-
-            scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-            pivot = new THREE.Group(); scene.add(pivot);
-            myModel = createHuman(0x00ff00); scene.add(myModel);
-            controls = new PointerLockControls(pivot, document.body);
-
-            setInterval(() => {
-                const bot = createHuman(0xff0000);
-                bot.position.set(0, 0, -500); bot.target = null;
-                scene.add(bot); robots.push(bot);
-            }, 5000);
-
-            window.onkeydown = e => {
-                if(document.activeElement.id==='chat-input') return;
-                if(e.code==='KeyW') moveF=true; if(e.code==='KeyS') moveB=true;
-                if(e.code==='KeyA') moveL=true; if(e.code==='KeyD') moveR=true;
-                if(e.code==='Space' && canJump){ velocity.y=0.25; canJump=false; }
-                if(e.code==='KeyE' && window.nearBot){
-                    window.nearBot.target = new THREE.Vector3(myBasePos.x, 0, myBasePos.z);
-                    document.getElementById('buy-ui').style.display='none';
-                }
-            };
-            window.onkeyup = e => {
-                if(e.code==='KeyW') moveF=false; if(e.code==='KeyS') moveB=false;
-                if(e.code==='KeyA') moveL=false; if(e.code==='KeyD') moveR=false;
-            };
-
-            document.getElementById('chat-input').onkeydown = e => {
-                if(e.code==='Enter' && e.target.value.trim()){
-                    chatRef.push({ u: myNick, t: e.target.value }); e.target.value = '';
-                }
-            };
-
-            function animate() {
-                requestAnimationFrame(animate);
-                if(controls.isLocked) {
-                    if(moveF) controls.moveForward(0.2); if(moveB) controls.moveForward(-0.2);
-                    if(moveL) controls.moveRight(-0.2); if(moveR) controls.moveRight(0.2);
-                    pivot.position.y += velocity.y;
-                    if(pivot.position.y > 0) velocity.y -= 0.01; else { pivot.position.y=0; canJump=true; velocity.y=0; }
-                    myModel.position.copy(pivot.position);
-                    playersRef.child(myID).update({ x: pivot.position.x, y: pivot.position.y, z: pivot.position.z, nick: myNick, bx: myBasePos.x, bz: myBasePos.z });
-                    
-                    document.getElementById('buy-ui').style.display='none'; window.nearBot=null;
-                    robots.forEach((bot, i) => {
-                        if(!bot.target){
-                            bot.position.z += 0.5;
-                            if(pivot.position.distanceTo(bot.position)<6){ document.getElementById('buy-ui').style.display='block'; window.nearBot=bot; }
-                        } else { bot.position.lerp(bot.target, 0.01); }
-                    });
-                }
-                camera.position.set(pivot.position.x, pivot.position.y+6, pivot.position.z+12);
-                camera.lookAt(pivot.position);
-                renderer.render(scene, camera);
-            }
-            animate();
         }
 
         document.getElementById('start-btn').onclick = () => {
@@ -204,6 +194,98 @@
             document.getElementById('sidebar').classList.remove('hidden');
             initGame(); initNet(n);
         };
+
+        function initGame() {
+            scene = new THREE.Scene(); scene.background = new THREE.Color(0x87CEEB);
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            const gr = new THREE.Mesh(new THREE.PlaneGeometry(500,500), new THREE.MeshStandardMaterial({color:0x228B22}));
+            gr.rotation.x = -Math.PI/2; scene.add(gr);
+            
+            // ДОРОЖКА
+            const road = new THREE.Mesh(new THREE.PlaneGeometry(10, 500), new THREE.MeshBasicMaterial({color: 0xff0000}));
+            road.rotation.x = -Math.PI/2; road.position.set(0, 0.02, 0); scene.add(road);
+
+            scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+            const sun = new THREE.DirectionalLight(0xffffff, 1); sun.position.set(10,20,10); scene.add(sun);
+
+            pivot = new THREE.Group(); scene.add(pivot);
+            controls = new PointerLockControls(pivot, document.body);
+            document.body.addEventListener('click', () => { if(!document.activeElement.id.includes('chat')) controls.lock(); });
+
+            // СПАВН РОБОТОВ
+            setInterval(() => {
+                const bot = createHuman(0xff0000, "ROBOT", true);
+                bot.position.set(0, 0, -250);
+                bot.targetBase = null;
+                scene.add(bot);
+                robots.push(bot);
+            }, 6000);
+
+            window.onkeydown = (e) => {
+                if(document.activeElement.id==='chat-input') return;
+                if(e.code==='KeyW') moveForward=true; if(e.code==='KeyS') moveBackward=true;
+                if(e.code==='KeyA') moveLeft=true; if(e.code==='KeyD') moveRight=true;
+                if(e.code==='Space' && canJump) { velocity.y = 0.25; canJump = false; }
+                if(e.code==='KeyE' && currentNearBot) {
+                    currentNearBot.targetBase = new THREE.Vector3(myBasePos.x, 0, myBasePos.z);
+                    document.getElementById('buy-ui').style.display = 'none';
+                }
+            };
+            window.onkeyup = (e) => {
+                if(e.code==='KeyW') moveForward=false; if(e.code==='KeyS') moveBackward=false;
+                if(e.code==='KeyA') moveLeft=false; if(e.code==='KeyD') moveRight=false;
+            };
+
+            document.getElementById('chat-input').onkeydown = (e) => {
+                if(e.code==='Enter' && e.target.value.trim()){
+                    chatRef.push({ u: myNick, t: e.target.value }); e.target.value = '';
+                }
+            };
+
+            function animate() {
+                requestAnimationFrame(animate);
+                if(controls.isLocked) {
+                    const s = 0.2;
+                    if(moveForward) controls.moveForward(s); if(moveBackward) controls.moveForward(-s);
+                    if(moveLeft) controls.moveRight(-s); if(moveRight) controls.moveRight(s);
+                    pivot.position.y += velocity.y;
+                    if(pivot.position.y > 0) velocity.y -= 0.01; else { pivot.position.y=0; canJump=true; velocity.y=0; }
+                    
+                    if(myModel) {
+                        myModel.position.copy(pivot.position);
+                        myModel.rotation.y = pivot.rotation.y;
+                        playersRef.child(myID).set({
+                            x: pivot.position.x, y: pivot.position.y, z: pivot.position.z,
+                            r: pivot.rotation.y, nick: myNick, basePos: myBasePos, laser: true
+                        });
+                    }
+
+                    // ЛОГИКА РОБОТОВ
+                    document.getElementById('buy-ui').style.display = 'none';
+                    currentNearBot = null;
+                    robots.forEach((bot, i) => {
+                        if(!bot.targetBase) {
+                            bot.position.z += 0.4;
+                            if(bot.position.z > 250) { scene.remove(bot); robots.splice(i,1); }
+                            if(pivot.position.distanceTo(bot.position) < 6) {
+                                document.getElementById('buy-ui').style.display = 'block';
+                                currentNearBot = bot;
+                            }
+                        } else {
+                            bot.position.lerp(bot.targetBase, 0.01);
+                        }
+                    });
+                }
+                const cPos = new THREE.Vector3(0, camDist/2, camDist).applyMatrix4(pivot.matrixWorld);
+                camera.position.lerp(cPos, 0.1); camera.lookAt(pivot.position.x, pivot.position.y+1, pivot.position.z);
+                renderer.render(scene, camera);
+            }
+            animate();
+        }
     </script>
 </body>
 </html>
