@@ -2,15 +2,15 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Brainrot Online - Fixed</title>
+    <title>Brainrot Online - Private World</title>
     <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; font-family: sans-serif; background: #000; color: #fff; }
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #000; color: #fff; }
         #menu { position: absolute; width: 100%; height: 100%; z-index: 100; display: flex; align-items: center; justify-content: center; background: #111; }
-        .window { background: #222; padding: 40px; border-radius: 15px; border: 2px solid #00ff88; text-align: center; }
-        input { padding: 12px; margin: 10px; border-radius: 5px; width: 250px; background: #000; color: #00ff88; border: 1px solid #444; }
-        button { padding: 12px 30px; background: #00ff88; color: #000; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        #hud { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 10px; z-index: 50; border: 1px solid #00ff88; }
+        .window { background: #222; padding: 40px; border-radius: 15px; border: 2px solid #ff00ff; text-align: center; box-shadow: 0 0 20px #ff00ff55; }
+        input { padding: 12px; margin: 10px; border-radius: 5px; width: 250px; background: #000; color: #ff00ff; border: 1px solid #ff00ff; font-weight: bold; }
+        button { padding: 12px 30px; background: #ff00ff; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 18px; }
+        #hud { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 10px; z-index: 50; border: 1px solid #ff00ff; }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -18,15 +18,16 @@
 
     <div id="menu">
         <div class="window">
-            <h1 style="color: #00ff88;">BRAINROT ONLINE</h1>
-            <input type="text" id="nick-input" placeholder="Твой ник (ENG)..."><br>
-            <button id="start-btn">ИГРАТЬ</button>
+            <h1 style="color: #ff00ff;">BRAINROT: PRIVATE</h1>
+            <input type="text" id="nick-input" placeholder="НИК (ЛАТИНИЦА)..."><br>
+            <button id="start-btn">ВОЙТИ В МИР</button>
+            <p style="font-size: 12px; color: #666; margin-top: 15px;">Теперь это твоя личная комната!</p>
         </div>
     </div>
 
     <div id="hud" class="hidden">
-        <div>НИК: <span id="display-nick">?</span></div>
-        <div id="status">СТАТУС: В СЕТИ</div>
+        <div>НИК: <span id="display-nick" style="color:#ff00ff">?</span></div>
+        <div id="status">СТАТУС: ОНЛАЙН</div>
     </div>
 
     <script type="importmap">
@@ -46,68 +47,86 @@
         let gun, playersRef, myID, myNick;
         let otherPlayers = {}; 
         let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
-        let gameReady = false; // ФЛАГ ГОТОВНОСТИ
+        let gameReady = false;
 
         const startBtn = document.getElementById('start-btn');
 
         function initNet(nick) {
             myNick = nick.replace(/[^a-zA-Z0-9]/g, "");
-            myID = 'user_' + Math.random().toString(36).substr(2, 9);
+            // Уникальный ID для каждой сессии
+            myID = 'danvr_' + Math.random().toString(36).substr(2, 9);
             document.getElementById('display-nick').innerText = myNick;
 
+            // Используем уникальное имя узла, чтобы не видеть чужих игроков
             gun = Gun(['https://gun-maniac.herokuapp.com/gun', 'https://relay.peer.ooo/gun']);
-            playersRef = gun.get('brainrot-world-v1').get('players');
+            
+            // "danvr_secret_room" - это твоя личная комната. Чужаки сюда не попадут.
+            playersRef = gun.get('danvr_secret_room_v1').get('players');
 
+            // Получаем данные
             playersRef.map().on((data, id) => {
-                if(!data || id === myID || !gameReady) return; // НЕ РИСУЕМ, ПОКА НЕ ГОТОВЫ
+                if(!data || id === myID || !gameReady) return;
                 syncPlayer(id, data);
             });
 
+            // Отправка координат (каждые 40мс для плавности)
             setInterval(() => {
                 if(gameReady && pivot) {
                     playersRef.get(myID).put({
-                        nick: myNick,
-                        x: parseFloat(pivot.position.x.toFixed(2)),
-                        y: parseFloat(pivot.position.y.toFixed(2)),
-                        z: parseFloat(pivot.position.z.toFixed(2)),
-                        ry: parseFloat(pivot.rotation.y.toFixed(2)),
-                        lastSeen: Date.now()
+                        n: myNick,
+                        x: Number(pivot.position.x.toFixed(2)),
+                        y: Number(pivot.position.y.toFixed(2)),
+                        z: Number(pivot.position.z.toFixed(2)),
+                        r: Number(pivot.rotation.y.toFixed(2)),
+                        t: Date.now() // Метка времени
                     });
                 }
-            }, 30);
+            }, 40);
+
+            // Удаление пропавших (через 3 секунды)
+            setInterval(() => {
+                const now = Date.now();
+                for(let id in otherPlayers) {
+                    if(now - otherPlayers[id].lastUpdate > 3000) {
+                        scene.remove(otherPlayers[id].mesh);
+                        delete otherPlayers[id];
+                    }
+                }
+            }, 1000);
         }
 
         function syncPlayer(id, data) {
-            // Двойная проверка на наличие сцены
             if(!scene) return;
 
             if(!otherPlayers[id]) {
                 const geometry = new THREE.BoxGeometry(1, 2, 1);
-                const material = new THREE.MeshStandardMaterial({color: 0x0088ff});
+                const material = new THREE.MeshStandardMaterial({color: 0x00ffff});
                 const m = new THREE.Mesh(geometry, material);
                 m.position.y = 1;
-                scene.add(m); // Ошибка была здесь, теперь scene точно есть
+                scene.add(m);
                 otherPlayers[id] = { mesh: m, lastUpdate: Date.now() };
             }
             
-            otherPlayers[id].mesh.position.lerp(new THREE.Vector3(data.x, data.y, data.z), 0.2);
-            otherPlayers[id].mesh.rotation.y = data.ry;
-            otherPlayers[id].lastUpdate = Date.now();
+            // Если данные новые, двигаем куб
+            if(data.t > otherPlayers[id].lastUpdate) {
+                otherPlayers[id].mesh.position.set(data.x, data.y, data.z);
+                otherPlayers[id].mesh.rotation.y = data.r;
+                otherPlayers[id].lastUpdate = data.t;
+            }
         }
 
         startBtn.onclick = () => {
             const nick = document.getElementById('nick-input').value.trim();
-            if(!nick) return alert("ENTER NICK!");
+            if(!nick) return alert("ВВЕДИ НИК!");
             document.getElementById('menu').classList.add('hidden');
             document.getElementById('hud').classList.remove('hidden');
-            
-            initGame(); // Сначала создаем мир
-            initNet(nick); // Потом включаем сеть
+            initGame();
+            initNet(nick);
         };
 
         function initGame() {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x050505);
+            scene.background = new THREE.Color(0x110011);
             camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -116,7 +135,7 @@
             pivot = new THREE.Group();
             scene.add(pivot);
 
-            const body = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), new THREE.MeshStandardMaterial({color: 0x00ff88}));
+            const body = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), new THREE.MeshStandardMaterial({color: 0xff00ff}));
             body.position.y = 1;
             playerModel = new THREE.Group(); 
             playerModel.add(body);
@@ -125,25 +144,37 @@
             controls = new PointerLockControls(pivot, document.body);
             document.body.addEventListener('click', () => controls.lock());
 
-            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-            scene.add(new THREE.GridHelper(200, 50, 0x00ff88, 0x222222));
+            scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+            scene.add(new THREE.GridHelper(200, 50, 0xff00ff, 0x330033));
 
-            // УПРАВЛЕНИЕ
-            window.onkeydown = (e) => { if(e.code === 'KeyW') moveForward = true; if(e.code === 'KeyS') moveBackward = true; if(e.code === 'KeyA') moveLeft = true; if(e.code === 'KeyD') moveRight = true; };
-            window.onkeyup = (e) => { if(e.code === 'KeyW') moveForward = false; if(e.code === 'KeyS') moveBackward = false; if(e.code === 'KeyA') moveLeft = false; if(e.code === 'KeyD') moveRight = false; };
+            window.onkeydown = (e) => { 
+                if(e.code === 'KeyW') moveForward = true; 
+                if(e.code === 'KeyS') moveBackward = true; 
+                if(e.code === 'KeyA') moveLeft = true; 
+                if(e.code === 'KeyD') moveRight = true; 
+            };
+            window.onkeyup = (e) => { 
+                if(e.code === 'KeyW') moveForward = false; 
+                if(e.code === 'KeyS') moveBackward = false; 
+                if(e.code === 'KeyA') moveLeft = false; 
+                if(e.code === 'KeyD') moveRight = false; 
+            };
 
-            gameReady = true; // ТЕПЕРЬ ВСЁ ГОТОВО
+            gameReady = true;
 
             function animate() {
                 requestAnimationFrame(animate);
                 if (controls.isLocked) {
-                    if (moveForward) controls.moveForward(0.2);
-                    if (moveBackward) controls.moveForward(-0.2);
-                    if (moveLeft) controls.moveRight(-0.2);
-                    if (moveRight) controls.moveRight(0.2);
+                    const speed = 0.2;
+                    if (moveForward) controls.moveForward(speed);
+                    if (moveBackward) controls.moveForward(-speed);
+                    if (moveLeft) controls.moveRight(-speed);
+                    if (moveRight) controls.moveRight(speed);
+                    
                     playerModel.position.copy(pivot.position);
                     playerModel.rotation.y = pivot.rotation.y;
-                    const camPos = new THREE.Vector3(0, 4, 12).applyMatrix4(pivot.matrixWorld);
+                    
+                    const camPos = new THREE.Vector3(0, 5, 10).applyMatrix4(pivot.matrixWorld);
                     camera.position.lerp(camPos, 0.1);
                     camera.lookAt(pivot.position.x, pivot.position.y + 1, pivot.position.z);
                 }
