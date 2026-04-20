@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DanBlox - Ultra Tycoon Fixed</title>
+    <title>DanBlox Tycoon - Fixed</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #000; touch-action: none; }
+        body { margin: 0; overflow: hidden; font-family: sans-serif; background: #000; touch-action: none; }
         #stats-ui { position: absolute; top: 10px; left: 10px; font-size: 24px; color: #0f0; z-index: 10; font-weight: bold; text-shadow: 2px 2px #000; pointer-events: none; }
         #menu { position: absolute; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; background: #000; }
         .window { background: #111; padding: 30px; border: 3px solid #0f0; border-radius: 20px; text-align: center; color: #fff; }
-        #interaction-ui { position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%); z-index: 100; text-align: center; pointer-events: none; display: none; }
+        #interaction-ui { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; text-align: center; pointer-events: none; display: none; }
         .prompt-btn { background: #0f0; color: black; padding: 15px 30px; border-radius: 10px; font-weight: bold; font-size: 20px; border: 2px solid white; pointer-events: auto; cursor: pointer; }
         #mobile-ui { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
         #jump-btn { width: 80px; height: 80px; background: rgba(0, 136, 255, 0.5); border-radius: 50%; position: absolute; bottom: 40px; right: 40px; border: 2px solid #fff; pointer-events: auto; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
@@ -29,7 +29,7 @@
     <div class="window">
         <h1 style="color: #0f0;">DANBLOX TYCOON</h1>
         <input type="text" id="nick-input" placeholder="НИК..." style="padding:10px; width:200px;"><br><br>
-        <button id="start-btn">ИГРАТЬ</button>
+        <button id="start-btn" style="padding: 10px 40px; background:#0f0; border:none; font-weight:bold; cursor:pointer;">ИГРАТЬ</button>
     </div>
 </div>
 
@@ -95,36 +95,37 @@
         return sprite;
     }
 
-    function createBox(w, h, d, x, y, z, color, opacity = 1) {
+    function createBox(w, h, d, x, y, z, color, opacity = 1, isCollider = false) {
         const mesh = new THREE.Mesh(
             new THREE.BoxGeometry(w, h, d),
             new THREE.MeshStandardMaterial({ color, transparent: opacity < 1, opacity })
         );
         mesh.position.set(x, y, z);
         scene.add(mesh);
+        if(isCollider) colliders.push(mesh);
         return mesh;
     }
 
-    function createBase(nick, pos) {
+    function createBase(nick, pos, isMine) {
         const group = new THREE.Group(); group.position.set(pos.x, 0, pos.z);
         const floor = createBox(20, 0.2, 20, 0, 0, 0, 0x222222); group.add(floor);
         
-        const walls = [
-            createBox(20, 5, 0.5, 0, 2.5, -10, 0x444444),
-            createBox(0.5, 5, 20, -10, 2.5, 0, 0x444444),
-            createBox(0.5, 5, 20, 10, 2.5, 0, 0x444444)
-        ];
-        walls.forEach(w => { group.add(w); colliders.push(w); });
+        // Стены
+        const w1 = createBox(20, 6, 0.5, 0, 3, -10, 0x444444); group.add(w1); colliders.push(w1);
+        const w2 = createBox(0.5, 6, 20, -10, 3, 0, 0x444444); group.add(w2); colliders.push(w2);
+        const w3 = createBox(0.5, 6, 20, 10, 3, 0, 0x444444); group.add(w3); colliders.push(w3);
 
-        const laser = createBox(19, 5, 0.1, 0, 2.5, 10, 0xff0000, 0);
-        group.add(laser);
+        const laser = createBox(19, 6, 0.1, 0, 3, 10, 0xff0000, 0); group.add(laser);
+        const pad = createBox(2, 0.2, 2, 8, 0.1, 8, 0xffff00); group.add(pad);
+        
+        const label = createTextSprite(nick); label.position.y = 8; group.add(label);
 
         const slots = [];
         for(let i=0; i<5; i++) {
             slots.push({ pos: new THREE.Vector3(pos.x - 6 + (i*3), 0.5, pos.z - 5), occupied: false, botID: null });
         }
         scene.add(group);
-        return { group, slots, laser, laserActive: false };
+        return { group, slots, laser, laserActive: false, pad };
     }
 
     function initGame() {
@@ -141,18 +142,18 @@
         createBox(12, 0.1, 200, 0, 0.05, 0, 0x333333); // Дорога
 
         controls = new OrbitControls(camera, renderer.domElement);
-        camera.position.set(20, 20, 20);
+        controls.enableDamping = true;
+        controls.maxPolarAngle = Math.PI / 2.1;
 
         myModel = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), new THREE.MeshStandardMaterial({color: 0x00ff00}));
         scene.add(myModel);
 
-        // Позиция базы
         myBasePos.x = (Math.random() > 0.5 ? 25 : -25);
         myBasePos.z = (Math.random() - 0.5) * 80;
-        myBaseObj = createBase(myNick, myBasePos);
+        myBaseObj = createBase(myNick, myBasePos, true);
         myModel.position.set(myBasePos.x, 1, myBasePos.z + 5);
 
-        // Firebase
+        // Firebase Sync
         db.ref('players').child(myID).onDisconnect().remove();
         db.ref('players').on('value', s => {
             const data = s.val() || {};
@@ -161,9 +162,13 @@
                 list.innerHTML += `<div>${data[id].n}: ${data[id].c}$</div>`;
                 if(id !== myID && !otherPlayers[id]) {
                     otherPlayers[id] = createBox(1, 2, 1, 0, 1, 0, 0x0088ff);
-                    otherBases[id] = createBase(data[id].n, data[id].bp);
+                    otherBases[id] = createBase(data[id].n, data[id].bp, false);
                 }
-                if(id !== myID) otherPlayers[id].position.lerp(new THREE.Vector3(data[id].x, data[id].y, data[id].z), 0.2);
+                if(id !== myID) {
+                    otherPlayers[id].position.lerp(new THREE.Vector3(data[id].x, data[id].y, data[id].z), 0.2);
+                    otherBases[id].laser.material.opacity = data[id].la ? 0.6 : 0;
+                    otherBases[id].laserActive = data[id].la;
+                }
             });
             Object.keys(otherPlayers).forEach(id => { if(!data[id]) { scene.remove(otherPlayers[id]); scene.remove(otherBases[id].group); delete otherPlayers[id]; }});
         });
@@ -178,18 +183,10 @@
                     robots[id] = { mesh, info: b, ...data[id] };
                 }
                 robots[id].mesh.position.lerp(new THREE.Vector3(data[id].x, data[id].y, data[id].z), 0.2);
+                robots[id].owner = data[id].owner;
             });
             Object.keys(robots).forEach(id => { if(!data[id]) { scene.remove(robots[id].mesh); delete robots[id]; }});
         });
-
-        // Создание роботов
-        setInterval(() => {
-            if (Object.keys(otherPlayers).length === 0 || Math.random() > 0.8) {
-                const id = 'bot' + Date.now();
-                const type = Object.keys(BOT_TYPES)[Math.floor(Math.random()*4)];
-                db.ref('robots/' + id).set({ x: 0, y: 0, z: -80, type, owner: null });
-            }
-        }, 8000);
 
         loop();
     }
@@ -207,33 +204,59 @@
         
         const nextPos = myModel.position.clone().add(moveDir.multiplyScalar(0.2));
         let canMove = true;
-        colliders.forEach(c => { if(new THREE.Box3().setFromObject(c).containsPoint(nextPos)) canMove = false; });
+        colliders.forEach(c => {
+            const b = new THREE.Box3().setFromObject(c);
+            if(b.containsPoint(nextPos)) canMove = false;
+        });
         if(canMove) myModel.position.copy(nextPos);
 
         myModel.position.y += velocity.y;
         if(myModel.position.y > 1) velocity.y -= 0.01; else { myModel.position.y = 1; velocity.y = 0; canJump = true; }
 
-        // Роботы
+        // Камера следует за игроком
+        controls.target.lerp(myModel.position, 0.1);
+        controls.update();
+
+        // Проверка желтой платформы (Защита)
+        const worldPad = new THREE.Vector3(); myBaseObj.pad.getWorldPosition(worldPad);
+        if(myModel.position.distanceTo(worldPad) < 1.5 && !myBaseObj.laserActive) {
+            myBaseObj.laserActive = true;
+            setTimeout(() => { myBaseObj.laserActive = false; }, 60000);
+        }
+
+        // Лазеры чужих баз
+        Object.values(otherBases).forEach(b => {
+            if(b.laserActive) {
+                const bPos = new THREE.Vector3(); b.laser.getWorldPosition(bPos);
+                if(myModel.position.distanceTo(bPos) < 2) myModel.position.set(0, 5, 0); // Смерть
+            }
+        });
+
+        // Взаимодействие с роботами
+        activeInteractBot = null;
+        let foundBot = false;
         Object.keys(robots).forEach(id => {
             const b = robots[id];
-            if(!b.owner) {
-                b.z += 0.1;
+            const dist = myModel.position.distanceTo(b.mesh.position);
+            if(!b.owner && !b.ownerID) { // Роботы на дороге
+                b.z += 0.05;
                 db.ref('robots/' + id).update({ z: b.z });
-                if(b.z > 80) db.ref('robots/' + id).remove();
             }
-            if(myModel.position.distanceTo(b.mesh.position) < 5) {
+            if(dist < 5) {
                 activeInteractBot = id;
+                foundBot = true;
                 document.getElementById('interaction-ui').style.display = 'block';
                 document.getElementById('interact-text').innerText = b.owner === myID ? "ВАШ РОБОТ" : "РОБОТ (" + b.info.price + "$)";
             }
         });
+        if(!foundBot) document.getElementById('interaction-ui').style.display = 'none';
 
+        // Firebase Update
         db.ref('players/' + myID).update({
             x: myModel.position.x, y: myModel.position.y, z: myModel.position.z,
-            c: myCash, n: myNick, bp: myBasePos
+            c: myCash, n: myNick, bp: myBasePos, la: myBaseObj.laserActive
         });
 
-        controls.update();
         renderer.render(scene, camera);
     }
 
@@ -249,17 +272,20 @@
     };
 
     document.getElementById('main-act-btn').onclick = () => {
+        if(!activeInteractBot) return;
         const bot = robots[activeInteractBot];
         if(!bot.owner && myCash >= bot.info.price) {
             const slot = myBaseObj.slots.find(s => !s.occupied);
             if(slot) {
                 myCash -= bot.info.price;
                 slot.occupied = true; slot.botID = activeInteractBot;
-                db.ref('robots/' + activeInteractBot).update({ owner: myID, x: slot.pos.x, z: slot.pos.z });
+                db.ref('robots/' + activeInteractBot).update({ owner: myID, x: slot.pos.x, y: 0.5, z: slot.pos.z });
             }
         }
         document.getElementById('cash-val').innerText = myCash;
     };
+
+    document.getElementById('jump-btn').ontouchstart = () => { if(canJump) { velocity.y = 0.25; canJump = false; } };
 </script>
 </body>
 </html>
