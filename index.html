@@ -3,29 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DanBlox - Ultra Tycoon</title>
+    <title>DanBlox - Ultra Tycoon Fixed</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
         body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #000; touch-action: none; }
         #stats-ui { position: absolute; top: 10px; left: 10px; font-size: 24px; color: #0f0; z-index: 10; font-weight: bold; text-shadow: 2px 2px #000; pointer-events: none; }
-        
         #menu { position: absolute; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; background: #000; }
         .window { background: #111; padding: 30px; border: 3px solid #0f0; border-radius: 20px; text-align: center; color: #fff; }
-        
-        /* Динамические кнопки по центру */
         #interaction-ui { position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%); z-index: 100; text-align: center; pointer-events: none; display: none; }
-        .prompt-btn { background: rgba(0, 255, 0, 0.8); color: black; padding: 15px 30px; border-radius: 10px; font-weight: bold; font-size: 20px; border: 2px solid white; pointer-events: auto; }
-
-        /* Джойстик и прыжок */
+        .prompt-btn { background: #0f0; color: black; padding: 15px 30px; border-radius: 10px; font-weight: bold; font-size: 20px; border: 2px solid white; pointer-events: auto; cursor: pointer; }
         #mobile-ui { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
-        #stick { width: 120px; height: 120px; background: rgba(255,255,255,0.1); border-radius: 50%; position: absolute; bottom: 40px; left: 40px; border: 2px solid #fff; pointer-events: auto; }
         #jump-btn { width: 80px; height: 80px; background: rgba(0, 136, 255, 0.5); border-radius: 50%; position: absolute; bottom: 40px; right: 40px; border: 2px solid #fff; pointer-events: auto; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
-
         #sidebar { position: absolute; right: 10px; top: 10px; width: 220px; z-index: 10; pointer-events: none; }
         .panel { background: rgba(0,0,0,0.8); border: 1px solid #0f0; padding: 10px; color: #0f0; pointer-events: auto; margin-bottom: 5px; border-radius: 10px; }
         #player-list { max-height: 100px; overflow-y: auto; font-size: 13px; }
-        
         .hidden { display: none !important; }
     </style>
 </head>
@@ -37,7 +29,7 @@
     <div class="window">
         <h1 style="color: #0f0;">DANBLOX TYCOON</h1>
         <input type="text" id="nick-input" placeholder="НИК..." style="padding:10px; width:200px;"><br><br>
-        <button id="start-btn" style="padding: 10px 40px; background:#0f0; border:none; font-weight:bold; cursor:pointer;">ИГРАТЬ</button>
+        <button id="start-btn">ИГРАТЬ</button>
     </div>
 </div>
 
@@ -47,7 +39,6 @@
 </div>
 
 <div id="mobile-ui" class="hidden">
-    <div id="stick"></div>
     <div id="jump-btn">JUMP</div>
 </div>
 
@@ -83,7 +74,7 @@
     let myID = 'u' + Math.floor(Math.random() * 1000000);
     let myNick, myCash = 25, otherPlayers = {}, otherBases = {}, robots = {};
     let moveDir = new THREE.Vector3(), velocity = new THREE.Vector3(), canJump = true;
-    let myBaseObj = null, activeInteractBot = null;
+    let myBaseObj = null, activeInteractBot = null, myBasePos = {x:0, z:0};
     let colliders = [];
 
     const BOT_TYPES = {
@@ -99,8 +90,7 @@
         canvas.width = 256; canvas.height = 64;
         ctx.fillStyle = 'white'; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'center';
         ctx.fillText(text, 128, 32);
-        const tex = new THREE.CanvasTexture(canvas);
-        const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex }));
+        const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas) }));
         sprite.scale.set(3, 0.75, 1);
         return sprite;
     }
@@ -115,33 +105,26 @@
         return mesh;
     }
 
-    function createBase(nick, pos, id) {
+    function createBase(nick, pos) {
         const group = new THREE.Group(); group.position.set(pos.x, 0, pos.z);
         const floor = createBox(20, 0.2, 20, 0, 0, 0, 0x222222); group.add(floor);
         
-        // Стены (Коллайдеры)
-        const wallH = 6;
         const walls = [
-            createBox(20, wallH, 0.5, 0, wallH/2, -10, 0x444444),
-            createBox(0.5, wallH, 20, -10, wallH/2, 0, 0x444444),
-            createBox(0.5, wallH, 20, 10, wallH/2, 0, 0x444444)
+            createBox(20, 5, 0.5, 0, 2.5, -10, 0x444444),
+            createBox(0.5, 5, 20, -10, 2.5, 0, 0x444444),
+            createBox(0.5, 5, 20, 10, 2.5, 0, 0x444444)
         ];
         walls.forEach(w => { group.add(w); colliders.push(w); });
 
-        const laser = createBox(19, wallH, 0.1, 0, wallH/2, 10, 0xff0000, 0);
+        const laser = createBox(19, 5, 0.1, 0, 2.5, 10, 0xff0000, 0);
         group.add(laser);
-
-        const pad = createBox(2, 0.2, 2, 8, 0.1, 8, 0xffff00); group.add(pad);
-        
-        const label = createTextSprite(nick); label.position.y = 8; group.add(label);
 
         const slots = [];
         for(let i=0; i<5; i++) {
             slots.push({ pos: new THREE.Vector3(pos.x - 6 + (i*3), 0.5, pos.z - 5), occupied: false, botID: null });
         }
-
         scene.add(group);
-        return { group, slots, laser, laserActive: false, id };
+        return { group, slots, laser, laserActive: false };
     }
 
     function initGame() {
@@ -151,50 +134,26 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        const ambient = new THREE.AmbientLight(0xffffff, 0.8); scene.add(ambient);
-        const sun = new THREE.DirectionalLight(0xffffff, 0.5); sun.position.set(10, 20, 10); scene.add(sun);
-
+        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
         const gr = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000), new THREE.MeshStandardMaterial({color: 0x1a5e1a}));
         gr.rotation.x = -Math.PI/2; scene.add(gr);
 
-        const road = createBox(12, 0.1, 150, 0, 0.05, 0, 0x333333); // Дорога в центре
+        createBox(12, 0.1, 200, 0, 0.05, 0, 0x333333); // Дорога
 
-        // Камера
         controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
         camera.position.set(20, 20, 20);
 
         myModel = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), new THREE.MeshStandardMaterial({color: 0x00ff00}));
         scene.add(myModel);
 
-        // Поиск места для базы (чтобы не на дороге)
-        let bx = (Math.random() > 0.5 ? 1 : -1) * (20 + Math.random() * 30);
-        let bz = (Math.random() - 0.5) * 60;
-        myBaseObj = createBase(myNick, {x: bx, z: bz}, myID);
-        myModel.position.set(bx, 1, bz + 5);
-        controls.target.set(bx, 1, bz);
+        // Позиция базы
+        myBasePos.x = (Math.random() > 0.5 ? 25 : -25);
+        myBasePos.z = (Math.random() - 0.5) * 80;
+        myBaseObj = createBase(myNick, myBasePos);
+        myModel.position.set(myBasePos.x, 1, myBasePos.z + 5);
 
-        // Firebase Events
+        // Firebase
         db.ref('players').child(myID).onDisconnect().remove();
-        db.ref('robots').on('value', s => {
-            const data = s.val() || {};
-            Object.keys(data).forEach(id => {
-                if(!robots[id]) {
-                    const b = BOT_TYPES[data[id].type];
-                    const mesh = new THREE.Group();
-                    const body = createBox(0.8, 1.5, 0.5, 0, 0.75, 0, b.color); mesh.add(body);
-                    const info = createTextSprite(`${b.name} | ${b.price}$ | +${b.income}/s`);
-                    info.position.y = 2; mesh.add(info);
-                    scene.add(mesh);
-                    robots[id] = { mesh, ...data[id], info: b };
-                }
-                robots[id].mesh.position.lerp(new THREE.Vector3(data[id].x, data[id].y, data[id].z), 0.2);
-                robots[id].owner = data[id].owner;
-            });
-            // Удаление лишних
-            Object.keys(robots).forEach(id => { if(!data[id]) { scene.remove(robots[id].mesh); delete robots[id]; }});
-        });
-
         db.ref('players').on('value', s => {
             const data = s.val() || {};
             const list = document.getElementById('player-list'); list.innerHTML = '';
@@ -202,136 +161,73 @@
                 list.innerHTML += `<div>${data[id].n}: ${data[id].c}$</div>`;
                 if(id !== myID && !otherPlayers[id]) {
                     otherPlayers[id] = createBox(1, 2, 1, 0, 1, 0, 0x0088ff);
-                    otherBases[id] = createBase(data[id].n, data[id].bp, id);
+                    otherBases[id] = createBase(data[id].n, data[id].bp);
                 }
                 if(id !== myID) otherPlayers[id].position.lerp(new THREE.Vector3(data[id].x, data[id].y, data[id].z), 0.2);
             });
-            // Чистка вышедших
-            Object.keys(otherPlayers).forEach(id => { 
-                if(!data[id]) { 
-                    scene.remove(otherPlayers[id]); delete otherPlayers[id];
-                    scene.remove(otherBases[id].group); delete otherBases[id];
-                }
-            });
+            Object.keys(otherPlayers).forEach(id => { if(!data[id]) { scene.remove(otherPlayers[id]); scene.remove(otherBases[id].group); delete otherPlayers[id]; }});
         });
 
-        // Спавн роботов (только один игрок создает их в БД)
-        if(myID) {
-            setInterval(() => {
+        db.ref('robots').on('value', s => {
+            const data = s.val() || {};
+            Object.keys(data).forEach(id => {
+                if(!robots[id]) {
+                    const b = BOT_TYPES[data[id].type];
+                    const mesh = createBox(0.8, 1.5, 0.5, 0, 0.75, 0, b.color);
+                    const info = createTextSprite(`${b.name} | ${b.price}$`); info.position.y = 2; mesh.add(info);
+                    robots[id] = { mesh, info: b, ...data[id] };
+                }
+                robots[id].mesh.position.lerp(new THREE.Vector3(data[id].x, data[id].y, data[id].z), 0.2);
+            });
+            Object.keys(robots).forEach(id => { if(!data[id]) { scene.remove(robots[id].mesh); delete robots[id]; }});
+        });
+
+        // Создание роботов
+        setInterval(() => {
+            if (Object.keys(otherPlayers).length === 0 || Math.random() > 0.8) {
                 const id = 'bot' + Date.now();
                 const type = Object.keys(BOT_TYPES)[Math.floor(Math.random()*4)];
-                db.ref('robots/' + id).set({ x: 0, y: 0, z: -70, type, owner: null });
-            }, 10000);
-        }
+                db.ref('robots/' + id).set({ x: 0, y: 0, z: -80, type, owner: null });
+            }
+        }, 8000);
 
         loop();
     }
 
-    function handleInput() {
-        moveDir.set(0, 0, 0);
-        if (keys['KeyW']) moveDir.z = -1; if (keys['KeyS']) moveDir.z = 1;
-        if (keys['KeyA']) moveDir.x = -1; if (keys['KeyD']) moveDir.x = 1;
-        moveDir.applyQuaternion(camera.quaternion);
-        moveDir.y = 0;
-        moveDir.normalize();
-
-        const speed = 0.2;
-        const nextPos = myModel.position.clone().add(moveDir.clone().multiplyScalar(speed));
-        
-        // Коллизии со стенами
-        let canMove = true;
-        colliders.forEach(c => {
-            const box = new THREE.Box3().setFromObject(c);
-            if(box.containsPoint(nextPos)) canMove = false;
-        });
-
-        if(canMove) myModel.position.copy(nextPos);
-        
-        myModel.position.y += velocity.y;
-        if(myModel.position.y > 1) velocity.y -= 0.01; else { myModel.position.y = 1; velocity.y = 0; canJump = true; }
-        
-        controls.target.lerp(myModel.position, 0.1);
-    }
-
-    function checkInteractions() {
-        activeInteractBot = null;
-        document.getElementById('interaction-ui').style.display = 'none';
-
-        Object.keys(robots).forEach(id => {
-            const bot = robots[id];
-            const dist = myModel.position.distanceTo(bot.mesh.position);
-            
-            if(dist < 5) {
-                activeInteractBot = id;
-                document.getElementById('interaction-ui').style.display = 'block';
-                const uiBtn = document.getElementById('main-act-btn');
-                
-                if(!bot.owner) {
-                    document.getElementById('interact-text').innerText = `КУПИТЬ ${bot.info.name}`;
-                    uiBtn.innerText = `КУПИТЬ (${bot.info.price}$)`;
-                } else if(bot.owner === myID) {
-                    document.getElementById('interact-text').innerText = `ВАШ РОБОТ`;
-                    uiBtn.innerText = `ПРОДАТЬ (${Math.floor(bot.info.price/2)}$)`;
-                } else {
-                    document.getElementById('interact-text').innerText = `ЧУЖОЙ РОБОТ`;
-                    uiBtn.innerText = `УКРАСТЬ (E)`;
-                }
-            }
-        });
-    }
-
-    document.getElementById('main-act-btn').onclick = () => {
-        if(!activeInteractBot) return;
-        const bot = robots[activeInteractBot];
-        
-        if(!bot.owner && myCash >= bot.info.price) {
-            const slot = myBaseObj.slots.find(s => !s.occupied);
-            if(slot) {
-                myCash -= bot.info.price;
-                slot.occupied = true; slot.botID = activeInteractBot;
-                db.ref('robots/' + activeInteractBot).update({ owner: myID, x: slot.pos.x, z: slot.pos.z });
-            }
-        } else if(bot.owner === myID) {
-            myCash += Math.floor(bot.info.price / 2);
-            const slot = myBaseObj.slots.find(s => s.botID === activeInteractBot);
-            if(slot) { slot.occupied = false; slot.botID = null; }
-            db.ref('robots/' + activeInteractBot).remove();
-        } else if(bot.owner && bot.owner !== myID) {
-            // Логика кражи
-            db.ref('robots/' + activeInteractBot).update({ owner: 'stolen_' + myID });
-        }
-        document.getElementById('cash-val').innerText = myCash;
-    };
-
     function loop() {
         requestAnimationFrame(loop);
-        handleInput();
-        checkInteractions();
+        if(!myBaseObj) return;
+
+        // Движение
+        moveDir.set(0,0,0);
+        if(keys['KeyW']) moveDir.z = -1; if(keys['KeyS']) moveDir.z = 1;
+        if(keys['KeyA']) moveDir.x = -1; if(keys['KeyD']) moveDir.x = 1;
+        moveDir.applyQuaternion(camera.quaternion);
+        moveDir.y = 0; moveDir.normalize();
         
-        // Движение роботов на дороге
+        const nextPos = myModel.position.clone().add(moveDir.multiplyScalar(0.2));
+        let canMove = true;
+        colliders.forEach(c => { if(new THREE.Box3().setFromObject(c).containsPoint(nextPos)) canMove = false; });
+        if(canMove) myModel.position.copy(nextPos);
+
+        myModel.position.y += velocity.y;
+        if(myModel.position.y > 1) velocity.y -= 0.01; else { myModel.position.y = 1; velocity.y = 0; canJump = true; }
+
+        // Роботы
         Object.keys(robots).forEach(id => {
-            const bot = robots[id];
-            if(!bot.owner) {
-                bot.z += 0.05;
-                db.ref('robots/' + id).update({ z: bot.z });
-                if(bot.z > 70) db.ref('robots/' + id).remove();
-            } else if(bot.owner.startsWith('stolen_')) {
-                const thiefID = bot.owner.split('_')[1];
-                if(thiefID === myID) {
-                    db.ref('robots/' + id).update({ x: myModel.position.x, y: 3, z: myModel.position.z });
-                    // Проверка на возврат на базу
-                    if(myModel.position.distanceTo(myBaseObj.group.position) < 8) {
-                         const slot = myBaseObj.slots.find(s => !s.occupied);
-                         if(slot) {
-                             slot.occupied = true; slot.botID = id;
-                             db.ref('robots/' + id).update({ owner: myID, x: slot.pos.x, y: 0, z: slot.pos.z });
-                         }
-                    }
-                }
+            const b = robots[id];
+            if(!b.owner) {
+                b.z += 0.1;
+                db.ref('robots/' + id).update({ z: b.z });
+                if(b.z > 80) db.ref('robots/' + id).remove();
+            }
+            if(myModel.position.distanceTo(b.mesh.position) < 5) {
+                activeInteractBot = id;
+                document.getElementById('interaction-ui').style.display = 'block';
+                document.getElementById('interact-text').innerText = b.owner === myID ? "ВАШ РОБОТ" : "РОБОТ (" + b.info.price + "$)";
             }
         });
 
-        // Синхронизация своего игрока
         db.ref('players/' + myID).update({
             x: myModel.position.x, y: myModel.position.y, z: myModel.position.z,
             c: myCash, n: myNick, bp: myBasePos
@@ -347,13 +243,23 @@
 
     document.getElementById('start-btn').onclick = () => {
         myNick = document.getElementById('nick-input').value || "Noob";
-        document.getElementById('menu').style.display = 'none';
+        document.getElementById('menu').classList.add('hidden');
         ['stats-ui', 'mobile-ui', 'sidebar'].forEach(id => document.getElementById(id).classList.remove('hidden'));
         initGame();
     };
 
-    // Мобильный прыжок
-    document.getElementById('jump-btn').ontouchstart = () => { if(canJump) { velocity.y = 0.25; canJump = false; } };
+    document.getElementById('main-act-btn').onclick = () => {
+        const bot = robots[activeInteractBot];
+        if(!bot.owner && myCash >= bot.info.price) {
+            const slot = myBaseObj.slots.find(s => !s.occupied);
+            if(slot) {
+                myCash -= bot.info.price;
+                slot.occupied = true; slot.botID = activeInteractBot;
+                db.ref('robots/' + activeInteractBot).update({ owner: myID, x: slot.pos.x, z: slot.pos.z });
+            }
+        }
+        document.getElementById('cash-val').innerText = myCash;
+    };
 </script>
 </body>
 </html>
