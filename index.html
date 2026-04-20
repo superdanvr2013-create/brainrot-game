@@ -2,7 +2,8 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>DanBlox - Robot Tycoon Fixed</title>
+    <title>DanBlox - Ultimate Fixed</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.158.0/three.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
@@ -23,7 +24,7 @@
 
     <div id="menu">
         <div class="window">
-            <h1 style="color: #0f0;">DANBLOX: ROBOTS</h1>
+            <h1 style="color: #0f0;">DANBLOX: ONLINE</h1>
             <input type="text" id="nick-input" placeholder="НИК..." maxlength="12"><br>
             <button id="start-btn">ИГРАТЬ</button>
         </div>
@@ -40,15 +41,14 @@
         </div>
         <div class="panel">
             <div id="chat-messages"></div>
-            <input type="text" id="chat-input" style="width:90%; background:#222; color:#fff; border:1px solid #0f0;" placeholder="Напиши что-нибудь...">
+            <input type="text" id="chat-input" style="width:90%; background:#222; color:#fff; border:1px solid #0f0;" placeholder="Напиши...">
         </div>
     </div>
 
-    <script type="module">
-        // ИСПОЛЬЗУЕМ ПРЯМЫЕ ССЫЛКИ, ЧТОБЫ ИЗБЕЖАТЬ TypeError
-        import * as THREE from 'https://unpkg.com/three@0.158.0/build/three.module.js';
-        import { PointerLockControls } from 'https://unpkg.com/three@0.158.0/examples/jsm/controls/PointerLockControls.js';
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r158/examples/js/controls/PointerLockControls.js"></script>
 
+    <script>
+        // Код БЕЗ импортов
         const firebaseConfig = {
             apiKey: "AIzaSyAocmcoBH2Q8_QENuE9AuaGwtDOSSg-WpE",
             authDomain: "danblox-e209f.firebaseapp.com",
@@ -94,12 +94,7 @@
             myNick = nick;
             playersRef.once('value', (snap) => {
                 const all = snap.val() || {};
-                let pos = { x: (Math.random()-0.5)*150, z: (Math.random()-0.5)*150 };
-                Object.values(all).forEach(p => {
-                    if(p.bx && Math.sqrt((p.bx-pos.x)**2 + (p.bz-pos.z)**2) < 30) {
-                        pos.x += 40; pos.z += 40;
-                    }
-                });
+                let pos = { x: (Math.random()-0.5)*200, z: (Math.random()-0.5)*200 };
                 myBaseData = pos;
                 createBase(myBaseData);
                 pivot.position.set(pos.x, 0, pos.z + 10);
@@ -110,7 +105,7 @@
                 const list = document.getElementById('player-list');
                 list.innerHTML = '';
                 Object.keys(data).forEach(id => {
-                    list.innerHTML += `<div style="padding:2px">${data[id].nick || 'Player'}</div>`;
+                    list.innerHTML += `<div>${data[id].nick || 'Dan'}</div>`;
                     if(id === myID) return;
                     if(!otherPlayers[id]) {
                         otherPlayers[id] = createHuman(0x0088ff);
@@ -118,12 +113,6 @@
                         if(data[id].bx !== undefined) otherBases[id] = createBase({x: data[id].bx, z: data[id].bz});
                     }
                     otherPlayers[id].position.lerp(new THREE.Vector3(data[id].x, data[id].y, data[id].z), 0.2);
-                });
-                Object.keys(otherPlayers).forEach(id => {
-                    if(!data[id]) { 
-                        scene.remove(otherPlayers[id]); if(otherBases[id]) scene.remove(otherBases[id]);
-                        delete otherPlayers[id]; delete otherBases[id];
-                    }
                 });
                 document.getElementById('online-count').innerText = Object.keys(data).length;
             });
@@ -134,7 +123,6 @@
                 box.innerHTML += `<div><b>${m.u}:</b> ${m.t}</div>`;
                 box.scrollTop = box.scrollHeight;
             });
-
             playersRef.child(myID).onDisconnect().remove();
         }
 
@@ -147,14 +135,15 @@
 
             const gr = new THREE.Mesh(new THREE.PlaneGeometry(1000,1000), new THREE.MeshStandardMaterial({color:0x228B22}));
             gr.rotation.x = -Math.PI/2; scene.add(gr);
-
             const road = new THREE.Mesh(new THREE.PlaneGeometry(10, 1000), new THREE.MeshBasicMaterial({color:0xff0000}));
             road.rotation.x = -Math.PI/2; road.position.set(0, 0.01, 0); scene.add(road);
 
             scene.add(new THREE.AmbientLight(0xffffff, 0.8));
             pivot = new THREE.Group(); scene.add(pivot);
             myModel = createHuman(0x00ff00); scene.add(myModel);
-            controls = new PointerLockControls(pivot, document.body);
+            
+            // Внимание: теперь вызываем через THREE
+            controls = new THREE.PointerLockControls(pivot, document.body);
 
             setInterval(() => {
                 const bot = createHuman(0xff0000, true);
@@ -202,7 +191,6 @@
 
                     document.getElementById('buy-ui').style.display = 'none';
                     window.currentNearBot = null;
-
                     robots.forEach((bot, i) => {
                         if(!bot.targetBase) {
                             bot.position.z += 0.5;
