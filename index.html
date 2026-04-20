@@ -2,10 +2,10 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Brainrot Online - Gun.js Edition</title>
+    <title>Brainrot Online - Fixed</title>
     <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #000; color: #fff; }
+        body { margin: 0; overflow: hidden; font-family: sans-serif; background: #000; color: #fff; }
         #menu { position: absolute; width: 100%; height: 100%; z-index: 100; display: flex; align-items: center; justify-content: center; background: #111; }
         .window { background: #222; padding: 40px; border-radius: 15px; border: 2px solid #00ff88; text-align: center; }
         input { padding: 12px; margin: 10px; border-radius: 5px; width: 250px; background: #000; color: #00ff88; border: 1px solid #444; }
@@ -18,10 +18,9 @@
 
     <div id="menu">
         <div class="window">
-            <h1 style="color: #00ff88;">BRAINROT GUN-EDITION</h1>
+            <h1 style="color: #00ff88;">BRAINROT ONLINE</h1>
             <input type="text" id="nick-input" placeholder="Твой ник (ENG)..."><br>
-            <button id="start-btn">ЗАПУСТИТЬ МИР</button>
-            <p style="font-size: 11px; color: #666; margin-top: 15px;">PeerJS заменен на Gun.js для стабильности</p>
+            <button id="start-btn">ИГРАТЬ</button>
         </div>
     </div>
 
@@ -47,63 +46,50 @@
         let gun, playersRef, myID, myNick;
         let otherPlayers = {}; 
         let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+        let gameReady = false; // ФЛАГ ГОТОВНОСТИ
 
         const startBtn = document.getElementById('start-btn');
 
-        // СЕТЬ ЧЕРЕЗ GUN.JS
         function initNet(nick) {
             myNick = nick.replace(/[^a-zA-Z0-9]/g, "");
             myID = 'user_' + Math.random().toString(36).substr(2, 9);
             document.getElementById('display-nick').innerText = myNick;
 
-            // Используем публичные relay-серверы Gun.js
-            gun = Gun([
-                'https://gun-maniac.herokuapp.com/gun',
-                'https://relay.peer.ooo/gun'
-            ]);
+            gun = Gun(['https://gun-maniac.herokuapp.com/gun', 'https://relay.peer.ooo/gun']);
             playersRef = gun.get('brainrot-world-v1').get('players');
 
-            // Слушаем изменения других игроков
             playersRef.map().on((data, id) => {
-                if(!data || id === myID) return;
+                if(!data || id === myID || !gameReady) return; // НЕ РИСУЕМ, ПОКА НЕ ГОТОВЫ
                 syncPlayer(id, data);
             });
 
-            // Отправляем свои координаты каждые 50мс
             setInterval(() => {
-                if(pivot) {
+                if(gameReady && pivot) {
                     playersRef.get(myID).put({
                         nick: myNick,
-                        x: pivot.position.x,
-                        y: pivot.position.y,
-                        z: pivot.position.z,
-                        ry: pivot.rotation.y,
+                        x: parseFloat(pivot.position.x.toFixed(2)),
+                        y: parseFloat(pivot.position.y.toFixed(2)),
+                        z: parseFloat(pivot.position.z.toFixed(2)),
+                        ry: parseFloat(pivot.rotation.y.toFixed(2)),
                         lastSeen: Date.now()
                     });
                 }
-            }, 50);
-
-            // Удаляем старых игроков (кто вышел)
-            setInterval(() => {
-                const now = Date.now();
-                for(let id in otherPlayers) {
-                    if(now - otherPlayers[id].lastUpdate > 5000) {
-                        scene.remove(otherPlayers[id].mesh);
-                        delete otherPlayers[id];
-                    }
-                }
-            }, 2000);
+            }, 30);
         }
 
         function syncPlayer(id, data) {
+            // Двойная проверка на наличие сцены
+            if(!scene) return;
+
             if(!otherPlayers[id]) {
                 const geometry = new THREE.BoxGeometry(1, 2, 1);
                 const material = new THREE.MeshStandardMaterial({color: 0x0088ff});
                 const m = new THREE.Mesh(geometry, material);
                 m.position.y = 1;
-                scene.add(m);
+                scene.add(m); // Ошибка была здесь, теперь scene точно есть
                 otherPlayers[id] = { mesh: m, lastUpdate: Date.now() };
             }
+            
             otherPlayers[id].mesh.position.lerp(new THREE.Vector3(data.x, data.y, data.z), 0.2);
             otherPlayers[id].mesh.rotation.y = data.ry;
             otherPlayers[id].lastUpdate = Date.now();
@@ -114,8 +100,9 @@
             if(!nick) return alert("ENTER NICK!");
             document.getElementById('menu').classList.add('hidden');
             document.getElementById('hud').classList.remove('hidden');
-            initNet(nick);
-            initGame();
+            
+            initGame(); // Сначала создаем мир
+            initNet(nick); // Потом включаем сеть
         };
 
         function initGame() {
@@ -131,7 +118,8 @@
 
             const body = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), new THREE.MeshStandardMaterial({color: 0x00ff88}));
             body.position.y = 1;
-            playerModel = new THREE.Group(); playerModel.add(body);
+            playerModel = new THREE.Group(); 
+            playerModel.add(body);
             scene.add(playerModel);
 
             controls = new PointerLockControls(pivot, document.body);
@@ -140,18 +128,11 @@
             scene.add(new THREE.AmbientLight(0xffffff, 0.6));
             scene.add(new THREE.GridHelper(200, 50, 0x00ff88, 0x222222));
 
-            window.onkeydown = (e) => {
-                if(e.code === 'KeyW') moveForward = true;
-                if(e.code === 'KeyS') moveBackward = true;
-                if(e.code === 'KeyA') moveLeft = true;
-                if(e.code === 'KeyD') moveRight = true;
-            };
-            window.onkeyup = (e) => {
-                if(e.code === 'KeyW') moveForward = false;
-                if(e.code === 'KeyS') moveBackward = false;
-                if(e.code === 'KeyA') moveLeft = false;
-                if(e.code === 'KeyD') moveRight = false;
-            };
+            // УПРАВЛЕНИЕ
+            window.onkeydown = (e) => { if(e.code === 'KeyW') moveForward = true; if(e.code === 'KeyS') moveBackward = true; if(e.code === 'KeyA') moveLeft = true; if(e.code === 'KeyD') moveRight = true; };
+            window.onkeyup = (e) => { if(e.code === 'KeyW') moveForward = false; if(e.code === 'KeyS') moveBackward = false; if(e.code === 'KeyA') moveLeft = false; if(e.code === 'KeyD') moveRight = false; };
+
+            gameReady = true; // ТЕПЕРЬ ВСЁ ГОТОВО
 
             function animate() {
                 requestAnimationFrame(animate);
