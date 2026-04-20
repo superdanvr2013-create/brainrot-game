@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>DanBlox - Robot Tycoon</title>
+    <title>DanBlox - Robot Tycoon Fixed</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
@@ -11,11 +11,10 @@
         .window { background: #111; padding: 30px; border: 3px solid #00ff00; border-radius: 20px; text-align: center; color: #fff; }
         input { padding: 12px; margin: 10px; width: 250px; background: #222; color: #0f0; border: 1px solid #0f0; outline: none; }
         button { padding: 12px 30px; background: #0f0; color: #000; border: none; cursor: pointer; font-weight: bold; }
-        
         #sidebar { position: absolute; right: 10px; top: 10px; bottom: 10px; width: 260px; z-index: 500; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
         .panel { background: rgba(0, 0, 0, 0.8); border: 2px solid #00ff00; border-radius: 10px; padding: 10px; color: #0f0; pointer-events: auto; }
         #player-list { max-height: 150px; overflow-y: auto; }
-        #chat-messages { height: 250px; overflow-y: auto; color: #fff; }
+        #chat-messages { height: 250px; overflow-y: auto; color: #fff; margin-bottom: 5px;}
         #buy-ui { position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%); display: none; }
         .hidden { display: none !important; }
     </style>
@@ -41,11 +40,12 @@
         </div>
         <div class="panel">
             <div id="chat-messages"></div>
-            <input type="text" id="chat-input" style="width:90%; background:#222; color:#fff; border:1px solid #0f0;" placeholder="Чат...">
+            <input type="text" id="chat-input" style="width:90%; background:#222; color:#fff; border:1px solid #0f0;" placeholder="Напиши что-нибудь...">
         </div>
     </div>
 
     <script type="module">
+        // ИСПОЛЬЗУЕМ ПРЯМЫЕ ССЫЛКИ, ЧТОБЫ ИЗБЕЖАТЬ TypeError
         import * as THREE from 'https://unpkg.com/three@0.158.0/build/three.module.js';
         import { PointerLockControls } from 'https://unpkg.com/three@0.158.0/examples/jsm/controls/PointerLockControls.js';
 
@@ -69,9 +69,9 @@
         let myNick, otherPlayers = {}, otherBases = {};
         let moveForward, moveBackward, moveLeft, moveRight, canJump = true;
         let velocity = new THREE.Vector3(), camDist = 12;
-        let myBaseData = null, robots = [];
+        let myBaseData = { x: 0, z: 0 }, robots = [];
 
-        function createHuman(color, nick, isRobot = false) {
+        function createHuman(color, isRobot = false) {
             const group = new THREE.Group();
             const mat = new THREE.MeshStandardMaterial({ color: isRobot ? 0xff0000 : color });
             const head = new THREE.Mesh(new THREE.BoxGeometry(0.6,0.6,0.6), mat); head.position.y = 1.6; group.add(head);
@@ -81,7 +81,7 @@
             return group;
         }
 
-        function createBase(pos, nick) {
+        function createBase(pos) {
             const group = new THREE.Group();
             group.position.set(pos.x, 0, pos.z);
             const wall = new THREE.Mesh(new THREE.BoxGeometry(10, 5, 0.5), new THREE.MeshStandardMaterial({color:0x333333}));
@@ -92,39 +92,47 @@
 
         function initNet(nick) {
             myNick = nick;
-            // Проверка дистанции при спавне
             playersRef.once('value', (snap) => {
                 const all = snap.val() || {};
                 let pos = { x: (Math.random()-0.5)*150, z: (Math.random()-0.5)*150 };
-                // Минимальная дистанция 30 метров
                 Object.values(all).forEach(p => {
-                    if(Math.sqrt((p.bx-pos.x)**2 + (p.bz-pos.z)**2) < 30) {
+                    if(p.bx && Math.sqrt((p.bx-pos.x)**2 + (p.bz-pos.z)**2) < 30) {
                         pos.x += 40; pos.z += 40;
                     }
                 });
                 myBaseData = pos;
-                createBase(myBaseData, myNick);
+                createBase(myBaseData);
                 pivot.position.set(pos.x, 0, pos.z + 10);
             });
 
             playersRef.on('value', (snap) => {
                 const data = snap.val() || {};
-                document.getElementById('online-count').innerText = Object.keys(data).length;
+                const list = document.getElementById('player-list');
+                list.innerHTML = '';
                 Object.keys(data).forEach(id => {
+                    list.innerHTML += `<div style="padding:2px">${data[id].nick || 'Player'}</div>`;
                     if(id === myID) return;
                     if(!otherPlayers[id]) {
-                        otherPlayers[id] = createHuman(0x0088ff, data[id].nick);
+                        otherPlayers[id] = createHuman(0x0088ff);
                         scene.add(otherPlayers[id]);
-                        otherBases[id] = createBase({x: data[id].bx, z: data[id].bz}, data[id].nick);
+                        if(data[id].bx !== undefined) otherBases[id] = createBase({x: data[id].bx, z: data[id].bz});
                     }
                     otherPlayers[id].position.lerp(new THREE.Vector3(data[id].x, data[id].y, data[id].z), 0.2);
                 });
                 Object.keys(otherPlayers).forEach(id => {
                     if(!data[id]) { 
-                        scene.remove(otherPlayers[id]); scene.remove(otherBases[id]);
+                        scene.remove(otherPlayers[id]); if(otherBases[id]) scene.remove(otherBases[id]);
                         delete otherPlayers[id]; delete otherBases[id];
                     }
                 });
+                document.getElementById('online-count').innerText = Object.keys(data).length;
+            });
+
+            chatRef.limitToLast(10).on('child_added', (s) => {
+                const m = s.val();
+                const box = document.getElementById('chat-messages');
+                box.innerHTML += `<div><b>${m.u}:</b> ${m.t}</div>`;
+                box.scrollTop = box.scrollHeight;
             });
 
             playersRef.child(myID).onDisconnect().remove();
@@ -140,47 +148,71 @@
             const gr = new THREE.Mesh(new THREE.PlaneGeometry(1000,1000), new THREE.MeshStandardMaterial({color:0x228B22}));
             gr.rotation.x = -Math.PI/2; scene.add(gr);
 
-            // Красная дорожка
             const road = new THREE.Mesh(new THREE.PlaneGeometry(10, 1000), new THREE.MeshBasicMaterial({color:0xff0000}));
             road.rotation.x = -Math.PI/2; road.position.set(0, 0.01, 0); scene.add(road);
 
             scene.add(new THREE.AmbientLight(0xffffff, 0.8));
             pivot = new THREE.Group(); scene.add(pivot);
-            myModel = createHuman(0x00ff00, ""); scene.add(myModel);
+            myModel = createHuman(0x00ff00); scene.add(myModel);
             controls = new PointerLockControls(pivot, document.body);
 
-            // Спавн роботов
             setInterval(() => {
-                const bot = createHuman(0xff0000, "BOT", true);
+                const bot = createHuman(0xff0000, true);
                 bot.position.set(0, 0, -500);
                 bot.targetBase = null;
                 scene.add(bot);
                 robots.push(bot);
             }, 5000);
 
+            window.onkeydown = (e) => {
+                if(document.activeElement.id==='chat-input') return;
+                if(e.code==='KeyW') moveForward=true; if(e.code==='KeyS') moveBackward=true;
+                if(e.code==='KeyA') moveLeft=true; if(e.code==='KeyD') moveRight=true;
+                if(e.code==='Space' && canJump) { velocity.y = 0.25; canJump = false; }
+                if(e.code==='KeyE' && window.currentNearBot) {
+                    window.currentNearBot.targetBase = new THREE.Vector3(myBaseData.x, 0, myBaseData.z);
+                    document.getElementById('buy-ui').style.display = 'none';
+                }
+            };
+            window.onkeyup = (e) => {
+                if(e.code==='KeyW') moveForward=false; if(e.code==='KeyS') moveBackward=false;
+                if(e.code==='KeyA') moveLeft=false; if(e.code==='KeyD') moveRight=false;
+            };
+
+            document.getElementById('chat-input').onkeydown = (e) => {
+                if(e.code==='Enter' && e.target.value.trim()){
+                    chatRef.push({ u: myNick, t: e.target.value }); e.target.value = '';
+                }
+            };
+
             function animate() {
                 requestAnimationFrame(animate);
                 if(controls.isLocked) {
-                    // Управление и гравитация
+                    const s = 0.2;
+                    if(moveForward) controls.moveForward(s); if(moveBackward) controls.moveForward(-s);
+                    if(moveLeft) controls.moveRight(-s); if(moveRight) controls.moveRight(s);
+                    pivot.position.y += velocity.y;
+                    if(pivot.position.y > 0) velocity.y -= 0.01; else { pivot.position.y=0; canJump=true; velocity.y=0; }
+                    
                     myModel.position.copy(pivot.position);
                     playersRef.child(myID).update({
                         x: pivot.position.x, y: pivot.position.y, z: pivot.position.z,
                         nick: myNick, bx: myBaseData.x, bz: myBaseData.z
                     });
 
-                    // Логика роботов
+                    document.getElementById('buy-ui').style.display = 'none';
+                    window.currentNearBot = null;
+
                     robots.forEach((bot, i) => {
                         if(!bot.targetBase) {
-                            bot.position.z += 0.5; // Идут по дорожке
+                            bot.position.z += 0.5;
                             if(bot.position.z > 500) { scene.remove(bot); robots.splice(i,1); }
-                            
-                            // Проверка дистанции для покупки
                             if(pivot.position.distanceTo(bot.position) < 5) {
                                 document.getElementById('buy-ui').style.display = 'block';
                                 window.currentNearBot = bot;
                             }
                         } else {
-                            bot.position.lerp(bot.targetBase, 0.01); // Идут к базе
+                            bot.position.lerp(bot.targetBase, 0.01);
                         }
                     });
                 }
@@ -192,17 +224,12 @@
         }
 
         document.getElementById('start-btn').onclick = () => {
+            const nick = document.getElementById('nick-input').value.trim();
+            if(!nick) return;
             document.getElementById('menu').classList.add('hidden');
             document.getElementById('sidebar').classList.remove('hidden');
-            initGame(); initNet(document.getElementById('nick-input').value);
+            initGame(); initNet(nick);
         };
-
-        window.addEventListener('keydown', (e) => {
-            if(e.code === 'KeyE' && window.currentNearBot) {
-                window.currentNearBot.targetBase = new THREE.Vector3(myBaseData.x, 0, myBaseData.z);
-                document.getElementById('buy-ui').style.display = 'none';
-            }
-        });
     </script>
 </body>
 </html>
