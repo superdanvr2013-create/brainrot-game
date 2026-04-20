@@ -2,37 +2,37 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Brainrot Online - Final Fix</title>
-    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <title>Brainrot Online - Ultra Fix</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; font-family: sans-serif; background: #111; color: white; }
-        #menu { position: absolute; width: 100%; height: 100%; z-index: 100; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.9); }
-        .window { background: #222; padding: 30px; border-radius: 15px; border: 3px solid #00b06f; text-align: center; }
-        input { padding: 12px; margin: 10px; border-radius: 5px; border: none; width: 250px; font-size: 16px; background: #333; color: white; }
-        button { padding: 12px 30px; background: #00b06f; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        #hud { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 10px; z-index: 50; border: 1px solid #444; }
-        #status { font-size: 12px; margin-top: 5px; color: #ffcc00; }
+        body { margin: 0; overflow: hidden; font-family: 'Courier New', monospace; background: #000; color: #0f0; }
+        #menu { position: absolute; width: 100%; height: 100%; z-index: 100; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.95); }
+        .window { background: #111; padding: 40px; border: 2px solid #0f0; text-align: center; box-shadow: 0 0 15px #0f0; }
+        input { padding: 12px; margin: 10px; border: 1px solid #0f0; width: 250px; background: #000; color: #0f0; font-size: 16px; outline: none; }
+        button { padding: 12px 30px; background: #0f0; color: #000; border: none; cursor: pointer; font-weight: bold; font-size: 18px; margin-top: 10px; }
+        button:hover { background: #0c0; }
+        #hud { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); padding: 10px; border: 1px solid #0f0; z-index: 50; pointer-events: none; }
         .hidden { display: none !important; }
-        #error-overlay { position: fixed; top: 0; left: 0; width: 100%; background: red; color: white; text-align: center; z-index: 1000; display: none; }
+        #net-err { color: #f00; font-weight: bold; margin-top: 10px; display: none; }
     </style>
 </head>
 <body>
 
-    <div id="error-overlay">Ошибка: Библиотека мультиплеера заблокирована твоей сетью! Попробуй выключить VPN или сменить браузер.</div>
-
     <div id="menu">
         <div class="window">
-            <h1 style="color: #00b06f;">BRAINROT ONLINE</h1>
-            <input type="text" id="nick-input" placeholder="Ник (латиница)..."><br>
-            <input type="text" id="friend-id-input" placeholder="ID друга (необязательно)"><br>
-            <button id="start-btn">ИГРАТЬ</button>
+            <h1>SYSTEM: BRAINROT</h1>
+            <div id="lib-status" style="color: #555; font-size: 10px; margin-bottom: 10px;">Проверка модулей связи...</div>
+            <input type="text" id="nick-input" placeholder="ENTER NICKNAME..."><br>
+            <input type="text" id="friend-id-input" placeholder="FRIEND ID (OPTIONAL)"><br>
+            <button id="start-btn">INITIALIZE</button>
+            <div id="net-err">ОШИБКА СЕТИ: ПРОВАЙДЕР БЛОКИРУЕТ P2P</div>
         </div>
     </div>
 
     <div id="hud" class="hidden">
-        <div>НИК: <span id="display-nick">?</span></div>
-        <div>ID: <span id="display-id" style="color: #ffcc00;">...</span></div>
-        <div id="status">Подключение...</div>
+        <div>USER: <span id="display-nick">?</span></div>
+        <div>MY_ID: <span id="display-id" style="color: #ff0;">...</span></div>
+        <div id="status">STATUS: IDLE</div>
     </div>
 
     <script type="importmap">
@@ -48,10 +48,17 @@
         import * as THREE from 'three';
         import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
-        // Проверка библиотеки
-        if (typeof Peer === 'undefined') {
-            document.getElementById('error-overlay').style.display = 'block';
-        }
+        // Проверяем, загрузилась ли библиотека вообще
+        window.onload = () => {
+            const libStatus = document.getElementById('lib-status');
+            if (typeof Peer !== 'undefined') {
+                libStatus.innerText = "МОДУЛЬ СВЯЗИ: OK";
+                libStatus.style.color = "#0f0";
+            } else {
+                libStatus.innerText = "МОДУЛЬ СВЯЗИ: ОШИБКА (ЗАБЛОКИРОВАНО)";
+                libStatus.style.color = "#f00";
+            }
+        };
 
         let scene, camera, renderer, controls, pivot, playerModel;
         let peer, conn, myID;
@@ -63,60 +70,72 @@
 
         function initNet(nick) {
             const cleanNick = nick.replace(/[^a-zA-Z0-9]/g, "");
-            myID = cleanNick + "-" + Math.floor(Math.random() * 9000 + 1000);
+            myID = cleanNick + "-" + Math.floor(Math.random() * 8999 + 1000);
+            
             document.getElementById('display-id').innerText = myID;
             document.getElementById('display-nick').innerText = cleanNick;
 
-            // Используем стандартный сервер с STUN
-            peer = new Peer(myID, {
-                config: {'iceServers': [{ url: 'stun:stun.l.google.com:19302' }]}
-            });
+            try {
+                peer = new Peer(myID, {
+                    debug: 3,
+                    config: {'iceServers': [{ url: 'stun:stun.l.google.com:19302' }]}
+                });
 
-            peer.on('open', (id) => {
-                statusEl.innerText = "В сети. Жду друга.";
-                statusEl.style.color = "#00ff88";
-                const targetID = document.getElementById('friend-id-input').value.trim();
-                if(targetID) {
-                    const c = peer.connect(targetID);
-                    setupConnection(c);
-                }
-            });
+                peer.on('open', (id) => {
+                    statusEl.innerText = "STATUS: LISTENING";
+                    statusEl.style.color = "#0f0";
+                    const targetID = document.getElementById('friend-id-input').value.trim();
+                    if(targetID) connectTo(targetID);
+                });
 
-            peer.on('connection', (c) => setupConnection(c));
-            
-            peer.on('error', (err) => {
-                statusEl.innerText = "Сетевая ошибка: " + err.type;
-                statusEl.style.color = "red";
-                console.error(err);
-            });
+                peer.on('connection', (c) => setupConnection(c));
+                
+                peer.on('error', (err) => {
+                    console.error("PeerJS Error:", err.type);
+                    document.getElementById('net-err').style.display = "block";
+                    document.getElementById('net-err').innerText = "NETWORK ERROR: " + err.type;
+                    statusEl.innerText = "STATUS: ERROR";
+                    statusEl.style.color = "#f00";
+                });
+            } catch (e) {
+                alert("Критическая ошибка инициализации сети!");
+            }
+        }
+
+        function connectTo(id) {
+            const c = peer.connect(id.trim());
+            setupConnection(c);
         }
 
         function setupConnection(c) {
             conn = c;
             conn.on('open', () => {
-                statusEl.innerText = "СОЕДИНЕНО!";
+                statusEl.innerText = "STATUS: CONNECTED";
                 setInterval(() => {
                     if(conn && conn.open) {
                         conn.send({id: myID, x: pivot.position.x, y: pivot.position.y, z: pivot.position.z, ry: pivot.rotation.y});
                     }
                 }, 50);
             });
-            conn.on('data', (data) => {
-                if(!otherPlayers[data.id]) {
-                    const m = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.4, 0.5), new THREE.MeshStandardMaterial({color: 0x0077ff}));
-                    m.position.y = 0.7;
-                    const g = new THREE.Group(); g.add(m);
-                    scene.add(g);
-                    otherPlayers[data.id] = g;
-                }
-                otherPlayers[data.id].position.lerp(new THREE.Vector3(data.x, data.y, data.z), 0.2);
-                otherPlayers[data.id].rotation.y = data.ry;
-            });
+            conn.on('data', (data) => syncPlayer(data));
+        }
+
+        function syncPlayer(data) {
+            if(!otherPlayers[data.id]) {
+                const m = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), new THREE.MeshStandardMaterial({color: 0x0000ff}));
+                m.position.y = 1;
+                const g = new THREE.Group(); g.add(m);
+                scene.add(g);
+                otherPlayers[data.id] = g;
+            }
+            otherPlayers[data.id].position.lerp(new THREE.Vector3(data.x, data.y, data.z), 0.2);
+            otherPlayers[data.id].rotation.y = data.ry;
         }
 
         startBtn.onclick = () => {
+            if (typeof Peer === 'undefined') return alert("Библиотека не загружена. Проверь интернет или выключи VPN.");
             const nick = document.getElementById('nick-input').value.trim();
-            if(!nick) return alert("Введи ник!");
+            if(!nick) return alert("ENTER NICK!");
             document.getElementById('menu').classList.add('hidden');
             document.getElementById('hud').classList.remove('hidden');
             initNet(nick);
@@ -125,7 +144,7 @@
 
         function initGame() {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x87ceeb);
+            scene.background = new THREE.Color(0x000000);
             camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -134,19 +153,23 @@
             pivot = new THREE.Group();
             scene.add(pivot);
 
-            const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.4, 0.5), new THREE.MeshStandardMaterial({color: 0xff4444}));
-            body.position.y = 0.7;
+            const body = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), new THREE.MeshStandardMaterial({color: 0x00ff00}));
+            body.position.y = 1;
             playerModel = new THREE.Group(); playerModel.add(body);
             scene.add(playerModel);
 
             controls = new PointerLockControls(pivot, document.body);
             document.body.addEventListener('click', () => controls.lock());
 
-            scene.add(new THREE.AmbientLight(0xffffff, 1));
-            const floor = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), new THREE.MeshStandardMaterial({color: 0x333333}));
+            scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+            const pLight = new THREE.PointLight(0x00ff00, 1, 100);
+            pLight.position.set(0, 10, 0);
+            scene.add(pLight);
+
+            const floor = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({color: 0x111111}));
             floor.rotation.x = -Math.PI/2;
             scene.add(floor);
-            scene.add(new THREE.GridHelper(100, 50, 0x00b06f, 0x444444));
+            scene.add(new THREE.GridHelper(200, 50, 0x00ff00, 0x004400));
 
             window.onkeydown = (e) => {
                 if(e.code === 'KeyW') moveForward = true;
@@ -164,13 +187,13 @@
             function animate() {
                 requestAnimationFrame(animate);
                 if (controls.isLocked) {
-                    if (moveForward) controls.moveForward(0.15);
-                    if (moveBackward) controls.moveForward(-0.15);
-                    if (moveLeft) controls.moveRight(-0.15);
-                    if (moveRight) controls.moveRight(0.15);
+                    if (moveForward) controls.moveForward(0.2);
+                    if (moveBackward) controls.moveForward(-0.2);
+                    if (moveLeft) controls.moveRight(-0.2);
+                    if (moveRight) controls.moveRight(0.2);
                     playerModel.position.copy(pivot.position);
                     playerModel.rotation.y = pivot.rotation.y;
-                    const camPos = new THREE.Vector3(0, 2, 8).applyMatrix4(pivot.matrixWorld);
+                    const camPos = new THREE.Vector3(0, 3, 10).applyMatrix4(pivot.matrixWorld);
                     camera.position.lerp(camPos, 0.1);
                     camera.lookAt(pivot.position.x, pivot.position.y + 1, pivot.position.z);
                 }
