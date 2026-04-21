@@ -3,61 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DanBlox - Ultra Roblox Tycoon</title>
+    <title>Steal A Brainrot - Stable</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
         body { margin: 0; overflow: hidden; font-family: sans-serif; background: #000; touch-action: none; }
-        #stats-ui { position: absolute; top: 10px; left: 10px; z-index: 10; font-weight: bold; pointer-events: none; }
-        .stat-label { color: #0f0; font-size: 26px; text-shadow: 2px 2px #000; }
-        .rebirth-label { color: #f0f; font-size: 20px; text-shadow: 2px 2px #000; }
-
-        #menu { position: absolute; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.9); }
-        .window { background: #111; padding: 40px; border: 4px solid #0f0; border-radius: 20px; text-align: center; color: #fff; }
-        input { padding: 15px; margin: 10px; width: 250px; background: #222; color: #0f0; border: 1px solid #0f0; border-radius: 5px; font-size: 16px; outline: none; }
-        button#start-btn { padding: 15px 50px; background: #0f0; color: #000; border: none; font-weight: bold; cursor: pointer; border-radius: 5px; font-size: 18px; margin-top: 15px;}
-
-        #sidebar { position: absolute; right: 10px; top: 10px; width: 200px; z-index: 10; pointer-events: none; }
-        .panel { background: rgba(0,0,0,0.8); border: 2px solid #0f0; border-radius: 10px; padding: 10px; color: #fff; pointer-events: auto; }
-        #player-list { max-height: 120px; overflow-y: auto; font-size: 14px; margin-top: 5px; }
-
-        #jump-btn { width: 80px; height: 80px; background: rgba(0,136,255,0.5); border-radius: 50%; position: absolute; bottom: 40px; right: 40px; border: 2px solid #fff; pointer-events: auto; display: none; align-items: center; justify-content: center; color: white; font-weight: bold; user-select: none; }
+        #stats-ui { position: absolute; top: 10px; left: 10px; font-size: 24px; color: #0f0; z-index: 10; font-weight: bold; text-shadow: 2px 2px #000; }
+        #menu { position: absolute; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; background: #000; }
+        .window { background: #111; padding: 30px; border: 3px solid #0f0; border-radius: 20px; text-align: center; color: #fff; }
+        input { padding: 10px; width: 200px; background: #222; color: #fff; border: 1px solid #0f0; margin-bottom: 15px; }
+        #interaction-ui { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; text-align: center; display: none; pointer-events: none; }
+        .prompt-btn { background: #0f0; color: black; padding: 15px 30px; border-radius: 10px; font-weight: bold; font-size: 20px; border: 2px solid white; pointer-events: auto; cursor: pointer; }
+        #jump-btn { width: 80px; height: 80px; background: rgba(0, 136, 255, 0.5); border-radius: 50%; position: absolute; bottom: 40px; right: 40px; border: 2px solid #fff; pointer-events: auto; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
+        #sidebar { position: absolute; right: 10px; top: 10px; width: 220px; z-index: 10; pointer-events: auto; }
+        .panel { background: rgba(0,0,0,0.8); border: 1px solid #0f0; padding: 10px; color: #0f0; border-radius: 10px; }
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-<div id="stats-ui" class="hidden">
-    <div class="stat-label">CASH: <span id="cash-val">0</span>$</div>
-    <div class="rebirth-label">REBIRTHS: <span id="rebirth-val">0</span></div>
-</div>
+<div id="stats-ui" class="hidden">CASH: <span id="cash-val">25</span>$</div>
 
 <div id="menu">
     <div class="window">
-        <h1 style="color: #0f0; font-size: 32px;">DANBLOX TYCOON</h1>
-        <p>Клон Roblox. Строй базу, делай перерождения.</p>
-        <input type="text" id="nick-input" placeholder="НИК (Только ENG)..." maxlength="10"><br>
-        <button id="start-btn">ПОСТРОИТЬ ТАЙКУН</button>
+        <h1 style="color: #0f0;">STEAL A BRAINROT</h1>
+        <input type="text" id="nick-input" placeholder="НИК..." maxlength="12"><br>
+        <button id="start-btn" style="padding:12px 40px; background:#0f0; cursor:pointer; font-weight:bold; border:none; border-radius:5px;">ИГРАТЬ</button>
     </div>
 </div>
 
-<div id="jump-btn">JUMP</div>
+<div id="interaction-ui">
+    <div id="interact-text" style="color: white; margin-bottom: 5px; font-weight: bold; text-shadow: 2px 2px #000; font-size: 18px;"></div>
+    <button id="main-act-btn" class="prompt-btn">ДЕЙСТВИЕ (E)</button>
+</div>
+
+<div id="mobile-ui" class="hidden">
+    <div id="jump-btn">JUMP</div>
+</div>
 
 <div id="sidebar" class="hidden">
-    <div class="panel">
-        <b>ОНЛАЙН ИГРОКИ</b>
-        <div id="player-list"></div>
-    </div>
+    <div class="panel"><b>ИГРОКИ:</b> <div id="player-list"></div></div>
 </div>
 
 <script type="importmap">
-    { "imports": { "three": "https://unpkg.com/three@0.158.0/build/three.module.js" } }
+    { "imports": { "three": "https://unpkg.com/three@0.158.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/" } }
 </script>
 
 <script type="module">
     import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-    // --- КОНФИГ И БД ---
     const firebaseConfig = {
         apiKey: "AIzaSyAocmcoBH2Q8_QENuE9AuaGwtDOSSg-WpE",
         authDomain: "danblox-e209f.firebaseapp.com",
@@ -67,205 +62,206 @@
         messagingSenderId: "828099060847",
         appId: "1:828099060847:web:9bb0bebc8c02833ce7d99a"
     };
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const playersRef = db.ref('players');
-
-    // --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ---
-    let scene, camera, renderer, myModel, pivot;
+    
+    let scene, camera, renderer, controls, myModel;
     let myID = 'u' + Math.floor(Math.random() * 1000000);
-    let myNick, myCash = 0, myRebirths = 0, otherPlayers = {}, otherBases = {}, activeButtons = [];
+    let myNick, myCash = 25, otherPlayers = {}, otherBases = {}, robots = {};
     let moveDir = new THREE.Vector3(), velocity = new THREE.Vector3(), canJump = true;
-    let myBasePos, myTycoonData = { floor1: false, droppers: [], walls: false }, baseMesh;
-    let mapColliders = [], mapBounds = { minX: -55, maxX: 55, minZ: -100, maxZ: 100 };
-    let dropReceiver;
+    let myBaseObj = null, activeInteractBot = null, myBasePos = {x:0, z:0};
+    let colliders = [];
 
-    // --- ФИКСИРОВАННЫЕ КООРДИНАТЫ БАЗ (10 мест) ---
+    const BOT_TYPES = {
+        blue: { color: 0x00aaff, price: 25, income: 1, name: "Обычный" },
+        green: { color: 0x00ff00, price: 100, income: 5, name: "Зеленый" },
+        red: { color: 0xff0000, price: 250, income: 10, name: "Красный" }
+    };
+
     const BASE_SPOTS = [];
-    for(let i=0; i<5; i++) BASE_SPOTS.push({ x: -40, z: -80 + (i*40), la: true }); // Слева
-    for(let i=0; i<5; i++) BASE_SPOTS.push({ x: 40, z: -80 + (i*40), la: false }); // Справа
+    for(let i=0; i<5; i++) BASE_SPOTS.push({x: -35, z: -80 + (i*40)}); 
+    for(let i=0; i<5; i++) BASE_SPOTS.push({x: 35, z: -80 + (i*40)});
 
-    // --- ПОДГОТОВКА СЦЕНЫ ---
-    function initScene() {
+    function createBox(w, h, d, x, y, z, color, opacity = 1, isCollider = false) {
+        const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({ color, transparent: opacity < 1, opacity }));
+        mesh.position.set(x, y, z); scene.add(mesh);
+        if(isCollider) colliders.push(mesh);
+        return mesh;
+    }
+
+    function createBase(nick, pos) {
+        const group = new THREE.Group(); group.position.set(pos.x, 0, pos.z);
+        createBox(20, 0.2, 20, 0, 0.1, 0, 0x222222).parent = group;
+        const w1 = createBox(20, 6, 0.5, 0, 3, -10, 0x444444, 1, true); group.add(w1);
+        const w2 = createBox(0.5, 6, 20, -10, 3, 0, 0x444444, 1, true); group.add(w2);
+        const w3 = createBox(0.5, 6, 20, 10, 3, 0, 0x444444, 1, true); group.add(w3);
+        const laser = createBox(19, 6, 0.1, 0, 3, 10, 0xff0000, 0); group.add(laser);
+        const pad = createBox(3, 0.2, 3, 8, 0.2, 8, 0xffff00); group.add(pad);
+        const slots = [];
+        for(let i=0; i<5; i++) slots.push({ pos: new THREE.Vector3(pos.x - 6 + (i*3), 0.8, pos.z - 5), occupied: false, botID: null });
+        scene.add(group);
+        return { group, slots, laser, pad, laserActive: false };
+    }
+
+    function initGame() {
         scene = new THREE.Scene(); scene.background = new THREE.Color(0x87CEEB);
         camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
         renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
         scene.add(new THREE.AmbientLight(0xffffff, 1));
+
+        createBox(2000, 0.2, 2000, 0, 0, 0, 0x1a5e1a); // Поле
+        createBox(12, 0.2, 350, 0, 0.15, 0, 0xff0000); // Дорожка
         
-        // Карта и Границы
-        createBox(1000, 0.2, 1000, 0, 0, 0, 0x1a5e1a); // Трава
-        createBox(15, 0.15, 200, 0, 0.1, 0, 0xff0000); // Красная дорожка
+        // Стены карты
+        createBox(200, 20, 1, 0, 10, 180, 0, 0, true); createBox(200, 20, 1, 0, 10, -180, 0, 0, true);
+        createBox(1, 20, 360, 100, 10, 0, 0, 0, true); createBox(1, 20, 360, -100, 10, 0, 0, 0, true);
 
-        // Невидимые стены границ карты (чтобы не убежать)
-        const wallM = new THREE.MeshBasicMaterial({visible:false});
-        createBox(120, 20, 1, 0, 10, 105, 0x0, 1, wallM, true); createBox(120, 20, 1, 0, 10, -105, 0x0, 1, wallM, true);
-        createBox(1, 20, 210, 60, 10, 0, 0x0, 1, wallM, true); createBox(1, 20, 210, -60, 10, 0, 0x0, 1, wallM, true);
-    }
+        myModel = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2, 1.2), new THREE.MeshStandardMaterial({color: 0x00ff00}));
+        scene.add(myModel);
 
-    // --- СОЗДАНИЕ 3D ОБЪЕКТОВ ---
-    function createBox(w, h, d, x, y, z, color, opacity = 1, mat = null, isCollider = false) {
-        const mesh = new THREE.Mesh(
-            new THREE.BoxGeometry(w, h, d),
-            mat || new THREE.MeshStandardMaterial({ color, transparent: opacity < 1, opacity })
-        );
-        mesh.position.set(x, y, z); scene.add(mesh);
-        if(isCollider) mapColliders.push(mesh);
-        return mesh;
-    }
+        db.ref('player_count').transaction(c => {
+            const index = (c || 0) % 10;
+            myBasePos = BASE_SPOTS[index];
+            myBaseObj = createBase(myNick, myBasePos);
+            myModel.position.set(myBasePos.x, 1, myBasePos.z + 5);
+            return (c || 0) + 1;
+        });
 
-    function createHumanMesh(color) {
-        const g = new THREE.Group();
-        const m = new THREE.MeshStandardMaterial({color});
-        const body = createBox(1, 1.2, 0.5, 0, 1, 0, color, 1, m); g.add(body);
-        const head = createBox(0.6, 0.6, 0.6, 0, 1.8, 0, color, 1, m); g.add(head);
-        const leg = createBox(0.4, 0.8, 0.4, -0.3, 0.4, 0, color, 1, m); g.add(leg);
-        const legR = leg.clone(); legR.position.x = 0.3; g.add(legR);
-        return g;
-    }
+        controls = new OrbitControls(camera, renderer.domElement);
+        controls.enablePan = false;
 
-    function createTycoonBase(pos, nick, isMine) {
-        const group = new THREE.Group(); group.position.set(pos.x, 0, pos.z);
-        const floor = createBox(25, 0.3, 25, 0, 0.2, 0, 0x333333); group.add(floor); // Фундамент
-        
-        const sign = new THREE.Mesh(new THREE.BoxGeometry(10, 4, 0.2), new THREE.MeshStandardMaterial({color:0x111}));
-        sign.position.set(0, 7, -12); group.add(sign); // Вывеска
-
-        if(isMine) createTycoonButtons(group);
-
-        // Приемник Cash (Collect Zone)
-        dropReceiver = createBox(5, 0.5, 5, 0, 0.5, 10, 0x00ff00, 0.5); group.add(dropReceiver);
-        
-        scene.add(group);
-        return { group, droppers: [], rebirthButton: null };
-    }
-
-    function createTycoonButtons(baseGroup) {
-        createButton(baseGroup, 0, 0.5, -5, "Build Dropper 1 (50$)", 0x00aaff, () => buildDropper(1));
-        createButton(baseGroup, -8, 0.5, 8, "Rebirth (Need 1000$)", 0xff00ff, () => handleRebirth());
-    }
-
-    function createButton(baseGroup, x, y, z, text, color, action) {
-        const btn = createBox(4, 0.2, 4, x, y, z, color); baseGroup.add(btn);
-        const btnData = { mesh: btn, action, text, pos: btn.getWorldPosition(new THREE.Vector3()) };
-        activeButtons.push(btnData);
-        // Тут можно добавить TextSprite над кнопкой
-    }
-
-    // --- ЛОГИКА ТАЙКУНА ---
-    function buildDropper(level) {
-        if(myCash < 50) return; myCash -= 50; updateStats();
-        const dropper = createBox(2, 6, 2, -10 + (level*3), 3, -10, 0x444);
-        baseMesh.add(dropper);
-        setInterval(() => {
-            const drop = createBox(0.8, 0.8, 0.8, dropper.position.x, 6, dropper.position.z, 0xffff00);
-            baseMesh.add(drop);
-            robots.push({mesh: drop, type: 'drop', vy: 0});
-        }, 3000);
-    }
-
-    function handleRebirth() {
-        if(myCash < 1000) return;
-        myCash = 0; myRebirths += 1; updateStats();
-        playersRef.child(myID).update({ r: myRebirths, c: 0 });
-        // Сброс тайкуна, смена скина на розовый, открытие 2 этажа и т.д.
-    }
-
-    // --- Firebase Sync ---
-    function initFirebase() {
-        playersRef.child(myID).onDisconnect().remove();
-        playersRef.on('value', s => {
+        db.ref('players').on('value', s => {
             const data = s.val() || {};
             const list = document.getElementById('player-list'); list.innerHTML = '';
             Object.keys(data).forEach(id => {
-                list.innerHTML += `<div><b>${data[id].n}</b>: ${data[id].c}$ (R:${data[id].r})</div>`;
+                list.innerHTML += `<div><b>${data[id].n}</b>: ${data[id].c}$</div>`;
                 if(id !== myID && !otherPlayers[id]) {
-                    otherPlayers[id] = createHumanMesh(0x0088ff); scene.add(otherPlayers[id]);
-                    otherBases[id] = createBase(data[id].n, BASE_SPOTS[data[id].bp]);
+                    otherPlayers[id] = createBox(1.2, 2, 1.2, 0, 1, 0, 0x0088ff);
+                    otherBases[id] = createBase(data[id].n, data[id].bp);
                 }
-                if(id !== myID) otherPlayers[id].position.lerp(new THREE.Vector3(data[id].x, data[id].y, data[id].z), 0.3);
+                if(id !== myID && otherPlayers[id]) {
+                    otherPlayers[id].position.lerp(new THREE.Vector3(data[id].x, data[id].y, data[id].z), 0.2);
+                    otherBases[id].laser.material.opacity = data[id].la ? 0.6 : 0;
+                }
             });
-            Object.keys(otherPlayers).forEach(id => { if(!data[id]) { scene.remove(otherPlayers[id]); scene.remove(otherBases[id]); delete otherPlayers[id]; }});
-        });
-    }
-
-    // --- ОСНОВНОЙ ЦИКЛ ГЕЙМПЛЕЯ ---
-    function loop() {
-        requestAnimationFrame(loop);
-        if(!myModel) return;
-
-        // 1. Физика Игрока
-        pivot.getWorldQuaternion(camera.quaternion); // Поворот камеры за игроком
-        velocity.y -= 0.015; // Гравитация
-        moveDir.y = velocity.y;
-        
-        const nextP = myModel.position.clone().add(moveDir.multiplyScalar(0.25));
-        let canMove = true;
-        mapColliders.forEach(c => {
-            const b = new THREE.Box3().setFromObject(c);
-            if(b.intersectsBox(new THREE.Box3().setFromCenterAndSize(nextP, new THREE.Vector3(1.2, 2, 1.2)))) canMove = false;
-        });
-        
-        // Границы карты
-        if(nextP.x < mapBounds.minX || nextP.x > mapBounds.maxX || nextP.z < mapBounds.minZ || nextP.z > mapBounds.maxZ) canMove = false;
-
-        if(canMove) myModel.position.copy(nextP);
-        if(myModel.position.y <= 1) { myModel.position.y = 1; velocity.y = 0; canJump = true; }
-
-        // 2. Кнопки Тайкуна
-        activeButtons.forEach(btn => {
-            if(myModel.position.distanceTo(btn.pos) < 3) btn.action();
         });
 
-        // 3. Физика Дропов (Ball physics)
-        robots.forEach((d, i) => {
-            if(d.type === 'drop') {
-                d.vy -= 0.01; d.mesh.position.y += d.vy;
-                if(d.mesh.position.y < 0.8) { d.mesh.position.y = 0.8; d.vy = 0; d.mesh.position.z += 0.1; } // Движение по конвейеру
-                
-                // Сбор Cash
-                if(d.mesh.position.distanceTo(dropReceiver.getWorldPosition(new THREE.Vector3())) < 3) {
-                    myCash += 1; updateStats(); baseMesh.remove(d.mesh); robots.splice(i,1);
+        db.ref('robots').on('value', s => {
+            const data = s.val() || {};
+            Object.keys(data).forEach(id => {
+                if(!robots[id]) {
+                    const b = BOT_TYPES[data[id].type] || BOT_TYPES.blue;
+                    robots[id] = { mesh: createBox(1, 1.5, 1, 0, 0.75, 0, b.color), info: b, ...data[id] };
                 }
-            }
+                robots[id].mesh.position.lerp(new THREE.Vector3(data[id].x, data[id].y, data[id].z), 0.2);
+                robots[id].owner = data[id].owner;
+            });
+            Object.keys(robots).forEach(id => { if(!data[id]) { scene.remove(robots[id].mesh); delete robots[id]; }});
         });
 
-        // 4. Синхронизация своего игрока
-        db.ref('players/' + myID).update({ x: myModel.position.x, y: myModel.position.y, z: myModel.position.z, c: myCash, r: myRebirths, la: true, n: myNick });
+        // Спавн ботов без точек в ID
+        setInterval(() => {
+            if(Object.keys(robots).length < 12) {
+                const safeID = 'bot' + Date.now() + Math.floor(Math.random() * 1000); 
+                const type = Object.keys(BOT_TYPES)[Math.floor(Math.random()*3)];
+                db.ref('robots/' + safeID).set({ x: 0, y: 0.75, z: -160, type: type, owner: null });
+            }
+        }, 4000);
 
-        renderer.render(scene, camera);
-    }
-
-    // --- Вспомогательные ---
-    function updateStats() { document.getElementById('cash-val').innerText = myCash; document.getElementById('rebirth-val').innerText = myRebirths; }
-
-    // --- УПРАВЛЕНИЕ ---
-    const keys = {};
-    window.onkeydown = (e) => {
-        if(document.activeElement.tagName === 'INPUT') return;
-        if(e.code === 'KeyW') moveDir.z = -1; if(e.code === 'KeyS') moveDir.z = 1;
-        if(e.code === 'KeyA') moveDir.x = -1; if(e.code === 'KeyD') moveDir.x = 1;
-        if(e.code === 'Space' && canJump) velocity.y = 0.3;
-    };
-    window.onkeyup = (e) => {
-        if(e.code === 'KeyW' || e.code === 'KeyS') moveDir.z = 0;
-        if(e.code === 'KeyA' || e.code === 'KeyD') moveDir.x = 0;
-    };
-
-    // Старт
-    document.getElementById('start-btn').onclick = () => {
-        myNick = document.getElementById('nick-input').value.trim() || "Robloxfan";
-        document.getElementById('menu').style.display = 'none';
-        ['stats-ui', 'sidebar'].forEach(id => document.getElementById(id).classList.remove('hidden'));
-        initScene(); initFirebase(); initGame();
-    };
-
-    function initGame() {
-        pivot = new THREE.Group(); scene.add(pivot);
-        pivot.add(camera); camera.position.set(0, 15, 25); camera.lookAt(pivot.position);
         loop();
     }
+
+    function loop() {
+        requestAnimationFrame(loop);
+        if(!myBaseObj) return;
+
+        moveDir.set(0,0,0);
+        if(keys['KeyW']) moveDir.z = -1; if(keys['KeyS']) moveDir.z = 1;
+        if(keys['KeyA']) moveDir.x = -1; if(keys['KeyD']) moveDir.x = 1;
+        
+        let quat = new THREE.Quaternion(); camera.getWorldQuaternion(quat);
+        moveDir.applyQuaternion(quat); moveDir.y = 0; moveDir.normalize();
+
+        const next = myModel.position.clone().add(moveDir.multiplyScalar(0.25));
+        let canMove = true;
+        colliders.forEach(c => {
+            const b = new THREE.Box3().setFromObject(c);
+            if(b.intersectsBox(new THREE.Box3().setFromCenterAndSize(next, new THREE.Vector3(1.2, 2, 1.2)))) canMove = false;
+        });
+        if(canMove) myModel.position.copy(next);
+
+        velocity.y -= 0.012; myModel.position.y += velocity.y;
+        if(myModel.position.y < 1) { myModel.position.y = 1; velocity.y = 0; canJump = true; }
+
+        controls.target.copy(myModel.position); controls.update();
+
+        const worldPad = new THREE.Vector3(); myBaseObj.pad.getWorldPosition(worldPad);
+        if(myModel.position.distanceTo(worldPad) < 2.5 && !myBaseObj.laserActive) {
+            myBaseObj.laserActive = true;
+            setTimeout(() => { if(myBaseObj) myBaseObj.laserActive = false; }, 30000);
+        }
+
+        activeInteractBot = null; let found = false;
+        Object.keys(robots).forEach(id => {
+            const b = robots[id];
+            if(!b.owner) {
+                const newZ = (b.z || 0) + 0.12;
+                db.ref('robots/' + id).update({ z: newZ });
+                if(newZ > 160) db.ref('robots/' + id).remove();
+            }
+            const dist = myModel.position.distanceTo(b.mesh.position);
+            if(dist < 5) {
+                activeInteractBot = id; found = true;
+                document.getElementById('interaction-ui').style.display = 'block';
+                const txt = b.owner === myID ? "ВАШ (Собрать прибыль)" : (b.owner ? "ЧУЖОЙ (Украсть!)" : "ДИКИЙ (Купить)");
+                document.getElementById('interact-text').innerText = txt;
+            }
+        });
+        if(!found) document.getElementById('interaction-ui').style.display = 'none';
+
+        db.ref('players/' + myID).update({ x: myModel.position.x, y: myModel.position.y, z: myModel.position.z, c: myCash, n: myNick, bp: myBasePos, la: myBaseObj.laserActive });
+    }
+
+    const keys = {};
+    window.onkeydown = (e) => {
+        keys[e.code] = true;
+        if(e.code === 'KeyE') handleAction();
+        if(e.code === 'Space' && canJump) { velocity.y = 0.3; canJump = false; }
+    };
+    window.onkeyup = (e) => keys[e.code] = false;
+
+    function handleAction() {
+        if(!activeInteractBot) return;
+        const b = robots[activeInteractBot];
+        if(!b.owner && myCash >= b.info.price) {
+            const slot = myBaseObj.slots.find(s => !s.occupied);
+            if(slot) {
+                myCash -= b.info.price; slot.occupied = true; slot.botID = activeInteractBot;
+                db.ref('robots/' + activeInteractBot).update({ owner: myID, x: slot.pos.x, z: slot.pos.z });
+            }
+        } else if (b.owner === myID) {
+            myCash += b.info.income;
+        } else if (b.owner) {
+            const slot = myBaseObj.slots.find(s => !s.occupied);
+            if(slot) {
+                slot.occupied = true; slot.botID = activeInteractBot;
+                db.ref('robots/' + activeInteractBot).update({ owner: myID, x: slot.pos.x, z: slot.pos.z });
+            }
+        }
+        document.getElementById('cash-val').innerText = myCash;
+    }
+
+    document.getElementById('start-btn').onclick = () => {
+        myNick = document.getElementById('nick-input').value.trim() || "Player";
+        document.getElementById('menu').style.display = 'none';
+        ['stats-ui', 'mobile-ui', 'sidebar'].forEach(id => document.getElementById(id).classList.remove('hidden'));
+        initGame();
+    };
+    document.getElementById('main-act-btn').onclick = handleAction;
+    document.getElementById('jump-btn').onclick = () => { if(canJump) { velocity.y = 0.3; canJump = false; } };
 </script>
 </body>
 </html>
