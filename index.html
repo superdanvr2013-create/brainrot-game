@@ -3,37 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DanBlox PVP Arena</title>
+    <title>DanBlox PVP v2</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
         body { margin: 0; overflow: hidden; font-family: sans-serif; background: #87CEEB; touch-action: none; }
         .screen { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 1000; background: rgba(0,0,0,0.8); }
-        .window { background: #fff; padding: 30px; border-radius: 20px; border: 5px solid #f00; text-align: center; }
+        .window { background: #fff; padding: 30px; border-radius: 20px; border: 5px solid #f00; text-align: center; width: 300px; }
         #ui-layer { position: absolute; top: 10px; left: 10px; z-index: 100; pointer-events: none; }
-        .bar { width: 200px; height: 20px; border: 2px solid #000; background: #555; margin: 5px 0; }
-        #hp-bar { background: #ff3333; width: 100%; height: 100%; }
-        #stamina-bar { background: #ffeb3b; width: 100%; height: 100%; }
+        .bar { width: 200px; height: 15px; border: 2px solid #000; background: #555; margin: 5px 0; }
+        #hp-bar { background: #ff3333; width: 100%; height: 100%; transition: 0.2s; }
         #mobile-controls { position: absolute; bottom: 20px; left: 20px; display: grid; grid-template-columns: repeat(3, 60px); gap: 5px; }
         .m-btn { width: 60px; height: 60px; background: rgba(255,255,255,0.3); border: 2px solid #fff; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; }
         #action-btns { position: absolute; bottom: 30px; right: 30px; display: flex; flex-direction: column; gap: 10px; }
         .action-circle { width: 70px; height: 70px; border-radius: 50%; border: 3px solid #fff; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; cursor: pointer; }
         .hidden { display: none !important; }
+        #error-msg { color: red; font-size: 14px; margin-top: 10px; display: none; }
     </style>
 </head>
 <body>
 
     <div id="login-screen" class="screen">
         <div class="window">
-            <h1>DANBLOX PVP</h1>
-            <input type="text" id="nick-input" placeholder="НИК..." maxlength="10" style="padding:10px; font-size:18px;"><br><br>
-            <button onclick="startGame()" style="padding:15px 30px; background:#f00; color:#fff; border:none; cursor:pointer;">ИГРАТЬ</button>
+            <h1 style="color:#f00">PVP ARENA</h1>
+            <input type="text" id="nick-input" placeholder="ПРИДУМАЙ НИК..." maxlength="10" style="padding:10px; width:80%; font-size:18px; text-align:center;">
+            <div id="error-msg">Этот ник уже занят!</div><br><br>
+            <button onclick="checkNickAndStart()" style="padding:15px 30px; background:#f00; color:#fff; border:none; cursor:pointer; font-weight:bold; border-radius:10px;">В БОЙ!</button>
         </div>
     </div>
 
     <div id="ui-layer" class="hidden">
         <div class="bar"><div id="hp-bar"></div></div>
-        <div class="bar"><div id="stamina-bar"></div></div>
     </div>
 
     <div id="mobile-controls" class="hidden">
@@ -43,7 +43,6 @@
 
     <div id="action-btns" class="hidden">
         <div class="action-circle" style="background:#2196f3;" id="btn-jump">JUMP</div>
-        <div class="action-circle" style="background:#ff9800;" id="btn-shift">SHIFT</div>
         <div class="action-circle" style="background:#f44336;" id="btn-e">АТАКА</div>
     </div>
 
@@ -66,27 +65,27 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let scene, camera, renderer, myModel;
+        let scene, camera, renderer, myModel, mySwordPivot;
         let myID = 'u' + Math.floor(Math.random() * 1000000);
-        let myNick = "", myHP = 100, myStamina = 100;
+        let myNick = "", myHP = 100, inGame = false;
         let otherPlayers = {}, moveState = { f: false, b: false, l: false, r: false };
-        let vy = 0, canJump = true, isSprinting = false, inGame = false;
-        let camAzimuth = 0, camElevation = 0.5, camDist = 12;
+        let vy = 0, canJump = true, camAzimuth = 0, camElevation = 0.5, camDist = 12;
+        let isAttacking = false;
 
-        function createNameTag(name) {
+        function createNameTag(name, hp) {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            canvas.width = 256; canvas.height = 64;
-            ctx.fillStyle = 'rgba(0,0,0,0.5)';
-            ctx.fillRect(0, 0, 256, 64);
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 32px Arial';
+            canvas.width = 512; canvas.height = 128;
+            ctx.fillStyle = 'rgba(0,0,0,0.4)';
+            ctx.roundRect(0, 0, 512, 128, 20); ctx.fill();
+            ctx.fillStyle = hp > 30 ? '#0f0' : '#f00';
+            ctx.font = 'bold 50px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(name, 128, 45);
+            ctx.fillText(`${name} [${hp} HP]`, 256, 80);
             const tex = new THREE.CanvasTexture(canvas);
             const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex }));
-            sprite.scale.set(3, 0.75, 1);
-            sprite.position.y = 2.5;
+            sprite.scale.set(4, 1, 1);
+            sprite.position.y = 2.8;
             return sprite;
         }
 
@@ -98,60 +97,79 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
 
-            const ambient = new THREE.AmbientLight(0xffffff, 0.7);
-            const sun = new THREE.DirectionalLight(0xffffff, 0.8);
-            sun.position.set(10, 20, 10);
-            scene.add(ambient, sun);
+            scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+            const sun = new THREE.DirectionalLight(0xffffff, 0.5); sun.position.set(10, 20, 10); scene.add(sun);
 
             const ground = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), new THREE.MeshStandardMaterial({color: 0x2e7d32}));
             ground.rotation.x = -Math.PI/2; scene.add(ground);
 
-            const road = new THREE.Mesh(new THREE.PlaneGeometry(10, 500), new THREE.MeshStandardMaterial({color: 0xd32f2f}));
-            road.rotation.x = -Math.PI/2; road.position.y = 0.02; scene.add(road);
+            const road = new THREE.Mesh(new THREE.PlaneGeometry(12, 500), new THREE.MeshStandardMaterial({color: 0xd32f2f}));
+            road.rotation.x = -Math.PI/2; road.position.y = 0.01; scene.add(road);
 
             myModel = new THREE.Group();
             const body = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 0.5), new THREE.MeshStandardMaterial({color: 0x2196f3}));
             body.position.y = 1; myModel.add(body);
-            myModel.add(createNameTag(myNick));
+            
+            mySwordPivot = new THREE.Group();
+            const sword = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.5, 0.2), new THREE.MeshStandardMaterial({color: 0xcccccc}));
+            sword.position.set(0.7, 1, -0.6); sword.rotation.x = Math.PI/2;
+            mySwordPivot.add(sword); myModel.add(mySwordPivot);
+
             scene.add(myModel);
 
             db.ref('players/' + myID).onDisconnect().remove();
             db.ref('players').on('value', snap => {
                 const data = snap.val() || {};
-                // Удаляем тех, кто вышел
                 Object.keys(otherPlayers).forEach(id => {
                     if(!data[id]) { scene.remove(otherPlayers[id]); delete otherPlayers[id]; }
                 });
-                // Обновляем существующих
                 Object.keys(data).forEach(id => {
                     if(id === myID) {
-                        if(data[id].hp <= 0 && inGame) backToMenu();
                         myHP = data[id].hp || 100;
+                        if(myHP <= 0 && inGame) location.reload();
+                        // Обновляем свой тег
+                        const oldTag = myModel.children.find(c => c.type === "Sprite");
+                        if(oldTag) myModel.remove(oldTag);
+                        myModel.add(createNameTag(myNick, myHP));
                         return;
                     }
                     if(!otherPlayers[id]) {
                         const g = new THREE.Group();
-                        g.add(new THREE.Mesh(new THREE.BoxGeometry(1,2,0.5), new THREE.MeshStandardMaterial({color: 0xf44336})));
-                        g.children[0].position.y = 1;
-                        g.add(createNameTag(data[id].n));
+                        const b = new THREE.Mesh(new THREE.BoxGeometry(1,2,0.5), new THREE.MeshStandardMaterial({color: 0xf44336}));
+                        b.position.y = 1; g.add(b);
                         scene.add(g); otherPlayers[id] = g;
                     }
-                    otherPlayers[id].position.lerp(new THREE.Vector3(data[id].x, data[id].y, data[id].z), 0.2);
+                    const p = otherPlayers[id];
+                    p.position.lerp(new THREE.Vector3(data[id].x, data[id].y, data[id].z), 0.2);
+                    p.rotation.y = data[id].ry || 0;
+                    const tag = p.children.find(c => c.type === "Sprite");
+                    if(tag) p.remove(tag);
+                    p.add(createNameTag(data[id].n, data[id].hp || 100));
                 });
             });
 
             animate();
         }
 
-        function backToMenu() {
-            inGame = false;
-            db.ref('players/' + myID).remove();
-            location.reload(); // Простой способ вернуться в меню
-        }
-
         function attack() {
+            if(isAttacking) return;
+            isAttacking = true;
+            
+            // Анимация удара
+            const startZ = mySwordPivot.position.z;
+            let time = 0;
+            const anim = setInterval(() => {
+                time += 0.1;
+                mySwordPivot.position.z = -Math.sin(time * 3) * 1.5;
+                if(time >= Math.PI / 1.5) {
+                    clearInterval(anim);
+                    mySwordPivot.position.z = startZ;
+                    isAttacking = false;
+                }
+            }, 20);
+
             Object.keys(otherPlayers).forEach(id => {
-                if(myModel.position.distanceTo(otherPlayers[id].position) < 4) {
+                if(myModel.position.distanceTo(otherPlayers[id].position) < 3.5) {
                     db.ref('players/' + id + '/hp').transaction(h => (h || 100) - 10);
                 }
             });
@@ -161,71 +179,71 @@
             if(!inGame) return;
             requestAnimationFrame(animate);
 
-            let speed = (isSprinting && myStamina > 0) ? 0.4 : 0.18;
-            if(isSprinting && myStamina > 0) myStamina -= 0.6; else if(myStamina < 100) myStamina += 0.4;
-
             const dir = new THREE.Vector3();
             if(moveState.f) dir.z -= 1; if(moveState.b) dir.z += 1;
             if(moveState.l) dir.x -= 1; if(moveState.r) dir.x += 1;
 
             if(dir.length() > 0) {
                 dir.applyAxisAngle(new THREE.Vector3(0,1,0), camAzimuth);
-                myModel.position.add(dir.normalize().multiplyScalar(speed));
+                myModel.position.add(dir.normalize().multiplyScalar(0.2));
                 myModel.rotation.y = Math.atan2(dir.x, dir.z);
             }
 
-            // Прыжок
             myModel.position.y += vy;
-            if(myModel.position.y > 0) { vy -= 0.012; canJump = false; }
+            if(myModel.position.y > 0) { vy -= 0.015; canJump = false; }
             else { myModel.position.y = 0; vy = 0; canJump = true; }
 
-            // Камера
             camera.position.x = myModel.position.x + camDist * Math.sin(camAzimuth) * Math.cos(camElevation);
             camera.position.y = myModel.position.y + camDist * Math.sin(camElevation) + 2;
             camera.position.z = myModel.position.z + camDist * Math.cos(camAzimuth) * Math.cos(camElevation);
-            camera.lookAt(myModel.position.x, myModel.position.y + 1, myModel.position.z);
+            camera.lookAt(myModel.position.x, myModel.position.y + 1.5, myModel.position.z);
 
             document.getElementById('hp-bar').style.width = myHP + "%";
-            document.getElementById('stamina-bar').style.width = myStamina + "%";
-
-            db.ref('players/' + myID).update({ x: myModel.position.x, y: myModel.position.y, z: myModel.position.z, n: myNick, hp: myHP });
+            db.ref('players/' + myID).update({ x: myModel.position.x, y: myModel.position.y, z: myModel.position.z, ry: myModel.rotation.y, n: myNick, hp: myHP });
             renderer.render(scene, camera);
         }
 
-        window.startGame = () => {
-            myNick = document.getElementById('nick-input').value || "Noob";
-            document.getElementById('login-screen').classList.add('hidden');
-            ['ui-layer', 'mobile-controls', 'action-btns'].forEach(id => document.getElementById(id).classList.remove('hidden'));
-            inGame = true;
-            init();
+        window.checkNickAndStart = () => {
+            const input = document.getElementById('nick-input').value.trim();
+            const err = document.getElementById('error-msg');
+            if(!input) return;
+
+            db.ref('players').once('value', snap => {
+                const players = snap.val() || {};
+                const exists = Object.values(players).some(p => p.n.toLowerCase() === input.toLowerCase());
+                
+                if(exists) {
+                    err.style.display = 'block';
+                } else {
+                    myNick = input;
+                    document.getElementById('login-screen').classList.add('hidden');
+                    ['ui-layer', 'mobile-controls', 'action-btns'].forEach(id => document.getElementById(id).classList.remove('hidden'));
+                    inGame = true;
+                    init();
+                }
+            });
         };
 
         window.onkeydown = (e) => {
             if(e.code === 'KeyW') moveState.f = true; if(e.code === 'KeyS') moveState.b = true;
             if(e.code === 'KeyA') moveState.l = true; if(e.code === 'KeyD') moveState.r = true;
-            if(e.code === 'Space' && canJump) vy = 0.3;
-            if(e.code === 'ShiftLeft') isSprinting = true;
+            if(e.code === 'Space' && canJump) vy = 0.35;
             if(e.code === 'KeyE') attack();
         };
         window.onkeyup = (e) => {
             if(e.code === 'KeyW') moveState.f = false; if(e.code === 'KeyS') moveState.b = false;
             if(e.code === 'KeyA') moveState.l = false; if(e.code === 'KeyD') moveState.r = false;
-            if(e.code === 'ShiftLeft') isSprinting = false;
         };
 
-        // Мышь для вращения камеры
-        let isRightMB = false;
-        window.onmousedown = (e) => { if(e.button === 2) isRightMB = true; };
-        window.onmouseup = () => isRightMB = false;
-        window.onmousemove = (e) => { if(isRightMB) { camAzimuth -= e.movementX * 0.01; camElevation = Math.max(0.1, Math.min(1.4, camElevation + e.movementY * 0.01)); }};
+        let isR = false;
+        window.onmousedown = (e) => { if(e.button === 2) isR = true; };
+        window.onmouseup = () => isR = false;
+        window.onmousemove = (e) => { if(isR) { camAzimuth -= e.movementX * 0.01; camElevation = Math.max(0.1, Math.min(1.4, camElevation + e.movementY * 0.01)); }};
         window.oncontextmenu = (e) => e.preventDefault();
 
-        // Мобилки
         const bind = (id, k) => { document.getElementById(id).ontouchstart = () => moveState[k] = true; document.getElementById(id).ontouchend = () => moveState[k] = false; };
         bind('btn-w','f'); bind('btn-s','b'); bind('btn-a','l'); bind('btn-d','r');
-        document.getElementById('btn-jump').onclick = () => { if(canJump) vy = 0.3; };
-        document.getElementById('btn-shift').ontouchstart = () => isSprinting = true;
-        document.getElementById('btn-shift').ontouchend = () => isSprinting = false;
+        document.getElementById('btn-jump').onclick = () => { if(canJump) vy = 0.35; };
         document.getElementById('btn-e').onclick = attack;
     </script>
 </body>
