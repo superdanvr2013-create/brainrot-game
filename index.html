@@ -3,48 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DanBlox PVP: Evolution Full</title>
+    <title>DanBlox PVP: Arena Guarded</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #87CEEB; touch-action: none; }
+        body { margin: 0; overflow: hidden; font-family: 'Arial Black', sans-serif; background: #000; touch-action: none; }
         .screen { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 1000; background: rgba(0,0,0,0.85); }
         
-        /* Таблица лидеров */
-        #leaderboard { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 15px; border-radius: 12px; border: 2px solid #ffd700; font-size: 14px; min-width: 180px; z-index: 500; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        #leaderboard h4 { margin: 0 0 10px 0; text-align: center; color: #ffd700; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #ffd700; padding-bottom: 5px; }
-        #lb-list div { display: flex; justify-content: space-between; margin-bottom: 3px; }
+        #leaderboard { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 15px; border-radius: 12px; border: 2px solid #ffd700; font-size: 14px; min-width: 180px; z-index: 500; }
+        #leaderboard h4 { margin: 0 0 10px 0; text-align: center; color: #ffd700; border-bottom: 1px solid #ffd700; }
 
         #ui-layer { position: absolute; top: 15px; left: 15px; z-index: 100; pointer-events: none; }
         .bar-container { width: 250px; height: 25px; border: 3px solid #000; background: #222; border-radius: 5px; overflow: hidden; }
-        #hp-bar { background: linear-gradient(90deg, #ff4b2b, #ff416c); width: 100%; height: 100%; transition: width 0.3s ease; }
+        #hp-bar { background: #ff3333; width: 100%; height: 100%; transition: 0.3s; }
         
         #mobile-controls { position: absolute; bottom: 40px; left: 40px; display: grid; grid-template-columns: repeat(3, 75px); gap: 12px; }
-        .m-btn { width: 75px; height: 75px; background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.8); border-radius: 15px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 20px; box-shadow: 0 4px 0 rgba(0,0,0,0.3); }
+        .m-btn { width: 75px; height: 75px; background: rgba(255,255,255,0.2); border: 2px solid #fff; border-radius: 15px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 20px; }
         
         #action-btns { position: absolute; bottom: 40px; right: 40px; display: flex; flex-direction: column; gap: 15px; }
-        .action-circle { width: 85px; height: 85px; border-radius: 50%; border: 4px solid #fff; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px; box-shadow: 0 5px 15px rgba(0,0,0,0.4); }
+        .action-circle { width: 85px; height: 85px; border-radius: 50%; border: 4px solid #fff; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
         
         #death-screen { display: none; background: rgba(139,0,0,0.95); flex-direction: column; text-align: center; }
-        .btn-main { padding: 18px 40px; background: #e63946; color: #fff; border: none; cursor: pointer; border-radius: 12px; font-weight: bold; font-size: 20px; transition: transform 0.1s; }
-        .btn-main:active { transform: scale(0.95); }
+        .btn-main { padding: 18px 40px; background: #e63946; color: #fff; border: none; cursor: pointer; border-radius: 12px; font-weight: bold; font-size: 20px; }
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div id="leaderboard"><h4>🏆 TOP KILLS</h4><div id="lb-list">Загрузка...</div></div>
+    <div id="leaderboard"><h4>🏆 KILL LEADERS</h4><div id="lb-list">...</div></div>
 
     <div id="login-screen" class="screen">
-        <div style="background:white; padding:40px; border-radius:25px; text-align:center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-            <h1 style="color:#e63946; margin:0 0 20px 0; font-size:32px;">DANBLOX PVP</h1>
-            <input type="text" id="nick-input" placeholder="НИК ИГРОКА" maxlength="10" style="padding:15px; width:220px; font-size:20px; text-align:center; border:2px solid #ddd; border-radius:10px;"><br><br>
-            <button class="btn-main" onclick="checkAndStart()">В БОЙ</button>
+        <div style="background:white; padding:40px; border-radius:25px; text-align:center;">
+            <h1 style="color:#e63946; margin:0 0 20px 0;">ARENA PVP</h1>
+            <input type="text" id="nick-input" placeholder="НИК..." maxlength="10" style="padding:15px; width:200px; font-size:20px; text-align:center;"><br><br>
+            <button class="btn-main" onclick="checkAndStart()">ИГРАТЬ</button>
         </div>
     </div>
 
     <div id="death-screen" class="screen">
-        <h1 style="color:white; font-size:56px; margin-bottom:30px;">ТЫ ПОГИБ</h1>
+        <h1 style="color:white; font-size:56px; margin-bottom:30px;">ВЫ УБИТЫ</h1>
         <button class="btn-main" style="background:white; color:#e63946;" onclick="respawn()">ВОЗРОДИТЬСЯ</button>
     </div>
 
@@ -84,37 +81,31 @@
         let otherPlayers = {}, moveState = { f: false, b: false, l: false, r: false };
         let vy = 0, canJump = true, camAzimuth = 0, camElevation = 0.5, camDist = 12;
         let isAttacking = false;
+        const MAP_SIZE = 200; // Половина размера карты для границ
 
         function createSword() {
             const group = new THREE.Group();
-            // Лезвие
-            const blade = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.4, 0.04), new THREE.MeshStandardMaterial({color: 0xeaeaea, metalness: 0.9, roughness: 0.1}));
-            blade.position.y = 0.7;
-            // Гарда
-            const guard = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.08, 0.15), new THREE.MeshStandardMaterial({color: 0xffd700, metalness: 0.7}));
-            // Рукоять
-            const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.4), new THREE.MeshStandardMaterial({color: 0x331a00}));
+            const blade = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.5, 0.05), new THREE.MeshStandardMaterial({color: 0xdddddd, metalness: 0.9}));
+            blade.position.y = 0.75;
+            const guard = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.1, 0.2), new THREE.MeshStandardMaterial({color: 0xffd700}));
+            const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.5), new THREE.MeshStandardMaterial({color: 0x442200}));
             handle.position.y = -0.2;
             group.add(blade, guard, handle);
-            group.rotation.x = -Math.PI / 2;
-            group.position.set(0.6, 1.1, -0.6);
+            group.rotation.x = Math.PI / 2; // Исправлено направление
+            group.position.set(0.65, 0.8, 0.1); 
             return group;
         }
 
         function createPlayerModel(color) {
             const group = new THREE.Group();
-            // Туловище
-            const torso = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.1, 0.4), new THREE.MeshStandardMaterial({color: color}));
-            torso.position.y = 0.55;
-            // Голова
+            const torso = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.2, 0.4), new THREE.MeshStandardMaterial({color: color}));
+            torso.position.y = 0.6;
             const head = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), new THREE.MeshStandardMaterial({color: 0xffdbac}));
-            head.position.y = 1.45;
-            // Руки
+            head.position.y = 1.5;
             const armL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1, 0.3), new THREE.MeshStandardMaterial({color: color}));
             armL.position.set(-0.6, 0.6, 0);
             const armR = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1, 0.3), new THREE.MeshStandardMaterial({color: color}));
             armR.position.set(0.6, 0.6, 0);
-            
             group.add(torso, head, armL, armR);
             return group;
         }
@@ -123,108 +114,80 @@
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             canvas.width = 512; canvas.height = 128;
-            ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.roundRect(0, 0, 512, 128, 25); ctx.fill();
-            ctx.fillStyle = hp > 30 ? '#4ade80' : '#f87171';
+            ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.roundRect(0,0,512,128,20); ctx.fill();
+            ctx.fillStyle = hp > 0 ? '#0f0' : '#f00';
             ctx.font = 'bold 50px sans-serif'; ctx.textAlign = 'center';
-            ctx.fillText(hp > 0 ? `${name} [${hp}%]` : `${name} [DEAD]`, 256, 82);
+            ctx.fillText(`${name} [${hp}%]`, 256, 85);
             const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas) }));
-            sprite.scale.set(4.5, 1.1, 1); sprite.position.y = 2.6;
+            sprite.scale.set(4, 1, 1); sprite.position.y = 2.7;
             return sprite;
         }
 
-        function buildWorld() {
-            // Плоскость
-            const ground = new THREE.Mesh(new THREE.PlaneGeometry(800, 800), new THREE.MeshStandardMaterial({color: 0x386641}));
+        function buildMap() {
+            // Пол
+            const ground = new THREE.Mesh(new THREE.PlaneGeometry(MAP_SIZE*2, MAP_SIZE*2), new THREE.MeshStandardMaterial({color: 0x1a472a}));
             ground.rotation.x = -Math.PI/2; scene.add(ground);
-            
-            // Арена (красная зона)
-            const road = new THREE.Mesh(new THREE.PlaneGeometry(16, 800), new THREE.MeshStandardMaterial({color: 0xbc4749}));
-            road.rotation.x = -Math.PI/2; road.position.y = 0.02; scene.add(road);
 
-            // Деревья и Горы
-            for(let i=0; i<80; i++) {
-                const x = (Math.random()-0.5)*400;
-                const z = (Math.random()-0.5)*400;
-                if(Math.abs(x) < 12) continue; // Не ставить на дорогу
-
-                if(Math.random() > 0.3) { // Дерево
-                    const tree = new THREE.Group();
-                    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 3), new THREE.MeshStandardMaterial({color: 0x582f0e}));
-                    trunk.position.y = 1.5;
-                    const leaves = new THREE.Mesh(new THREE.SphereGeometry(1.6, 6, 6), new THREE.MeshStandardMaterial({color: 0x2d6a4f}));
-                    leaves.position.y = 3.6;
-                    tree.add(trunk, leaves); tree.position.set(x, 0, z); scene.add(tree);
-                } else { // Гора (конус)
-                    const mountain = new THREE.Mesh(new THREE.ConeGeometry(5, 8, 4), new THREE.MeshStandardMaterial({color: 0x4a4e69}));
-                    mountain.position.set(x, 4, z); scene.add(mountain);
-                }
-            }
+            // Стены (Границы)
+            const wallMat = new THREE.MeshStandardMaterial({color: 0x00ffff, transparent: true, opacity: 0.2, side: THREE.DoubleSide});
+            const walls = [
+                {p: [0, 5, MAP_SIZE], s: [MAP_SIZE*2, 10, 0.1]}, // North
+                {p: [0, 5, -MAP_SIZE], s: [MAP_SIZE*2, 10, 0.1]}, // South
+                {p: [MAP_SIZE, 5, 0], s: [0.1, 10, MAP_SIZE*2]}, // East
+                {p: [-MAP_SIZE, 5, 0], s: [0.1, 10, MAP_SIZE*2]} // West
+            ];
+            walls.forEach(w => {
+                const wall = new THREE.Mesh(new THREE.BoxGeometry(...w.s), wallMat);
+                wall.position.set(...w.p); scene.add(wall);
+            });
         }
 
         function init() {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xa2d2ff);
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1500);
+            scene.background = new THREE.Color(0x87CEEB);
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
 
             scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-            const sun = new THREE.DirectionalLight(0xffffff, 0.6); sun.position.set(100, 200, 100); scene.add(sun);
+            buildMap();
 
-            buildWorld();
-
-            myModel = createPlayerModel(0x1d3557);
+            myModel = createPlayerModel(0x2196f3);
             mySwordPivot = new THREE.Group();
             mySwordPivot.add(createSword());
             myModel.add(mySwordPivot);
             scene.add(myModel);
 
-            // Таблица лидеров
             db.ref('leaderboard').orderByValue().limitToLast(10).on('value', snap => {
                 const list = document.getElementById('lb-list');
                 let items = [];
-                snap.forEach(s => { items.push({n: s.key, k: s.val()}); });
-                list.innerHTML = items.reverse().map(i => `<div><span>${i.n}</span><span>${i.k} ⚔️</span></div>`).join('');
+                snap.forEach(s => items.push({n: s.key, k: s.val()}));
+                list.innerHTML = items.reverse().map(i => `<div>${i.n}: ${i.k}</div>`).join('');
             });
 
-            // Сетевая часть
             db.ref('players/' + myID).onDisconnect().remove();
             db.ref('players').on('value', snap => {
                 const data = snap.val() || {};
                 Object.keys(otherPlayers).forEach(id => { if(!data[id]) { scene.remove(otherPlayers[id]); delete otherPlayers[id]; }});
-                
                 Object.keys(data).forEach(id => {
-                    if(id === myID) {
-                        myHP = data[id].hp;
-                        if(myHP <= 0 && !isDead && inGame) triggerDeath();
-                        return;
-                    }
+                    if(id === myID) { myHP = data[id].hp; if(myHP <= 0 && !isDead && inGame) triggerDeath(); return; }
                     if(!otherPlayers[id]) {
-                        const g = createPlayerModel(0xe63946);
+                        const g = createPlayerModel(0xf44336);
                         const sp = new THREE.Group(); sp.add(createSword()); g.add(sp);
                         scene.add(g); otherPlayers[id] = g;
                     }
                     const p = otherPlayers[id];
-                    p.position.lerp(new THREE.Vector3(data[id].x, data[id].y, data[id].z), 0.25);
+                    p.position.lerp(new THREE.Vector3(data[id].x, data[id].y, data[id].z), 0.2);
                     p.rotation.y = data[id].ry || 0;
-                    
-                    // Синхронизация анимации атаки
                     const sp = p.children.find(c => c.type === "Group");
                     if(sp) sp.position.z = data[id].at ? -1.3 : 0;
-                    
-                    // Анимация смерти
-                    if(data[id].hp <= 0) { p.rotation.z = Math.PI/2; p.position.y = 0.4; } 
-                    else { p.rotation.z = 0; p.position.y = data[id].y; }
-                    
+                    if(data[id].hp <= 0) { p.rotation.z = Math.PI/2; p.position.y = 0.4; } else { p.rotation.z = 0; p.position.y = data[id].y; }
                     const tag = p.children.find(c => c.type === "Sprite");
                     if(tag) p.remove(tag);
                     p.add(createTag(data[id].n, data[id].hp));
                 });
             });
-
-            // Авто-регенерация
-            setInterval(() => { if(inGame && !isDead && myHP < 100) { myHP = Math.min(100, myHP + 1); }}, 1000);
 
             animate();
         }
@@ -239,19 +202,18 @@
             isDead = false; myHP = 100;
             document.getElementById('death-screen').style.display = 'none';
             myModel.rotation.z = 0;
-            myModel.position.set((Math.random()-0.5)*40, 0, (Math.random()-0.5)*40);
-            db.ref('players/' + myID).update({hp: 100, x: myModel.position.x, z: myModel.position.z});
+            myModel.position.set(0, 0, 0);
+            db.ref('players/' + myID).update({hp: 100, x: 0, z: 0});
         };
 
         function attack() {
             if(isDead || isAttacking) return;
             isAttacking = true;
-            mySwordPivot.position.z = -1.3;
+            mySwordPivot.position.z = -1.2;
             db.ref('players/' + myID + '/at').set(true);
 
             setTimeout(() => { 
-                mySwordPivot.position.z = 0; 
-                isAttacking = false; 
+                mySwordPivot.position.z = 0; isAttacking = false; 
                 db.ref('players/' + myID + '/at').set(false);
             }, 180);
 
@@ -261,9 +223,12 @@
                         const target = s.val();
                         if(target && target.hp > 0) {
                             db.ref('players/' + id + '/hp').transaction(h => {
-                                let nh = (h || 100) - 15;
-                                if(nh <= 0) db.ref('leaderboard/' + myNick).transaction(k => (k || 0) + 1);
-                                return nh;
+                                let newHP = (h || 100) - 15;
+                                if(newHP <= 0) {
+                                    // Засчитываем убийство ТОЛЬКО если HP упало до 0 сейчас
+                                    db.ref('leaderboard/' + myNick).transaction(k => (k || 0) + 1);
+                                }
+                                return Math.max(0, newHP);
                             });
                         }
                     });
@@ -281,7 +246,14 @@
                 if(moveState.l) dir.x -= 1; if(moveState.r) dir.x += 1;
                 if(dir.length() > 0) {
                     dir.applyAxisAngle(new THREE.Vector3(0,1,0), camAzimuth);
-                    myModel.position.add(dir.normalize().multiplyScalar(0.24));
+                    const speed = 0.25;
+                    const nextX = myModel.position.x + dir.normalize().x * speed;
+                    const nextZ = myModel.position.z + dir.z * speed;
+                    
+                    // Физика границ (стены)
+                    if(Math.abs(nextX) < MAP_SIZE - 0.5) myModel.position.x = nextX;
+                    if(Math.abs(nextZ) < MAP_SIZE - 0.5) myModel.position.z = nextZ;
+                    
                     myModel.rotation.y = Math.atan2(dir.x, dir.z);
                 }
                 myModel.position.y += vy;
@@ -289,45 +261,35 @@
                 else { myModel.position.y = 0; vy = 0; canJump = true; }
             }
 
-            // Камера
             camera.position.x = myModel.position.x + camDist * Math.sin(camAzimuth) * Math.cos(camElevation);
-            camera.position.y = myModel.position.y + camDist * Math.sin(camElevation) + 1.6;
+            camera.position.y = myModel.position.y + camDist * Math.sin(camElevation) + 1.8;
             camera.position.z = myModel.position.z + camDist * Math.cos(camAzimuth) * Math.cos(camElevation);
             
-            if(camDist < 1) { // Первый взгляд
-                camera.position.copy(myModel.position).add(new THREE.Vector3(0, 1.6, 0));
-                myModel.visible = false;
-            } else { myModel.visible = true; }
-            
+            if(camDist < 1) { camera.position.copy(myModel.position).add(new THREE.Vector3(0, 1.6, 0)); myModel.visible = false; } 
+            else { myModel.visible = true; }
             camera.lookAt(myModel.position.x, myModel.position.y + 1.5, myModel.position.z);
 
-            // Свой тег
-            const old = myModel.children.find(c => c.type === "Sprite");
-            if(old) myModel.remove(old);
+            const oldTag = myModel.children.find(c => c.type === "Sprite");
+            if(oldTag) myModel.remove(oldTag);
             if(camDist >= 1) myModel.add(createTag(myNick, myHP));
 
             document.getElementById('hp-bar').style.width = myHP + "%";
-            db.ref('players/' + myID).update({ 
-                x: myModel.position.x, y: myModel.position.y, z: myModel.position.z, 
-                ry: myModel.rotation.y, n: myNick, hp: myHP, at: isAttacking, lastSeen: Date.now() 
-            });
+            db.ref('players/' + myID).update({ x: myModel.position.x, y: myModel.position.y, z: myModel.position.z, ry: myModel.rotation.y, n: myNick, hp: myHP, at: isAttacking, lastSeen: Date.now() });
             renderer.render(scene, camera);
         }
 
         window.checkAndStart = () => {
             const val = document.getElementById('nick-input').value.trim();
-            if(!val) return; 
-            myNick = val;
+            if(!val) return; myNick = val;
             document.getElementById('login-screen').classList.add('hidden');
             ['ui-layer', 'mobile-controls', 'action-btns'].forEach(id => document.getElementById(id).classList.remove('hidden'));
             inGame = true; init();
         };
 
-        // События
         window.onmousedown = (e) => { if(e.button === 0 && inGame) attack(); if(e.button === 2) window.isR = true; };
         window.onmouseup = () => window.isR = false;
         window.onmousemove = (e) => { if(window.isR) { camAzimuth -= e.movementX * 0.008; camElevation = Math.max(-0.4, Math.min(1.4, camElevation + e.movementY * 0.008)); }};
-        window.onwheel = (e) => { camDist = Math.max(0, Math.min(35, camDist + e.deltaY * 0.02)); };
+        window.onwheel = (e) => camDist = Math.max(0, Math.min(30, camDist + e.deltaY * 0.02));
         window.oncontextmenu = (e) => e.preventDefault();
 
         const handleKeys = (c, v) => {
@@ -338,11 +300,10 @@
         window.onkeydown = (e) => handleKeys(e.code, true);
         window.onkeyup = (e) => handleKeys(e.code, false);
 
-        // Мобильные кнопки
         const bindMob = (id, k) => {
             const el = document.getElementById(id);
-            el.onpointerdown = (e) => { e.preventDefault(); moveState[k] = true; el.style.background = "rgba(255,255,255,0.4)"; };
-            el.onpointerup = () => { moveState[k] = false; el.style.background = "rgba(255,255,255,0.15)"; };
+            el.onpointerdown = (e) => { e.preventDefault(); if(!isDead) moveState[k] = true; };
+            el.onpointerup = () => moveState[k] = false;
         };
         bindMob('btn-w','f'); bindMob('btn-s','b'); bindMob('btn-a','l'); bindMob('btn-d','r');
         document.getElementById('btn-jump').onpointerdown = () => { if(canJump && !isDead) vy = 0.4; };
