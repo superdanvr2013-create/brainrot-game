@@ -3,49 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DanBlox PVP - Death System</title>
+    <title>DanBlox PVP: Evolution Full</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; font-family: 'Arial Black', sans-serif; background: #000; touch-action: none; }
-        .screen { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 1000; background: rgba(0,0,0,0.8); }
-        .window { background: #fff; padding: 30px; border-radius: 20px; border: 5px solid #f00; text-align: center; width: 320px; }
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #87CEEB; touch-action: none; }
+        .screen { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 1000; background: rgba(0,0,0,0.85); }
         
-        /* Экран смерти */
-        #death-screen { background: rgba(139, 0, 0, 0.9); display: none; flex-direction: column; }
-        #death-screen h1 { color: #fff; font-size: 40px; text-shadow: 2px 2px #000; margin-bottom: 20px; }
+        /* Таблица лидеров */
+        #leaderboard { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 15px; border-radius: 12px; border: 2px solid #ffd700; font-size: 14px; min-width: 180px; z-index: 500; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        #leaderboard h4 { margin: 0 0 10px 0; text-align: center; color: #ffd700; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #ffd700; padding-bottom: 5px; }
+        #lb-list div { display: flex; justify-content: space-between; margin-bottom: 3px; }
 
-        #ui-layer { position: absolute; top: 10px; left: 10px; z-index: 100; pointer-events: none; }
-        .bar { width: 220px; height: 20px; border: 3px solid #000; background: #333; }
-        #hp-bar { background: #ff3333; width: 100%; height: 100%; transition: 0.3s; }
+        #ui-layer { position: absolute; top: 15px; left: 15px; z-index: 100; pointer-events: none; }
+        .bar-container { width: 250px; height: 25px; border: 3px solid #000; background: #222; border-radius: 5px; overflow: hidden; }
+        #hp-bar { background: linear-gradient(90deg, #ff4b2b, #ff416c); width: 100%; height: 100%; transition: width 0.3s ease; }
         
-        #mobile-controls { position: absolute; bottom: 30px; left: 30px; display: grid; grid-template-columns: repeat(3, 75px); gap: 10px; z-index: 2000; }
-        .m-btn { width: 75px; height: 75px; background: rgba(255,255,255,0.2); border: 3px solid #fff; border-radius: 15px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; font-size: 24px; user-select: none; }
+        #mobile-controls { position: absolute; bottom: 40px; left: 40px; display: grid; grid-template-columns: repeat(3, 75px); gap: 12px; }
+        .m-btn { width: 75px; height: 75px; background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.8); border-radius: 15px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 20px; box-shadow: 0 4px 0 rgba(0,0,0,0.3); }
         
-        #action-btns { position: absolute; bottom: 30px; right: 30px; display: flex; flex-direction: column; gap: 15px; z-index: 2000; }
-        .action-circle { width: 85px; height: 85px; border-radius: 50%; border: 4px solid #fff; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; cursor: pointer; }
+        #action-btns { position: absolute; bottom: 40px; right: 40px; display: flex; flex-direction: column; gap: 15px; }
+        .action-circle { width: 85px; height: 85px; border-radius: 50%; border: 4px solid #fff; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px; box-shadow: 0 5px 15px rgba(0,0,0,0.4); }
         
+        #death-screen { display: none; background: rgba(139,0,0,0.95); flex-direction: column; text-align: center; }
+        .btn-main { padding: 18px 40px; background: #e63946; color: #fff; border: none; cursor: pointer; border-radius: 12px; font-weight: bold; font-size: 20px; transition: transform 0.1s; }
+        .btn-main:active { transform: scale(0.95); }
         .hidden { display: none !important; }
-        .btn-main { padding: 15px 30px; background: #f00; color: #fff; border: none; cursor: pointer; font-weight: bold; border-radius: 10px; font-size: 18px; }
     </style>
 </head>
 <body>
 
+    <div id="leaderboard"><h4>🏆 TOP KILLS</h4><div id="lb-list">Загрузка...</div></div>
+
     <div id="login-screen" class="screen">
-        <div class="window">
-            <h1 style="color:#f00">DANBLOX PVP</h1>
-            <input type="text" id="nick-input" placeholder="НИК..." maxlength="10" style="padding:10px; width:80%; font-size:18px; text-align:center;"><br><br>
-            <button class="btn-main" onclick="checkAndStart()">ИГРАТЬ</button>
+        <div style="background:white; padding:40px; border-radius:25px; text-align:center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+            <h1 style="color:#e63946; margin:0 0 20px 0; font-size:32px;">DANBLOX PVP</h1>
+            <input type="text" id="nick-input" placeholder="НИК ИГРОКА" maxlength="10" style="padding:15px; width:220px; font-size:20px; text-align:center; border:2px solid #ddd; border-radius:10px;"><br><br>
+            <button class="btn-main" onclick="checkAndStart()">В БОЙ</button>
         </div>
     </div>
 
     <div id="death-screen" class="screen">
-        <h1>ВЫ ПОГИБЛИ!</h1>
-        <button class="btn-main" style="background: #fff; color: #f00;" onclick="respawn()">ВОЗРОДИТЬСЯ</button>
+        <h1 style="color:white; font-size:56px; margin-bottom:30px;">ТЫ ПОГИБ</h1>
+        <button class="btn-main" style="background:white; color:#e63946;" onclick="respawn()">ВОЗРОДИТЬСЯ</button>
     </div>
 
     <div id="ui-layer" class="hidden">
-        <div class="bar"><div id="hp-bar"></div></div>
+        <div class="bar-container"><div id="hp-bar"></div></div>
     </div>
 
     <div id="mobile-controls" class="hidden">
@@ -54,8 +58,8 @@
     </div>
 
     <div id="action-btns" class="hidden">
-        <div class="action-circle" style="background:#2196f3;" id="btn-jump">JUMP</div>
-        <div class="action-circle" style="background:#f44336;" id="btn-e">ATTACK</div>
+        <div class="action-circle" style="background:#457b9d;" id="btn-jump">JUMP</div>
+        <div class="action-circle" style="background:#e63946;" id="btn-attack">ATTACK</div>
     </div>
 
     <script type="importmap">
@@ -69,96 +73,158 @@
             apiKey: "AIzaSyAocmcoBH2Q8_QENuE9AuaGwtDOSSg-WpE",
             authDomain: "danblox-e209f.firebaseapp.com",
             databaseURL: "https://danblox-e209f-default-rtdb.firebaseio.com",
-            projectId: "danblox-e209f",
-            storageBucket: "danblox-e209f.firebasestorage.app",
-            messagingSenderId: "828099060847",
-            appId: "1:828099060847:web:9bb0bebc8c02833ce7d99a"
+            projectId: "danblox-e209f"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let scene, camera, renderer, myModel, mySword;
+        let scene, camera, renderer, myModel, mySwordPivot;
         let myID = 'u' + Math.floor(Math.random() * 1000000);
         let myNick = "", myHP = 100, inGame = false, isDead = false;
         let otherPlayers = {}, moveState = { f: false, b: false, l: false, r: false };
         let vy = 0, canJump = true, camAzimuth = 0, camElevation = 0.5, camDist = 12;
+        let isAttacking = false;
+
+        function createSword() {
+            const group = new THREE.Group();
+            // Лезвие
+            const blade = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.4, 0.04), new THREE.MeshStandardMaterial({color: 0xeaeaea, metalness: 0.9, roughness: 0.1}));
+            blade.position.y = 0.7;
+            // Гарда
+            const guard = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.08, 0.15), new THREE.MeshStandardMaterial({color: 0xffd700, metalness: 0.7}));
+            // Рукоять
+            const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.4), new THREE.MeshStandardMaterial({color: 0x331a00}));
+            handle.position.y = -0.2;
+            group.add(blade, guard, handle);
+            group.rotation.x = -Math.PI / 2;
+            group.position.set(0.6, 1.1, -0.6);
+            return group;
+        }
+
+        function createPlayerModel(color) {
+            const group = new THREE.Group();
+            // Туловище
+            const torso = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.1, 0.4), new THREE.MeshStandardMaterial({color: color}));
+            torso.position.y = 0.55;
+            // Голова
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), new THREE.MeshStandardMaterial({color: 0xffdbac}));
+            head.position.y = 1.45;
+            // Руки
+            const armL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1, 0.3), new THREE.MeshStandardMaterial({color: color}));
+            armL.position.set(-0.6, 0.6, 0);
+            const armR = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1, 0.3), new THREE.MeshStandardMaterial({color: color}));
+            armR.position.set(0.6, 0.6, 0);
+            
+            group.add(torso, head, armL, armR);
+            return group;
+        }
 
         function createTag(name, hp) {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             canvas.width = 512; canvas.height = 128;
-            ctx.fillStyle = 'rgba(0,0,0,0.5)';
-            ctx.roundRect(0, 0, 512, 128, 20); ctx.fill();
-            ctx.fillStyle = hp > 0 ? (hp > 30 ? '#0f0' : '#ff0') : '#f00';
-            ctx.font = 'bold 44px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(hp > 0 ? `${name} [${hp} HP]` : `${name} [DEAD]`, 256, 80);
-            const tex = new THREE.CanvasTexture(canvas);
-            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex }));
-            sprite.scale.set(4, 1, 1);
-            sprite.position.y = 2.8;
+            ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.roundRect(0, 0, 512, 128, 25); ctx.fill();
+            ctx.fillStyle = hp > 30 ? '#4ade80' : '#f87171';
+            ctx.font = 'bold 50px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText(hp > 0 ? `${name} [${hp}%]` : `${name} [DEAD]`, 256, 82);
+            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas) }));
+            sprite.scale.set(4.5, 1.1, 1); sprite.position.y = 2.6;
             return sprite;
+        }
+
+        function buildWorld() {
+            // Плоскость
+            const ground = new THREE.Mesh(new THREE.PlaneGeometry(800, 800), new THREE.MeshStandardMaterial({color: 0x386641}));
+            ground.rotation.x = -Math.PI/2; scene.add(ground);
+            
+            // Арена (красная зона)
+            const road = new THREE.Mesh(new THREE.PlaneGeometry(16, 800), new THREE.MeshStandardMaterial({color: 0xbc4749}));
+            road.rotation.x = -Math.PI/2; road.position.y = 0.02; scene.add(road);
+
+            // Деревья и Горы
+            for(let i=0; i<80; i++) {
+                const x = (Math.random()-0.5)*400;
+                const z = (Math.random()-0.5)*400;
+                if(Math.abs(x) < 12) continue; // Не ставить на дорогу
+
+                if(Math.random() > 0.3) { // Дерево
+                    const tree = new THREE.Group();
+                    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 3), new THREE.MeshStandardMaterial({color: 0x582f0e}));
+                    trunk.position.y = 1.5;
+                    const leaves = new THREE.Mesh(new THREE.SphereGeometry(1.6, 6, 6), new THREE.MeshStandardMaterial({color: 0x2d6a4f}));
+                    leaves.position.y = 3.6;
+                    tree.add(trunk, leaves); tree.position.set(x, 0, z); scene.add(tree);
+                } else { // Гора (конус)
+                    const mountain = new THREE.Mesh(new THREE.ConeGeometry(5, 8, 4), new THREE.MeshStandardMaterial({color: 0x4a4e69}));
+                    mountain.position.set(x, 4, z); scene.add(mountain);
+                }
+            }
         }
 
         function init() {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x87CEEB);
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+            scene.background = new THREE.Color(0xa2d2ff);
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1500);
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
 
             scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-            const ground = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), new THREE.MeshStandardMaterial({color: 0x2e7d32}));
-            ground.rotation.x = -Math.PI/2; scene.add(ground);
+            const sun = new THREE.DirectionalLight(0xffffff, 0.6); sun.position.set(100, 200, 100); scene.add(sun);
 
-            const road = new THREE.Mesh(new THREE.PlaneGeometry(12, 500), new THREE.MeshStandardMaterial({color: 0xd32f2f}));
-            road.rotation.x = -Math.PI/2; road.position.y = 0.01; scene.add(road);
+            buildWorld();
 
-            myModel = new THREE.Group();
-            const body = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 0.5), new THREE.MeshStandardMaterial({color: 0x2196f3}));
-            body.position.y = 1; myModel.add(body);
-            
-            mySword = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.5, 0.2), new THREE.MeshStandardMaterial({color: 0xcccccc}));
-            mySword.position.set(0.7, 1, -0.6); mySword.rotation.x = Math.PI/2;
-            myModel.add(mySword);
+            myModel = createPlayerModel(0x1d3557);
+            mySwordPivot = new THREE.Group();
+            mySwordPivot.add(createSword());
+            myModel.add(mySwordPivot);
             scene.add(myModel);
 
+            // Таблица лидеров
+            db.ref('leaderboard').orderByValue().limitToLast(10).on('value', snap => {
+                const list = document.getElementById('lb-list');
+                let items = [];
+                snap.forEach(s => { items.push({n: s.key, k: s.val()}); });
+                list.innerHTML = items.reverse().map(i => `<div><span>${i.n}</span><span>${i.k} ⚔️</span></div>`).join('');
+            });
+
+            // Сетевая часть
             db.ref('players/' + myID).onDisconnect().remove();
             db.ref('players').on('value', snap => {
                 const data = snap.val() || {};
-                Object.keys(otherPlayers).forEach(id => {
-                    if(!data[id]) { scene.remove(otherPlayers[id]); delete otherPlayers[id]; }
-                });
-
+                Object.keys(otherPlayers).forEach(id => { if(!data[id]) { scene.remove(otherPlayers[id]); delete otherPlayers[id]; }});
+                
                 Object.keys(data).forEach(id => {
                     if(id === myID) {
-                        myHP = data[id].hp || 0;
+                        myHP = data[id].hp;
                         if(myHP <= 0 && !isDead && inGame) triggerDeath();
                         return;
                     }
                     if(!otherPlayers[id]) {
-                        const g = new THREE.Group();
-                        const b = new THREE.Mesh(new THREE.BoxGeometry(1,2,0.5), new THREE.MeshStandardMaterial({color: 0xf44336}));
-                        b.position.y = 1; g.add(b);
+                        const g = createPlayerModel(0xe63946);
+                        const sp = new THREE.Group(); sp.add(createSword()); g.add(sp);
                         scene.add(g); otherPlayers[id] = g;
                     }
                     const p = otherPlayers[id];
-                    p.position.lerp(new THREE.Vector3(data[id].x, data[id].y, data[id].z), 0.2);
+                    p.position.lerp(new THREE.Vector3(data[id].x, data[id].y, data[id].z), 0.25);
                     p.rotation.y = data[id].ry || 0;
                     
-                    // Анимация смерти для других
-                    if(data[id].hp <= 0) {
-                        p.rotation.z = Math.PI/2; p.position.y = 0.3;
-                    } else {
-                        p.rotation.z = 0;
-                    }
-
+                    // Синхронизация анимации атаки
+                    const sp = p.children.find(c => c.type === "Group");
+                    if(sp) sp.position.z = data[id].at ? -1.3 : 0;
+                    
+                    // Анимация смерти
+                    if(data[id].hp <= 0) { p.rotation.z = Math.PI/2; p.position.y = 0.4; } 
+                    else { p.rotation.z = 0; p.position.y = data[id].y; }
+                    
                     const tag = p.children.find(c => c.type === "Sprite");
                     if(tag) p.remove(tag);
                     p.add(createTag(data[id].n, data[id].hp));
                 });
             });
+
+            // Авто-регенерация
+            setInterval(() => { if(inGame && !isDead && myHP < 100) { myHP = Math.min(100, myHP + 1); }}, 1000);
 
             animate();
         }
@@ -166,26 +232,41 @@
         function triggerDeath() {
             isDead = true;
             document.getElementById('death-screen').style.display = 'flex';
-            myModel.rotation.z = Math.PI/2; // Падаем на бок
-            myModel.position.y = 0.3;
+            myModel.rotation.z = Math.PI/2;
         }
 
         window.respawn = () => {
-            isDead = false;
-            myHP = 100;
+            isDead = false; myHP = 100;
             document.getElementById('death-screen').style.display = 'none';
             myModel.rotation.z = 0;
-            myModel.position.set((Math.random()-0.5)*20, 0, (Math.random()-0.5)*20);
-            db.ref('players/' + myID).update({ hp: 100, x: myModel.position.x, z: myModel.position.z });
+            myModel.position.set((Math.random()-0.5)*40, 0, (Math.random()-0.5)*40);
+            db.ref('players/' + myID).update({hp: 100, x: myModel.position.x, z: myModel.position.z});
         };
 
         function attack() {
-            if(isDead) return;
-            mySword.position.z = -1.5;
-            setTimeout(() => mySword.position.z = -0.6, 150);
+            if(isDead || isAttacking) return;
+            isAttacking = true;
+            mySwordPivot.position.z = -1.3;
+            db.ref('players/' + myID + '/at').set(true);
+
+            setTimeout(() => { 
+                mySwordPivot.position.z = 0; 
+                isAttacking = false; 
+                db.ref('players/' + myID + '/at').set(false);
+            }, 180);
+
             Object.keys(otherPlayers).forEach(id => {
-                if(myModel.position.distanceTo(otherPlayers[id].position) < 4) {
-                    db.ref('players/' + id + '/hp').transaction(h => (h || 100) - 10);
+                if(myModel.position.distanceTo(otherPlayers[id].position) < 4.2) {
+                    db.ref('players/' + id).once('value', s => {
+                        const target = s.val();
+                        if(target && target.hp > 0) {
+                            db.ref('players/' + id + '/hp').transaction(h => {
+                                let nh = (h || 100) - 15;
+                                if(nh <= 0) db.ref('leaderboard/' + myNick).transaction(k => (k || 0) + 1);
+                                return nh;
+                            });
+                        }
+                    });
                 }
             });
         }
@@ -198,74 +279,74 @@
                 const dir = new THREE.Vector3();
                 if(moveState.f) dir.z -= 1; if(moveState.b) dir.z += 1;
                 if(moveState.l) dir.x -= 1; if(moveState.r) dir.x += 1;
-
                 if(dir.length() > 0) {
                     dir.applyAxisAngle(new THREE.Vector3(0,1,0), camAzimuth);
-                    myModel.position.add(dir.normalize().multiplyScalar(0.2));
+                    myModel.position.add(dir.normalize().multiplyScalar(0.24));
                     myModel.rotation.y = Math.atan2(dir.x, dir.z);
                 }
-
                 myModel.position.y += vy;
-                if(myModel.position.y > 0) { vy -= 0.015; canJump = false; }
+                if(myModel.position.y > 0) { vy -= 0.018; canJump = false; }
                 else { myModel.position.y = 0; vy = 0; canJump = true; }
             }
 
-            // Камера всегда следит за игроком
+            // Камера
             camera.position.x = myModel.position.x + camDist * Math.sin(camAzimuth) * Math.cos(camElevation);
-            camera.position.y = myModel.position.y + camDist * Math.sin(camElevation) + 2;
+            camera.position.y = myModel.position.y + camDist * Math.sin(camElevation) + 1.6;
             camera.position.z = myModel.position.z + camDist * Math.cos(camAzimuth) * Math.cos(camElevation);
-            camera.lookAt(myModel.position.x, myModel.position.y + 1, myModel.position.z);
+            
+            if(camDist < 1) { // Первый взгляд
+                camera.position.copy(myModel.position).add(new THREE.Vector3(0, 1.6, 0));
+                myModel.visible = false;
+            } else { myModel.visible = true; }
+            
+            camera.lookAt(myModel.position.x, myModel.position.y + 1.5, myModel.position.z);
 
-            // Обновляем свой тег
-            const oldTag = myModel.children.find(c => c.type === "Sprite");
-            if(oldTag) myModel.remove(oldTag);
-            myModel.add(createTag(myNick, myHP));
+            // Свой тег
+            const old = myModel.children.find(c => c.type === "Sprite");
+            if(old) myModel.remove(old);
+            if(camDist >= 1) myModel.add(createTag(myNick, myHP));
 
             document.getElementById('hp-bar').style.width = myHP + "%";
             db.ref('players/' + myID).update({ 
                 x: myModel.position.x, y: myModel.position.y, z: myModel.position.z, 
-                ry: myModel.rotation.y, n: myNick, hp: myHP, lastSeen: Date.now() 
+                ry: myModel.rotation.y, n: myNick, hp: myHP, at: isAttacking, lastSeen: Date.now() 
             });
             renderer.render(scene, camera);
         }
 
-        window.checkAndStart = async () => {
-            const input = document.getElementById('nick-input').value.trim();
-            if(!input) return;
-            myNick = input;
+        window.checkAndStart = () => {
+            const val = document.getElementById('nick-input').value.trim();
+            if(!val) return; 
+            myNick = val;
             document.getElementById('login-screen').classList.add('hidden');
             ['ui-layer', 'mobile-controls', 'action-btns'].forEach(id => document.getElementById(id).classList.remove('hidden'));
-            inGame = true;
-            init();
+            inGame = true; init();
         };
 
-        // --- УПРАВЛЕНИЕ ---
-        window.onkeydown = (e) => {
-            if(isDead) return;
-            if(e.code === 'KeyW') moveState.f = true; if(e.code === 'KeyS') moveState.b = true;
-            if(e.code === 'KeyA') moveState.l = true; if(e.code === 'KeyD') moveState.r = true;
-            if(e.code === 'Space' && canJump) vy = 0.35;
-            if(e.code === 'KeyE') attack();
-        };
-        window.onkeyup = (e) => {
-            if(e.code === 'KeyW') moveState.f = false; if(e.code === 'KeyS') moveState.b = false;
-            if(e.code === 'KeyA') moveState.l = false; if(e.code === 'KeyD') moveState.r = false;
-        };
-
-        const bind = (id, k) => { 
-            const el = document.getElementById(id);
-            el.onpointerdown = (e) => { if(!isDead) moveState[k] = true; };
-            el.onpointerup = el.onpointercancel = () => { moveState[k] = false; };
-        };
-        bind('btn-w','f'); bind('btn-s','b'); bind('btn-a','l'); bind('btn-d','r');
-        document.getElementById('btn-jump').onpointerdown = () => { if(canJump && !isDead) vy = 0.35; };
-        document.getElementById('btn-e').onpointerdown = attack;
-
-        let isR = false;
-        window.onmousedown = (e) => { if(e.button === 2) isR = true; };
-        window.onmouseup = () => isR = false;
-        window.onmousemove = (e) => { if(isR) { camAzimuth -= e.movementX * 0.01; camElevation = Math.max(0.1, Math.min(1.4, camElevation + e.movementY * 0.01)); }};
+        // События
+        window.onmousedown = (e) => { if(e.button === 0 && inGame) attack(); if(e.button === 2) window.isR = true; };
+        window.onmouseup = () => window.isR = false;
+        window.onmousemove = (e) => { if(window.isR) { camAzimuth -= e.movementX * 0.008; camElevation = Math.max(-0.4, Math.min(1.4, camElevation + e.movementY * 0.008)); }};
+        window.onwheel = (e) => { camDist = Math.max(0, Math.min(35, camDist + e.deltaY * 0.02)); };
         window.oncontextmenu = (e) => e.preventDefault();
+
+        const handleKeys = (c, v) => {
+            if(c === 'KeyW') moveState.f = v; if(c === 'KeyS') moveState.b = v;
+            if(c === 'KeyA') moveState.l = v; if(c === 'KeyD') moveState.r = v;
+            if(c === 'Space' && v && canJump && !isDead) vy = 0.4;
+        };
+        window.onkeydown = (e) => handleKeys(e.code, true);
+        window.onkeyup = (e) => handleKeys(e.code, false);
+
+        // Мобильные кнопки
+        const bindMob = (id, k) => {
+            const el = document.getElementById(id);
+            el.onpointerdown = (e) => { e.preventDefault(); moveState[k] = true; el.style.background = "rgba(255,255,255,0.4)"; };
+            el.onpointerup = () => { moveState[k] = false; el.style.background = "rgba(255,255,255,0.15)"; };
+        };
+        bindMob('btn-w','f'); bindMob('btn-s','b'); bindMob('btn-a','l'); bindMob('btn-d','r');
+        document.getElementById('btn-jump').onpointerdown = () => { if(canJump && !isDead) vy = 0.4; };
+        document.getElementById('btn-attack').onpointerdown = attack;
     </script>
 </body>
 </html>
