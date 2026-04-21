@@ -3,20 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DanBlox PVP v2</title>
+    <title>DanBlox PVP - Fixed</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; font-family: sans-serif; background: #87CEEB; touch-action: none; }
-        .screen { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 1000; background: rgba(0,0,0,0.8); }
+        body { margin: 0; overflow: hidden; font-family: sans-serif; background: #000; touch-action: none; }
+        .screen { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 1000; background: #111; }
         .window { background: #fff; padding: 30px; border-radius: 20px; border: 5px solid #f00; text-align: center; width: 300px; }
         #ui-layer { position: absolute; top: 10px; left: 10px; z-index: 100; pointer-events: none; }
-        .bar { width: 200px; height: 15px; border: 2px solid #000; background: #555; margin: 5px 0; }
+        .bar { width: 200px; height: 15px; border: 2px solid #000; background: #555; }
         #hp-bar { background: #ff3333; width: 100%; height: 100%; transition: 0.2s; }
-        #mobile-controls { position: absolute; bottom: 20px; left: 20px; display: grid; grid-template-columns: repeat(3, 60px); gap: 5px; }
-        .m-btn { width: 60px; height: 60px; background: rgba(255,255,255,0.3); border: 2px solid #fff; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; }
-        #action-btns { position: absolute; bottom: 30px; right: 30px; display: flex; flex-direction: column; gap: 10px; }
-        .action-circle { width: 70px; height: 70px; border-radius: 50%; border: 3px solid #fff; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; cursor: pointer; }
+        
+        /* Исправленные мобильные кнопки */
+        #mobile-controls { position: absolute; bottom: 30px; left: 30px; display: grid; grid-template-columns: repeat(3, 70px); gap: 10px; z-index: 2000; }
+        .m-btn { width: 70px; height: 70px; background: rgba(255,255,255,0.2); border: 3px solid #fff; border-radius: 15px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; font-size: 24px; user-select: none; -webkit-user-select: none; }
+        
+        #action-btns { position: absolute; bottom: 30px; right: 30px; display: flex; flex-direction: column; gap: 15px; z-index: 2000; }
+        .action-circle { width: 80px; height: 80px; border-radius: 50%; border: 4px solid #fff; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; cursor: pointer; user-select: none; }
+        
         .hidden { display: none !important; }
         #error-msg { color: red; font-size: 14px; margin-top: 10px; display: none; }
     </style>
@@ -26,9 +30,9 @@
     <div id="login-screen" class="screen">
         <div class="window">
             <h1 style="color:#f00">PVP ARENA</h1>
-            <input type="text" id="nick-input" placeholder="ПРИДУМАЙ НИК..." maxlength="10" style="padding:10px; width:80%; font-size:18px; text-align:center;">
-            <div id="error-msg">Этот ник уже занят!</div><br><br>
-            <button onclick="checkNickAndStart()" style="padding:15px 30px; background:#f00; color:#fff; border:none; cursor:pointer; font-weight:bold; border-radius:10px;">В БОЙ!</button>
+            <input type="text" id="nick-input" placeholder="НИК..." maxlength="10" style="padding:10px; width:80%; font-size:18px; text-align:center;">
+            <div id="error-msg">Ник занят (попробуй еще раз)</div><br><br>
+            <button onclick="checkAndStart()" style="padding:15px 30px; background:#f00; color:#fff; border:none; cursor:pointer; font-weight:bold; border-radius:10px;">ИГРАТЬ</button>
         </div>
     </div>
 
@@ -43,7 +47,7 @@
 
     <div id="action-btns" class="hidden">
         <div class="action-circle" style="background:#2196f3;" id="btn-jump">JUMP</div>
-        <div class="action-circle" style="background:#f44336;" id="btn-e">АТАКА</div>
+        <div class="action-circle" style="background:#f44336;" id="btn-e">ATTACK</div>
     </div>
 
     <script type="importmap">
@@ -65,21 +69,21 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let scene, camera, renderer, myModel, mySwordPivot;
+        let scene, camera, renderer, myModel, mySword;
         let myID = 'u' + Math.floor(Math.random() * 1000000);
         let myNick = "", myHP = 100, inGame = false;
         let otherPlayers = {}, moveState = { f: false, b: false, l: false, r: false };
         let vy = 0, canJump = true, camAzimuth = 0, camElevation = 0.5, camDist = 12;
-        let isAttacking = false;
 
-        function createNameTag(name, hp) {
+        // Создание 3D текста (Ник + HP)
+        function createTag(name, hp) {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             canvas.width = 512; canvas.height = 128;
-            ctx.fillStyle = 'rgba(0,0,0,0.4)';
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
             ctx.roundRect(0, 0, 512, 128, 20); ctx.fill();
             ctx.fillStyle = hp > 30 ? '#0f0' : '#f00';
-            ctx.font = 'bold 50px Arial';
+            ctx.font = 'bold 44px Arial';
             ctx.textAlign = 'center';
             ctx.fillText(`${name} [${hp} HP]`, 256, 80);
             const tex = new THREE.CanvasTexture(canvas);
@@ -87,6 +91,18 @@
             sprite.scale.set(4, 1, 1);
             sprite.position.y = 2.8;
             return sprite;
+        }
+
+        async function cleanOldPlayers() {
+            const now = Date.now();
+            const snap = await db.ref('players').once('value');
+            const players = snap.val() || {};
+            for (let id in players) {
+                // Если игрока не обновляли больше 10 секунд — удаляем
+                if (!players[id].lastSeen || now - players[id].lastSeen > 10000) {
+                    await db.ref('players/' + id).remove();
+                }
+            }
         }
 
         function init() {
@@ -98,8 +114,6 @@
             document.body.appendChild(renderer.domElement);
 
             scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-            const sun = new THREE.DirectionalLight(0xffffff, 0.5); sun.position.set(10, 20, 10); scene.add(sun);
-
             const ground = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), new THREE.MeshStandardMaterial({color: 0x2e7d32}));
             ground.rotation.x = -Math.PI/2; scene.add(ground);
 
@@ -110,41 +124,39 @@
             const body = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 0.5), new THREE.MeshStandardMaterial({color: 0x2196f3}));
             body.position.y = 1; myModel.add(body);
             
-            mySwordPivot = new THREE.Group();
-            const sword = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.5, 0.2), new THREE.MeshStandardMaterial({color: 0xcccccc}));
-            sword.position.set(0.7, 1, -0.6); sword.rotation.x = Math.PI/2;
-            mySwordPivot.add(sword); myModel.add(mySwordPivot);
-
+            mySword = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.5, 0.2), new THREE.MeshStandardMaterial({color: 0xcccccc}));
+            mySword.position.set(0.7, 1, -0.6); mySword.rotation.x = Math.PI/2;
+            myModel.add(mySword);
             scene.add(myModel);
 
             db.ref('players/' + myID).onDisconnect().remove();
             db.ref('players').on('value', snap => {
                 const data = snap.val() || {};
+                
+                // Удаление вышедших
                 Object.keys(otherPlayers).forEach(id => {
                     if(!data[id]) { scene.remove(otherPlayers[id]); delete otherPlayers[id]; }
                 });
+
                 Object.keys(data).forEach(id => {
                     if(id === myID) {
                         myHP = data[id].hp || 100;
                         if(myHP <= 0 && inGame) location.reload();
-                        // Обновляем свой тег
-                        const oldTag = myModel.children.find(c => c.type === "Sprite");
-                        if(oldTag) myModel.remove(oldTag);
-                        myModel.add(createNameTag(myNick, myHP));
+                        const old = myModel.children.find(c => c.type === "Sprite");
+                        if(old) myModel.remove(old);
+                        myModel.add(createTag(myNick, myHP));
                         return;
                     }
                     if(!otherPlayers[id]) {
                         const g = new THREE.Group();
-                        const b = new THREE.Mesh(new THREE.BoxGeometry(1,2,0.5), new THREE.MeshStandardMaterial({color: 0xf44336}));
-                        b.position.y = 1; g.add(b);
+                        g.add(new THREE.Mesh(new THREE.BoxGeometry(1,2,0.5), new THREE.MeshStandardMaterial({color: 0xf44336})));
+                        g.children[0].position.y = 1;
                         scene.add(g); otherPlayers[id] = g;
                     }
-                    const p = otherPlayers[id];
-                    p.position.lerp(new THREE.Vector3(data[id].x, data[id].y, data[id].z), 0.2);
-                    p.rotation.y = data[id].ry || 0;
-                    const tag = p.children.find(c => c.type === "Sprite");
-                    if(tag) p.remove(tag);
-                    p.add(createNameTag(data[id].n, data[id].hp || 100));
+                    otherPlayers[id].position.lerp(new THREE.Vector3(data[id].x, data[id].y, data[id].z), 0.2);
+                    const tag = otherPlayers[id].children.find(c => c.type === "Sprite");
+                    if(tag) otherPlayers[id].remove(tag);
+                    otherPlayers[id].add(createTag(data[id].n, data[id].hp || 100));
                 });
             });
 
@@ -152,24 +164,11 @@
         }
 
         function attack() {
-            if(isAttacking) return;
-            isAttacking = true;
-            
-            // Анимация удара
-            const startZ = mySwordPivot.position.z;
-            let time = 0;
-            const anim = setInterval(() => {
-                time += 0.1;
-                mySwordPivot.position.z = -Math.sin(time * 3) * 1.5;
-                if(time >= Math.PI / 1.5) {
-                    clearInterval(anim);
-                    mySwordPivot.position.z = startZ;
-                    isAttacking = false;
-                }
-            }, 20);
+            mySword.position.z = -1.5; // Анимация выпада
+            setTimeout(() => mySword.position.z = -0.6, 150);
 
             Object.keys(otherPlayers).forEach(id => {
-                if(myModel.position.distanceTo(otherPlayers[id].position) < 3.5) {
+                if(myModel.position.distanceTo(otherPlayers[id].position) < 4) {
                     db.ref('players/' + id + '/hp').transaction(h => (h || 100) - 10);
                 }
             });
@@ -199,21 +198,26 @@
             camera.lookAt(myModel.position.x, myModel.position.y + 1.5, myModel.position.z);
 
             document.getElementById('hp-bar').style.width = myHP + "%";
-            db.ref('players/' + myID).update({ x: myModel.position.x, y: myModel.position.y, z: myModel.position.z, ry: myModel.rotation.y, n: myNick, hp: myHP });
+            db.ref('players/' + myID).update({ 
+                x: myModel.position.x, y: myModel.position.y, z: myModel.position.z, 
+                n: myNick, hp: myHP, lastSeen: Date.now() 
+            });
             renderer.render(scene, camera);
         }
 
-        window.checkNickAndStart = () => {
+        window.checkAndStart = async () => {
             const input = document.getElementById('nick-input').value.trim();
-            const err = document.getElementById('error-msg');
             if(!input) return;
+            
+            // Сначала чистим базу от призраков
+            await cleanOldPlayers();
 
             db.ref('players').once('value', snap => {
-                const players = snap.val() || {};
-                const exists = Object.values(players).some(p => p.n.toLowerCase() === input.toLowerCase());
+                const data = snap.val() || {};
+                const exists = Object.values(data).some(p => p.n.toLowerCase() === input.toLowerCase());
                 
                 if(exists) {
-                    err.style.display = 'block';
+                    document.getElementById('error-msg').style.display = 'block';
                 } else {
                     myNick = input;
                     document.getElementById('login-screen').classList.add('hidden');
@@ -224,6 +228,7 @@
             });
         };
 
+        // --- УПРАВЛЕНИЕ ---
         window.onkeydown = (e) => {
             if(e.code === 'KeyW') moveState.f = true; if(e.code === 'KeyS') moveState.b = true;
             if(e.code === 'KeyA') moveState.l = true; if(e.code === 'KeyD') moveState.r = true;
@@ -235,16 +240,23 @@
             if(e.code === 'KeyA') moveState.l = false; if(e.code === 'KeyD') moveState.r = false;
         };
 
+        // Исправленное мобильное управление через PointerEvents
+        const bind = (id, k) => { 
+            const el = document.getElementById(id);
+            el.onpointerdown = (e) => { e.preventDefault(); moveState[k] = true; el.style.background = "rgba(255,255,255,0.5)"; };
+            el.onpointerup = el.onpointercancel = () => { moveState[k] = false; el.style.background = "rgba(255,255,255,0.2)"; };
+        };
+        bind('btn-w','f'); bind('btn-s','b'); bind('btn-a','l'); bind('btn-d','r');
+
+        document.getElementById('btn-jump').onpointerdown = () => { if(canJump) vy = 0.35; };
+        document.getElementById('btn-e').onpointerdown = attack;
+
+        // Вращение камеры правой кнопкой
         let isR = false;
         window.onmousedown = (e) => { if(e.button === 2) isR = true; };
         window.onmouseup = () => isR = false;
         window.onmousemove = (e) => { if(isR) { camAzimuth -= e.movementX * 0.01; camElevation = Math.max(0.1, Math.min(1.4, camElevation + e.movementY * 0.01)); }};
         window.oncontextmenu = (e) => e.preventDefault();
-
-        const bind = (id, k) => { document.getElementById(id).ontouchstart = () => moveState[k] = true; document.getElementById(id).ontouchend = () => moveState[k] = false; };
-        bind('btn-w','f'); bind('btn-s','b'); bind('btn-a','l'); bind('btn-d','r');
-        document.getElementById('btn-jump').onclick = () => { if(canJump) vy = 0.35; };
-        document.getElementById('btn-e').onclick = attack;
     </script>
 </body>
 </html>
