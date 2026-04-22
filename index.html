@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DanBlox: Account & World Update</title>
+    <title>DanBlox: Ultimate Fix</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
@@ -16,10 +16,6 @@
         .info-panel { position: absolute; background: rgba(0,0,0,0.6); color: #fff; padding: 10px; border-radius: 8px; font-size: 12px; z-index: 500; pointer-events: none; }
         #leaderboard { top: 15px; right: 15px; border: 1px solid gold; }
         
-        #admin-menu { position: absolute; left: 10px; top: 150px; background: rgba(255,0,0,0.2); padding: 10px; border-radius: 8px; border: 1px solid red; z-index: 1000; }
-        .hp-bar-3d { background: rgba(0,0,0,0.5); border: 1px solid white; width: 60px; height: 6px; position: relative; }
-        .hp-fill-3d { background: #f00; height: 100%; }
-
         #mobile-controls { position: absolute; inset: 0; pointer-events: none; z-index: 1000; }
         .joy-pad { position: absolute; bottom: 30px; left: 30px; display: grid; grid-template-columns: repeat(3, 65px); gap: 8px; pointer-events: auto; }
         .act-pad { position: absolute; bottom: 30px; right: 30px; pointer-events: auto; display: flex; flex-direction: column; gap: 15px; }
@@ -28,24 +24,16 @@
         .hidden { display: none !important; }
     </style>
 </head>
-<body>
-
-    <div id="leaderboard" class="info-panel"><b>TOP KILLS</b><div id="lb-inner"></div></div>
+<body oncontextmenu="return false;"> <div id="leaderboard" class="info-panel"><b>TOP KILLS</b><div id="lb-inner"></div></div>
 
     <div id="auth-screen" class="screen">
         <div class="auth-box">
             <h2 id="auth-title">РЕГИСТРАЦИЯ</h2>
             <input type="text" id="auth-nick" placeholder="Никнейм">
             <input type="password" id="auth-pass" placeholder="Пароль">
-            <button class="btn-main" id="auth-action-btn" onclick="handleAuth()">СОЗДАТЬ АККАУНТ</button>
-            <p style="font-size: 12px; cursor: pointer; color: #aaa;" onclick="toggleAuthMode()" id="auth-toggle">Уже есть аккаунт? Войти</p>
+            <button class="btn-main" id="auth-action-btn" onclick="handleAuth()">ВОЙТИ В МИР</button>
+            <p style="font-size: 12px; cursor: pointer; color: #aaa; margin-top:15px;" onclick="toggleAuthMode()" id="auth-toggle">Нужен новый аккаунт?</p>
         </div>
-    </div>
-
-    <div id="admin-menu" class="hidden">
-        <div style="font-size:10px; color:red; font-weight:bold;">ADM MODE</div>
-        <button onclick="toggleFly()" id="fly-btn" style="font-size:10px;">FLY: OFF</button>
-        <button onclick="clearLB()" style="font-size:10px; background:maroon; color:white;">RESET LB</button>
     </div>
 
     <div id="mobile-controls" class="hidden">
@@ -72,21 +60,26 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        const WORLD_REF = db.ref('world_v5'); 
+        const WORLD_REF = db.ref('world_v6'); 
 
         let scene, camera, renderer, myModel, mySword;
         let myID = "", myNick = "", myHP = 100, inGame = false, isDead = false;
-        let isRegMode = true, isAdmin = false, isFlying = false;
+        let isRegMode = false, isRightClick = false;
         let otherPlayers = {}, colliders = [];
         let moveState = { f:false, b:false, l:false, r:false };
-        let vy = 0, canJump = true, camAzimuth = 0, camDist = 16;
+        let vy = 0, canJump = true, camAzimuth = 0, camDist = 18;
 
-        function createSword() {
-            const g = new THREE.Group();
-            const blade = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1.8, 0.05), new THREE.MeshStandardMaterial({color: 0xdddddd}));
-            blade.position.y = 0.9;
-            const guard = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.1, 0.2), new THREE.MeshStandardMaterial({color: 0xffd700}));
-            g.add(blade, guard); g.rotation.x = Math.PI/2; g.position.set(0.7, 0.8, 0.3); return g;
+        function createHPBar() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128; canvas.height = 16;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#333'; ctx.fillRect(0,0,128,16);
+            ctx.fillStyle = '#f00'; ctx.fillRect(2,2,124,12);
+            const tex = new THREE.CanvasTexture(canvas);
+            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({map: tex}));
+            sprite.scale.set(2, 0.25, 1);
+            sprite.position.y = 2.2;
+            return sprite;
         }
 
         function createPlayerObject(color, name) {
@@ -97,42 +90,42 @@
             head.position.y = 1.75;
             group.add(body, head);
             
-            // Навешиваем ник (Canvas Texture)
+            // Ник
             const canvas = document.createElement('canvas');
             canvas.width = 256; canvas.height = 64;
             const ctx = canvas.getContext('2d');
-            ctx.fillStyle = 'white'; ctx.font = 'Bold 32px Arial'; ctx.textAlign = 'center';
-            ctx.fillText(name, 128, 40);
+            ctx.fillStyle = 'white'; ctx.font = 'Bold 36px Arial'; ctx.textAlign = 'center';
+            ctx.fillText(name, 128, 45);
             const tex = new THREE.CanvasTexture(canvas);
             const sprite = new THREE.Sprite(new THREE.SpriteMaterial({map: tex}));
-            sprite.position.y = 2.5; sprite.scale.set(3, 0.75, 1);
+            sprite.position.y = 2.8; sprite.scale.set(3, 0.75, 1);
             group.add(sprite);
+
+            // Полоска ХП
+            const hpBar = createHPBar();
+            group.add(hpBar);
+            group.hpBarRef = hpBar;
 
             return group;
         }
 
         function buildWorld() {
             scene = new THREE.Scene(); scene.background = new THREE.Color(0x87ceeb);
-            const ground = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000), new THREE.MeshStandardMaterial({color: 0x447722}));
+            const ground = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000), new THREE.MeshStandardMaterial({color: 0x2d4c1e}));
             ground.rotation.x = -Math.PI/2; scene.add(ground);
             
-            // Декорации с коллизией
-            const addObj = (geo, mat, x, z, scaleY = 1) => {
+            const addObj = (geo, mat, x, z, sY = 1) => {
                 const m = new THREE.Mesh(geo, mat);
-                m.position.set(x, (geo.parameters.height * scaleY)/2, z);
-                m.scale.y = scaleY;
+                m.position.set(x, (geo.parameters.height * sY)/2, z);
+                m.scale.y = sY;
                 scene.add(m);
                 colliders.push(new THREE.Box3().setFromObject(m));
             };
 
-            const stoneMat = new THREE.MeshStandardMaterial({color: 0x777777});
-            const treeMat = new THREE.MeshStandardMaterial({color: 0x114411});
-
-            for(let i=0; i<40; i++) {
-                const rx = (Math.random()-0.5)*200, rz = (Math.random()-0.5)*200;
-                if(Math.abs(rx) < 10) continue;
-                if(Math.random() > 0.5) addObj(new THREE.BoxGeometry(4, 3, 4), stoneMat, rx, rz, Math.random()+0.5);
-                else addObj(new THREE.CylinderGeometry(0.2, 2, 5), treeMat, rx, rz);
+            const stone = new THREE.MeshStandardMaterial({color: 0x666666});
+            for(let i=0; i<30; i++){
+                const rx = (Math.random()-0.5)*150, rz = (Math.random()-0.5)*150;
+                if(Math.hypot(rx,rz) > 12) addObj(new THREE.BoxGeometry(5, 4, 5), stone, rx, rz, Math.random()+0.5);
             }
         }
 
@@ -142,11 +135,17 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
 
-            scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-            const light = new THREE.DirectionalLight(0xffffff, 0.8); light.position.set(50, 100, 50); scene.add(light);
+            scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+            const sun = new THREE.DirectionalLight(0xffffff, 0.5); sun.position.set(10, 50, 10); scene.add(sun);
 
             myModel = createPlayerObject(0x0066ff, myNick);
-            mySword = createSword(); myModel.add(mySword);
+            myModel.children[2].visible = false; // Скрыть свой ник/хп для себя
+            myModel.children[3].visible = false;
+            mySword = new THREE.Group();
+            const blade = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1.8, 0.05), new THREE.MeshStandardMaterial({color: 0xffffff}));
+            blade.position.y = 0.9;
+            mySword.add(blade); mySword.rotation.x = Math.PI/2; mySword.position.set(0.7, 0.8, 0.3);
+            myModel.add(mySword);
             scene.add(myModel);
 
             WORLD_REF.child('players').on('value', snap => {
@@ -154,43 +153,44 @@
                 const now = Date.now();
                 Object.keys(otherPlayers).forEach(id => { if(!data[id]) { scene.remove(otherPlayers[id]); delete otherPlayers[id]; }});
                 Object.keys(data).forEach(id => {
-                    if(id === myID) { 
-                        myHP = data[id].hp; 
-                        if(myHP <= 0 && !isDead) { isDead = true; myModel.rotation.z = Math.PI/2; }
-                        return; 
-                    }
-                    if(now - data[id].ls > 10000) return;
+                    if(id === myID) { myHP = data[id].hp; return; }
+                    if(now - data[id].ls > 8000) return;
                     if(!otherPlayers[id]) {
                         otherPlayers[id] = createPlayerObject(0xff3300, data[id].n);
-                        otherPlayers[id].add(createSword());
+                        otherPlayers[id].add(new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.5, 0.05), new THREE.MeshStandardMaterial()));
+                        otherPlayers[id].children[4].rotation.x = Math.PI/2;
                         scene.add(otherPlayers[id]);
                     }
                     const p = otherPlayers[id];
                     p.position.lerp(new THREE.Vector3(data[id].x, data[id].y, data[id].z), 0.2);
                     p.rotation.y = data[id].ry;
-                    // Анимация меча других игроков
-                    p.children[2].position.z = data[id].at ? 1.5 : 0.3; 
-                    if(data[id].hp <= 0) p.rotation.z = Math.PI/2; else p.rotation.z = 0;
+                    p.children[4].position.z = data[id].at ? 1.5 : 0.3;
+                    
+                    // Обновление ХП над головой
+                    const hpFactor = (data[id].hp || 0) / 100;
+                    p.hpBarRef.material.map.dispose();
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 128; canvas.height = 16;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#333'; ctx.fillRect(0,0,128,16);
+                    ctx.fillStyle = hpFactor > 0.3 ? '#0f0' : '#f00'; 
+                    ctx.fillRect(2, 2, 124 * hpFactor, 12);
+                    p.hpBarRef.material.map = new THREE.CanvasTexture(canvas);
                 });
-            });
-
-            db.ref('leaderboard').orderByValue().limitToLast(5).on('value', snap => {
-                let h = ""; snap.forEach(s => { h = `<div>${s.key}: ${s.val()}</div>` + h; });
-                document.getElementById('lb-inner').innerHTML = h;
             });
 
             animate();
         }
 
         function attack() {
-            if(isDead) return;
-            // Анимация ВПЕРЕД
-            new TWEEN.Tween(mySword.position).to({z: 1.5}, 100).chain(
-                new TWEEN.Tween(mySword.position).to({z: 0.3}, 100)
+            if(isDead || isAtk) return;
+            window.isAtk = true;
+            new TWEEN.Tween(mySword.position).to({z: 1.6}, 80).chain(
+                new TWEEN.Tween(mySword.position).to({z: 0.3}, 120).onComplete(() => window.isAtk = false)
             ).start();
 
             WORLD_REF.child('players/'+myID).update({ at: true });
-            setTimeout(() => WORLD_REF.child('players/'+myID).update({ at: false }), 200);
+            setTimeout(() => WORLD_REF.child('players/'+myID).update({ at: false }), 150);
 
             Object.keys(otherPlayers).forEach(id => {
                 if(myModel.position.distanceTo(otherPlayers[id].position) < 5) {
@@ -208,28 +208,25 @@
         function animate() {
             requestAnimationFrame(animate);
             if(inGame && !isDead) {
-                const prevPos = myModel.position.clone();
+                const prev = myModel.position.clone();
                 const move = new THREE.Vector3();
                 if(moveState.f) move.z -= 1; if(moveState.b) move.z += 1;
                 if(moveState.l) move.x -= 1; if(moveState.r) move.x += 1;
                 
                 if(move.length() > 0) {
                     move.applyAxisAngle(new THREE.Vector3(0,1,0), camAzimuth);
-                    myModel.position.add(move.normalize().multiplyScalar(0.3));
+                    myModel.position.add(move.normalize().multiplyScalar(0.32));
                     myModel.rotation.y = Math.atan2(move.x, move.z);
                 }
 
-                // Проверка коллизий
                 const myBox = new THREE.Box3().setFromObject(myModel);
-                colliders.forEach(c => { if(myBox.intersectsBox(c)) myModel.position.copy(prevPos); });
+                colliders.forEach(c => { if(myBox.intersectsBox(c)) myModel.position.copy(prev); });
 
-                if(!isFlying) {
-                    myModel.position.y += vy;
-                    if(myModel.position.y > 0) { vy -= 0.02; canJump = false; }
-                    else { myModel.position.y = 0; vy = 0; canJump = true; }
-                }
+                myModel.position.y += vy;
+                if(myModel.position.y > 0) { vy -= 0.022; canJump = false; }
+                else { myModel.position.y = 0; vy = 0; canJump = true; }
 
-                WORLD_REF.child('players/'+myID).update({ x: myModel.position.x, y: myModel.position.y, z: myModel.position.z, ry: myModel.rotation.y, ls: Date.now() });
+                WORLD_REF.child('players/'+myID).update({ x: myModel.position.x, y: myModel.position.y, z: myModel.position.z, ry: myModel.rotation.y, ls: Date.now(), hp: myHP });
             }
 
             camera.position.set(myModel.position.x + camDist * Math.sin(camAzimuth), myModel.position.y + 10, myModel.position.z + camDist * Math.cos(camAzimuth));
@@ -238,73 +235,58 @@
             renderer.render(scene, camera);
         }
 
-        // --- AUTH LOGIC ---
+        // --- AUTH & MISC ---
         window.toggleAuthMode = () => {
             isRegMode = !isRegMode;
             document.getElementById('auth-title').innerText = isRegMode ? "РЕГИСТРАЦИЯ" : "ВХОД";
-            document.getElementById('auth-action-btn').innerText = isRegMode ? "СОЗДАТЬ АККАУНТ" : "ВОЙТИ";
-            document.getElementById('auth-toggle').innerText = isRegMode ? "Уже есть аккаунт? Войти" : "Нет аккаунта? Регистрация";
+            document.getElementById('auth-toggle').innerText = isRegMode ? "Уже есть аккаунт? Войти" : "Нужен новый аккаунт?";
         };
 
         window.handleAuth = async () => {
             const nick = document.getElementById('auth-nick').value.trim();
             const pass = document.getElementById('auth-pass').value.trim();
-            if(nick.length < 3 || pass.length < 4) return alert("Слишком короткий ник или пароль");
-
-            const userRef = db.ref('users/' + nick);
-            const snap = await userRef.once('value');
-
-            if(isRegMode) {
-                if(snap.exists()) return alert("Ник занят");
-                await userRef.set({ pass: pass, kills: 0 });
-                loginSuccess(nick);
-            } else {
-                if(!snap.exists() || snap.val().pass !== pass) return alert("Неверный ник или пароль");
-                loginSuccess(nick);
-            }
-        };
-
-        function loginSuccess(nick) {
-            myNick = nick; myID = 'u' + Math.random().toString(36).substr(2, 9);
-            const pass = document.getElementById('auth-pass').value.trim().toLowerCase();
-            if(pass === "la ginger sekolah") { isAdmin = true; document.getElementById('admin-menu').classList.remove('hidden'); }
-            
+            if(nick.length < 2) return;
+            myNick = nick; myID = 'u' + Math.random().toString(36).substr(2, 6);
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('mobile-controls').classList.remove('hidden');
-            inGame = true;
-            buildWorld();
-            initGame();
+            inGame = true; buildWorld(); initGame();
             WORLD_REF.child('players/'+myID).set({ n: myNick, hp: 100, x: 0, y: 0, z: 0, ls: Date.now() });
             WORLD_REF.child('players/'+myID).onDisconnect().remove();
-        }
+        };
 
-        // --- CONTROLS ---
-        window.addEventListener('wheel', e => camDist = Math.max(5, Math.min(40, camDist + e.deltaY * 0.05)));
+        // --- FIXED CONTROLS ---
+        window.addEventListener('blur', () => { moveState = {f:false,b:false,l:false,r:false}; });
+        window.addEventListener('wheel', e => camDist = Math.max(8, Math.min(45, camDist + e.deltaY * 0.05)), {passive:true});
         
-        let lastTouchDist = 0;
-        window.addEventListener('touchmove', e => {
-            if(e.touches.length === 2) {
-                const d = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                if(lastTouchDist) camDist = Math.max(5, Math.min(40, camDist + (lastTouchDist - d) * 0.1));
-                lastTouchDist = d;
-            }
-        });
-        window.addEventListener('touchend', () => lastTouchDist = 0);
+        window.onkeydown = (e) => {
+            const k = e.code;
+            if(k==='KeyW') moveState.f=true; if(k==='KeyS') moveState.b=true;
+            if(k==='KeyA') moveState.l=true; if(k==='KeyD') moveState.r=true;
+            if(k==='Space' && canJump) vy = 0.45;
+        };
+        window.onkeyup = (e) => {
+            const k = e.code;
+            if(k==='KeyW') moveState.f=false; if(k==='KeyS') moveState.b=false;
+            if(k==='KeyA') moveState.l=false; if(k==='KeyD') moveState.r=false;
+        };
 
-        const setup = (id, k) => {
+        window.onmousedown = (e) => { 
+            if(e.button === 2) isRightClick = true; 
+            if(e.button === 0 && inGame) attack(); 
+        };
+        window.onmouseup = (e) => { if(e.button === 2) isRightClick = false; };
+        window.onmousemove = (e) => { if(isRightClick) camAzimuth -= e.movementX * 0.008; };
+
+        const bind = (id, k) => {
             const el = document.getElementById(id);
             el.onpointerdown = (e) => { e.preventDefault(); moveState[k] = true; };
             el.onpointerup = () => moveState[k] = false;
+            el.onpointerleave = () => moveState[k] = false;
         };
-        setup('m-w','f'); setup('m-s','b'); setup('m-a','l'); setup('m-d','r');
-        document.getElementById('m-jump').onpointerdown = () => { if(canJump) vy = 0.45; };
-        document.getElementById('m-atk').onpointerdown = attack;
+        bind('m-w','f'); bind('m-s','b'); bind('m-a','l'); bind('m-d','r');
+        document.getElementById('m-jump').onpointerdown = (e) => { e.preventDefault(); if(canJump) vy = 0.45; };
+        document.getElementById('m-atk').onpointerdown = (e) => { e.preventDefault(); attack(); };
 
-        window.onkeydown = (e) => { if(e.code==='KeyW')moveState.f=true; if(e.code==='Space'&&canJump)vy=0.45; };
-        window.onkeyup = (e) => { if(e.code==='KeyW')moveState.f=false; };
-        window.onmousedown = (e) => { if(e.button===0) attack(); if(e.button===2) window.isR=true; };
-        window.onmousemove = (e) => { if(window.isR) camAzimuth -= e.movementX * 0.01; };
-        window.onmouseup = () => window.isR = false;
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/20.0.0/tween.umd.js"></script>
 </body>
