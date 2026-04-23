@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DanChat Ultra</title>
+    <title>DanChat Ultra Pro</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
@@ -11,12 +11,10 @@
         :root { --bg: #0b0d0f; --panel: #16191d; --accent: #00a2ff; --text: #ffffff; --side-w: 300px; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; overflow: hidden; }
         
-        /* Sidebar */
         #sidebar { width: var(--side-w); background: var(--panel); border-right: 1px solid #2d3239; display: flex; flex-direction: column; }
         .my-profile { padding: 20px; background: #1c2127; border-bottom: 1px solid #2d3239; text-align: center; }
         .my-id-label { font-size: 32px; font-weight: 900; color: var(--accent); letter-spacing: 2px; }
         
-        .sidebar-header { padding: 15px; font-size: 14px; font-weight: bold; color: #888; display: flex; justify-content: space-between; align-items: center; }
         #contact-list { flex: 1; overflow-y: auto; }
         .contact-item { padding: 12px 15px; border-bottom: 1px solid #1f2329; cursor: pointer; display: flex; align-items: center; gap: 12px; position: relative; }
         .contact-item:hover { background: #23282e; }
@@ -26,38 +24,27 @@
         .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #555; margin-right: 5px; display: inline-block; }
         .status-online { background: #00ff88; box-shadow: 0 0 5px #00ff88; }
 
-        /* Main Chat Area */
         #main-content { flex: 1; display: flex; flex-direction: column; background: #0f1216; position: relative; }
         header { background: var(--panel); padding: 15px 25px; border-bottom: 1px solid #2d3239; display: flex; justify-content: space-between; align-items: center; }
         .call-btn { background: #2d3239; border: 1px solid #00ff88; color: #00ff88; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
 
         #chat-window { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-        
-        /* Messages */
-        .msg-row { display: flex; gap: 10px; align-items: flex-end; max-width: 80%; }
+        .msg-row { display: flex; gap: 10px; align-items: flex-end; max-width: 85%; }
         .msg-row.me { flex-direction: row-reverse; align-self: flex-end; }
-        .msg-av { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 1px solid #333; }
-        .msg { padding: 10px 14px; border-radius: 15px; position: relative; min-width: 50px; }
+        .msg-av { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
+        .msg { padding: 10px 14px; border-radius: 15px; position: relative; }
         .me .msg { background: #005bb5; border-bottom-right-radius: 2px; }
         .other .msg { background: #23282e; border-bottom-left-radius: 2px; }
-        .sender-name { font-size: 11px; font-weight: bold; margin-bottom: 4px; display: block; color: #8bb9fe; cursor: pointer; }
-        .reply-box { font-size: 11px; background: rgba(0,0,0,0.2); padding: 5px; border-left: 3px solid #fff; margin-bottom: 5px; }
 
-        /* Context Menu */
         #ctx-menu { position: fixed; background: #1c2127; border: 1px solid #444; border-radius: 8px; z-index: 5000; display: none; box-shadow: 0 5px 15px #000; }
         .ctx-item { padding: 12px 20px; cursor: pointer; font-size: 14px; border-bottom: 1px solid #222; }
         .ctx-item:hover { background: var(--accent); }
 
-        /* Call Modal */
-        #call-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000; display: none; align-items: center; justify-content: center; flex-direction: column; text-align: center; }
+        #call-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000; display: none; align-items: center; justify-content: center; flex-direction: column; }
         .call-av-big { width: 140px; height: 140px; border-radius: 50%; border: 4px solid #00ff88; margin-bottom: 20px; object-fit: cover; }
-        .peer-mic-status { color: #ffaa00; font-size: 14px; margin-top: 5px; }
-
-        /* Input & Emojis */
-        .input-area { background: var(--panel); padding: 15px; display: flex; gap: 10px; align-items: center; border-top: 1px solid #2d3239; position: relative; }
+        
         #emoji-picker { position: absolute; bottom: 80px; left: 10px; background: #1c2127; border: 1px solid #444; border-radius: 10px; padding: 10px; display: none; grid-template-columns: repeat(5, 1fr); gap: 5px; z-index: 1000; }
         #reply-preview { position: absolute; top: -45px; left: 0; right: 0; background: #222; padding: 10px 20px; border-top: 2px solid var(--accent); display: none; justify-content: space-between; font-size: 12px; }
-        
         .hidden { display: none !important; }
     </style>
 </head>
@@ -73,61 +60,52 @@
 
     <div id="call-modal">
         <img id="call-av-img" class="call-av-big" src="">
-        <h2 id="call-peer-name">DanUser</h2>
-        <p id="call-timer">Звонок...</p>
-        <div id="peer-mic-status" class="peer-mic-status"></div>
-        <div style="display:flex; gap:30px; margin-top:40px;">
-            <button onclick="toggleMic()" id="mic-btn" style="padding:20px; border-radius:50%; border:none; background:#444; font-size:24px; cursor:pointer; color:white;">🎙️</button>
-            <button onclick="endCallSignal()" style="padding:20px; border-radius:50%; border:none; background:#ff4444; font-size:24px; cursor:pointer; color:white;">📞</button>
+        <h2 id="call-peer-name">Загрузка...</h2>
+        <p id="call-timer">Вызов...</p>
+        <p id="peer-mic-status" style="color:#ffaa00; font-size:13px;"></p>
+        <div style="display:flex; gap:30px; margin-top:30px;">
+            <button onclick="toggleMic()" id="mic-btn" style="padding:20px; border-radius:50%; background:#444; border:none; cursor:pointer; font-size:24px;">🎙️</button>
+            <button onclick="endCallSignal()" style="padding:20px; border-radius:50%; background:#ff4444; border:none; cursor:pointer; font-size:24px;">📞</button>
         </div>
     </div>
 
     <div id="auth-screen" style="position:fixed; inset:0; background:#0b0d0f; z-index:20000; display:flex; align-items:center; justify-content:center;">
-        <div style="background:var(--panel); padding:40px; border-radius:24px; text-align:center; width:340px; border:1px solid #2d3239;">
-            <h1 style="color:var(--accent); margin-bottom:5px;">DanChat</h1>
+        <div style="background:var(--panel); padding:40px; border-radius:24px; text-align:center; width:340px;">
+            <h1 style="color:var(--accent);">DanChat</h1>
             <div id="reg-box">
-                <img id="preview-av" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" style="width:100px; height:100px; border-radius:50%; object-fit:cover; border:3px solid var(--accent); margin-bottom:15px;">
-                <br><label style="color:var(--accent); cursor:pointer; font-size:12px; font-weight:bold;">ВЫБРАТЬ ФАЙЛ АВАТАРКИ<input type="file" id="av-file" class="hidden" onchange="previewFile(this, 'preview-av')"></label>
+                <img id="preview-av" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" style="width:100px; height:100px; border-radius:50%; object-fit:cover; border:3px solid var(--accent);">
+                <br><label style="color:var(--accent); cursor:pointer; font-size:12px;">ВЫБРАТЬ АВАТАРКУ<input type="file" id="av-file" class="hidden" onchange="previewFile(this, 'preview-av')"></label>
             </div>
-            <input type="text" id="nick" placeholder="Ник" maxlength="20" style="width:100%; padding:14px; margin:15px 0 5px; background:#000; border:1px solid #333; color:white; border-radius:10px;">
+            <input type="text" id="nick" placeholder="Ник" style="width:100%; padding:14px; margin:15px 0 5px; background:#000; border:1px solid #333; color:white; border-radius:10px;">
             <input type="password" id="pass" placeholder="Пароль" style="width:100%; padding:14px; margin:5px 0 15px; background:#000; border:1px solid #333; color:white; border-radius:10px;">
-            <button onclick="handleAuth()" style="width:100%; padding:16px; background:var(--accent); color:white; border:none; border-radius:12px; cursor:pointer; font-weight:bold; font-size:16px;">ВОЙТИ В СЕТЬ</button>
+            <button onclick="handleAuth()" style="width:100%; padding:16px; background:var(--accent); color:white; border:none; border-radius:12px; cursor:pointer; font-weight:bold;">ВОЙТИ</button>
             <p onclick="isRegMode=!isRegMode; document.getElementById('reg-box').style.display=isRegMode?'block':'none'; this.innerText=isRegMode?'Уже есть аккаунт?':'Нужен новый аккаунт?'" style="cursor:pointer; font-size:13px; color:#666; margin-top:20px;">Нужен новый аккаунт?</p>
         </div>
     </div>
 
     <div id="sidebar" class="hidden">
         <div class="my-profile">
-            <div style="font-size:12px; opacity:0.6; font-weight:bold;">ВАШ ID</div>
+            <div style="font-size:12px; opacity:0.6;">ВАШ ID</div>
             <div id="my-id-display" class="my-id-label">000000</div>
-            <b id="my-nick-label" style="font-size:18px;"></b>
+            <b id="my-nick-label"></b>
         </div>
-        <div class="sidebar-header">
-            <span>КОНТАКТЫ</span>
-            <button onclick="addFriendByID()" style="background:var(--accent); border:none; border-radius:50%; width:28px; height:28px; color:white; cursor:pointer; font-weight:bold;">+</button>
-        </div>
+        <div class="sidebar-header"><span>КОНТАКТЫ</span><button onclick="addFriendByID()" style="background:var(--accent); border:none; border-radius:50%; width:28px; height:28px; color:white; cursor:pointer;">+</button></div>
         <div id="contact-list"></div>
     </div>
 
     <div id="main-content" class="hidden">
         <header>
-            <div>
-                <b id="chat-title" style="font-size:20px;">DanChat</b><br>
-                <small id="chat-status" style="color:#00ff88"></small>
-            </div>
+            <div><b id="chat-title">Выберите чат</b><br><small id="chat-status"></small></div>
             <button class="call-btn" id="call-btn-ui" onclick="startCallSignal()" style="display:none;">📞 ЗВОНОК</button>
         </header>
-
         <div id="chat-window" onclick="closeCtx()"></div>
-
         <div id="emoji-picker"></div>
         <div id="reply-preview"><span id="reply-label"></span><span onclick="cancelSpec()" style="cursor:pointer">✕</span></div>
-
         <div class="input-area">
             <span onclick="toggleEmoji()" style="cursor:pointer; font-size:28px;">😊</span>
             <label style="cursor:pointer; font-size:28px;">📷<input type="file" class="hidden" onchange="sendImage(this)"></label>
-            <input type="text" id="msg-input" placeholder="Введите сообщение..." onkeydown="if(event.key==='Enter') sendMsg()">
-            <button onclick="sendMsg()" style="background:var(--accent); border:none; border-radius:10px; padding:12px 25px; color:white; cursor:pointer; font-weight:bold;">OTПPABИТЬ</button>
+            <input type="text" id="msg-input" placeholder="Сообщение..." onkeydown="if(event.key==='Enter') sendMsg()">
+            <button onclick="sendMsg()" style="background:var(--accent); border:none; border-radius:10px; padding:12px 25px; color:white; cursor:pointer;">></button>
         </div>
     </div>
 
@@ -144,7 +122,7 @@
 
         async function handleAuth() {
             const n=document.getElementById('nick').value.trim(), p=document.getElementById('pass').value.trim();
-            if(!n) return alert("Введите ник!");
+            if(!n) return;
             const s = await db.ref('users/'+n).get();
             if(isRegMode) {
                 const id=Math.floor(100000+Math.random()*899999);
@@ -159,80 +137,21 @@
             myData=data; document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('sidebar').classList.remove('hidden'); document.getElementById('main-content').classList.remove('hidden');
             document.getElementById('my-id-display').innerText=data.id; document.getElementById('my-nick-label').innerText=data.nick;
-            
             db.ref('presence/'+myData.nick).set(true); db.ref('presence/'+myData.nick).onDisconnect().remove();
             
-            // Онлайн в глобале
-            db.ref('presence').on('value', s => {
-                const count = s.numChildren();
-                if(activeChatId === 'global') document.getElementById('chat-status').innerText = count + " чел. онлайн";
-            });
-
             initPeer();
             loadFriends();
             initEmojis();
-            listenCalls(); // Слушаем сигналы звонков в Firebase
+            listenCalls();
             switchChat('global', 'Глобальный чат');
         }
 
         function initPeer() {
-            myPeer = new Peer(myData.nick);
+            myPeer = new Peer(myData.nick, { host: '0.peerjs.com', port: 443, secure: true, debug: 1 });
             myPeer.on('call', call => {
-                // PeerJS срабатывает только при реальном соединении
-                navigator.mediaDevices.getUserMedia({audio:true}).then(stream => {
-                    localStream = stream; call.answer(stream); currentCall = call;
-                    handleCallStream(call);
-                });
+                // Если мы уже в звонке - не принимаем второй
+                if (currentCall) return;
             });
-        }
-
-        function loadFriends() {
-            db.ref('users/'+myData.nick+'/friends').on('value', async s => {
-                const list = document.getElementById('contact-list'); 
-                list.innerHTML = `<div class="contact-item" onclick="switchChat('global','Глобальный чат')"><img src="https://cdn-icons-png.flaticon.com/512/864/864685.png"><div><b>🌍 Глобальный чат</b></div></div>`;
-                const friends = s.val() || {};
-                myData.friends = friends;
-                for(let fNick in friends){
-                    const info = await db.ref('users/'+fNick).get();
-                    if(!info.exists()) continue;
-                    const d=info.val(), item=document.createElement('div');
-                    item.className='contact-item';
-                    item.onclick=()=>switchChat(getRoomId(myData.nick, d.nick), d.nick);
-                    db.ref('presence/'+d.nick).on('value', st => {
-                        const on = st.exists();
-                        item.innerHTML=`<img src="${d.av}"><div style="flex:1"><b>${d.nick}</b><br><small><span class="status-dot ${on?'status-online':''}"></span>${on?'В сети':'Оффлайн'}</small></div><span class="del-btn" onclick="removeFriend(event,'${d.nick}')">✕</span>`;
-                    });
-                    list.appendChild(item);
-                }
-            });
-        }
-
-        function addFriendByID() {
-            const id=prompt("Введите ID пользователя:"); if(!id || id == myData.id) return;
-            db.ref('id_map/'+id).once('value', s => {
-                if(s.exists()){
-                    const targetNick = s.val();
-                    db.ref('users/'+myData.nick+'/friends/'+targetNick).set(true);
-                    db.ref('users/'+targetNick+'/friends/'+myData.nick).set(true);
-                } else alert("ID не найден!");
-            });
-        }
-
-        function removeFriend(e, n) { e.stopPropagation(); if(confirm("Удалить?")){ db.ref('users/'+myData.nick+'/friends/'+n).remove(); db.ref('users/'+n+'/friends/'+myData.nick).remove(); } }
-
-        // ЗВОНКИ ЧЕРЕЗ СИГНАЛЫ FIREBASE
-        async function startCallSignal() {
-            const on = await db.ref('presence/'+activePeerNick).get();
-            if(!on.exists()) return alert("Собеседник оффлайн!");
-
-            const callData = { from: myData.nick, to: activePeerNick, status: 'calling', mic: true };
-            db.ref('calls/'+activePeerNick).set(callData);
-            db.ref('calls/'+myData.nick).set(callData);
-            
-            showCallModal(activePeerNick, "Вызов...");
-            localStream = await navigator.mediaDevices.getUserMedia({audio:true});
-            currentCall = myPeer.call(activePeerNick, localStream);
-            handleCallStream(currentCall);
         }
 
         function listenCalls() {
@@ -240,32 +159,68 @@
                 const c = s.val();
                 if(!c) { endCallUI(); return; }
                 
-                // Входящий звонок
+                // Входящий вызов (сигнал из Firebase)
                 if(c.to === myData.nick && c.status === 'calling' && !currentCall) {
                     if(confirm("Вам звонит " + c.from + ". Принять?")) {
                         db.ref('calls/'+myData.nick).update({status: 'connected'});
                         db.ref('calls/'+c.from).update({status: 'connected'});
-                        showCallModal(c.from, "В звонке");
+                        
+                        showCallModal(c.from, "Соединение...");
+                        localStream = await navigator.mediaDevices.getUserMedia({audio:true});
+                        
+                        // Слушаем PeerJS вызов
+                        myPeer.on('call', call => {
+                            call.answer(localStream);
+                            currentCall = call;
+                            handleCallStream(call);
+                        });
                     } else {
                         endCallSignal();
                     }
                 }
-                
-                // Синхронизация микрофона собеседника
+
                 if(c.status === 'connected') {
                     const peerNick = (c.from === myData.nick) ? c.to : c.from;
-                    const peerData = await db.ref('calls/'+peerNick).get();
-                    document.getElementById('peer-mic-status').innerText = peerData.val().mic ? "" : "Собеседник выключил микрофон";
+                    db.ref('calls/'+peerNick).on('value', ps => {
+                        if(ps.exists()) document.getElementById('peer-mic-status').innerText = ps.val().mic ? "" : "Собеседник выключил микрофон";
+                    });
                 }
             });
         }
 
-        function showCallModal(nick, statusText) {
-            db.ref('users/'+nick).get().then(s => {
+        async function startCallSignal() {
+            try {
+                const on = await db.ref('presence/'+activePeerNick).get();
+                if(!on.exists()) return alert("Собеседник не в сети!");
+
+                localStream = await navigator.mediaDevices.getUserMedia({audio:true});
+                currentCall = myPeer.call(activePeerNick, localStream);
+                
+                if (currentCall) {
+                    handleCallStream(currentCall);
+                    const callData = { from: myData.nick, to: activePeerNick, status: 'calling', mic: true };
+                    db.ref('calls/'+activePeerNick).set(callData);
+                    db.ref('calls/'+myData.nick).set(callData);
+                    showCallModal(activePeerNick, "Вызов...");
+                }
+            } catch (err) { alert("Микрофон недоступен: " + err); }
+        }
+
+        function handleCallStream(call) {
+            if (!call) return;
+            call.on('stream', rs => {
+                const a = new Audio(); a.srcObject = rs; a.play();
+                document.getElementById('call-timer').innerText = "В звонке";
+            });
+            call.on('close', endCallUI);
+        }
+
+        function showCallModal(nick, text) {
+            db.ref('users/'+nick).once('value', s => {
                 document.getElementById('call-modal').style.display='flex';
                 document.getElementById('call-av-img').src = s.val().av;
                 document.getElementById('call-peer-name').innerText = s.val().nick;
-                document.getElementById('call-timer').innerText = statusText;
+                document.getElementById('call-timer').innerText = text;
             });
         }
 
@@ -283,18 +238,48 @@
         }
 
         function toggleMic() {
+            if(!localStream) return;
             const enabled = localStream.getAudioTracks()[0].enabled;
             localStream.getAudioTracks()[0].enabled = !enabled;
             document.getElementById('mic-btn').style.background = !enabled ? "#444" : "#ff4444";
             db.ref('calls/'+myData.nick).update({mic: !enabled});
         }
 
-        function handleCallStream(call) {
-            call.on('stream', rs => { const a=new Audio(); a.srcObject=rs; a.play(); });
-            call.on('close', endCallUI);
+        // --- ОСТАЛЬНЫЕ ФУНКЦИИ (ЧАТ, КОНТАКТЫ) ---
+        function loadFriends() {
+            db.ref('users/'+myData.nick+'/friends').on('value', async s => {
+                const list = document.getElementById('contact-list'); 
+                list.innerHTML = `<div class="contact-item" onclick="switchChat('global','Глобальный чат')"><img src="https://cdn-icons-png.flaticon.com/512/864/864685.png"><div><b>🌍 Глобальный чат</b></div></div>`;
+                myData.friends = s.val() || {};
+                for(let fNick in myData.friends){
+                    const info = await db.ref('users/'+fNick).get();
+                    if(!info.exists()) continue;
+                    const d=info.val(), item=document.createElement('div');
+                    item.className='contact-item';
+                    item.onclick=()=>switchChat(getRoomId(myData.nick, d.nick), d.nick);
+                    db.ref('presence/'+d.nick).on('value', st => {
+                        const on = st.exists();
+                        item.innerHTML=`<img src="${d.av}"><div style="flex:1"><b>${d.nick}</b><br><small><span class="status-dot ${on?'status-online':''}"></span>${on?'В сети':'Оффлайн'}</small></div><span class="del-btn" onclick="removeFriend(event,'${d.nick}')">✕</span>`;
+                    });
+                    list.appendChild(item);
+                }
+            });
         }
 
-        // ЧАТ И СООБЩЕНИЯ
+        function addFriendByID() {
+            const id=prompt("ID:"); if(!id || id == myData.id) return;
+            db.ref('id_map/'+id).once('value', s => {
+                if(s.exists()){
+                    const n = s.val();
+                    if(myData.friends[n]) return alert("Уже в списке!");
+                    db.ref('users/'+myData.nick+'/friends/'+n).set(true);
+                    db.ref('users/'+n+'/friends/'+myData.nick).set(true);
+                } else alert("Не найден!");
+            });
+        }
+
+        function removeFriend(e, n) { e.stopPropagation(); if(confirm("Удалить?")){ db.ref('users/'+myData.nick+'/friends/'+n).remove(); db.ref('users/'+n+'/friends/'+myData.nick).remove(); } }
+
         function switchChat(id, name) {
             activeChatId=id; activePeerNick=(name.includes("Глобальный")?"":name);
             document.getElementById('chat-title').innerText=name;
@@ -304,25 +289,19 @@
             db.ref('messages/'+id).on('child_added', s => drawMsg(s.key, s.val()));
             db.ref('messages/'+id).on('child_changed', s => { const e=document.getElementById('m-'+s.key); if(e) e.querySelector('.txt-c').innerText = s.val().txt + " (изм.)"; });
             db.ref('messages/'+id).on('child_removed', s => { const e=document.getElementById('m-'+s.key); if(e) e.remove(); });
+            
+            if(id==='global') db.ref('presence').on('value', s=>document.getElementById('chat-status').innerText=s.numChildren()+" онлайн");
+            else document.getElementById('chat-status').innerText="";
         }
 
         async function drawMsg(id, m) {
             const win=document.getElementById('chat-window'), row=document.createElement('div');
             row.id='m-'+id; row.className=`msg-row ${m.sn===myData.nick?'me':'other'}`;
-            
-            const userInf = await db.ref('users/'+m.sn).get();
-            const av = userInf.exists() ? userInf.val().av : "";
-
-            let rpHtml = m.rp ? `<div class="reply-box">↪ ${m.rp}</div>` : "";
-            let content = m.txt ? `<div class="txt-c">${m.txt}</div>` : `<img src="${m.img}" style="max-width:250px;border-radius:10px;cursor:pointer" onclick="window.open(this.src)">`;
-            
-            row.innerHTML=`
-                <img src="${av}" class="msg-av">
-                <div class="msg">
-                    <span class="sender-name" onclick="addFriendDirect('${m.sn}')">${m.sn}</span>
-                    ${rpHtml}${content}
-                </div>
-            `;
+            const sUser = await db.ref('users/'+m.sn).get();
+            const av = sUser.exists() ? sUser.val().av : "";
+            let rpH = m.rp ? `<div class="reply-box">↪ ${m.rp}</div>` : "";
+            let cnt = m.txt ? `<div class="txt-c">${m.txt}</div>` : `<img src="${m.img}" style="max-width:250px;border-radius:10px;cursor:pointer" onclick="window.open(this.src)">`;
+            row.innerHTML=`<img src="${av}" class="msg-av"><div class="msg"><span style="font-size:11px;color:#8bb9fe;cursor:pointer" onclick="addFriendByIDDirect('${m.sn}')">${m.sn}</span>${rpH}${cnt}</div>`;
             row.oncontextmenu = (e) => { e.preventDefault(); openCtx(e, id, m); };
             win.appendChild(row); win.scrollTop=win.scrollHeight;
         }
@@ -351,14 +330,6 @@
             r.readAsDataURL(inp.files[0]);
         }
 
-        async function addFriendDirect(n) {
-            if(n === myData.nick || myData.friends[n]) return;
-            if(confirm("Добавить " + n + " в контакты?")) {
-                db.ref('users/'+myData.nick+'/friends/'+n).set(true);
-                db.ref('users/'+n+'/friends/'+myData.nick).set(true);
-            }
-        }
-
         function initEmojis() {
             const emojis=['😀','😂','😍','😎','🔥','👍','🙌','💩','🤡','👾'];
             const p=document.getElementById('emoji-picker');
@@ -369,6 +340,7 @@
         }
         function toggleEmoji(){ const p=document.getElementById('emoji-picker'); p.style.display=p.style.display==='grid'?'none':'grid'; }
         function getRoomId(n1,n2){ return [n1,n2].sort().join("_"); }
+        async function addFriendByIDDirect(n) { if(n !== myData.nick && !myData.friends[n]) { db.ref('users/'+myData.nick+'/friends/'+n).set(true); db.ref('users/'+n+'/friends/'+myData.nick).set(true); } }
     </script>
 </body>
 </html>
