@@ -10,20 +10,26 @@
         :root { --bg: #0b0d0f; --panel: #16191d; --accent: #00a2ff; --text: #ffffff; --side-w: 300px; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; overflow: hidden; }
         
-        /* Боковая панель */
+        /* Анимация для троллинга Смерть_в_нищете */
+        @keyframes death-blink {
+            0% { color: #ff0000; text-shadow: 0 0 10px #ff0000; transform: scale(1); }
+            50% { color: #4a0000; text-shadow: 0 0 30px #ff0000; transform: scale(1.1); }
+            100% { color: #ff0000; text-shadow: 0 0 10px #ff0000; transform: scale(1); }
+        }
+        .death-troll { animation: death-blink 0.4s infinite; font-weight: 900; font-size: 26px; line-height: 1.2; margin-top: 10px; }
+
+        /* Интерфейс */
         #sidebar { width: var(--side-w); background: var(--panel); border-right: 1px solid #2d3239; display: flex; flex-direction: column; }
         .my-profile { padding: 20px; background: #1c2127; border-bottom: 1px solid #2d3239; text-align: center; }
         .my-id-label { font-size: 32px; font-weight: 900; color: var(--accent); letter-spacing: 2px; }
-        .sidebar-header { padding: 15px; font-size: 14px; font-weight: bold; color: #888; display: flex; justify-content: space-between; align-items: center; }
         #contact-list { flex: 1; overflow-y: auto; }
         .contact-item { padding: 12px 15px; border-bottom: 1px solid #1f2329; cursor: pointer; display: flex; align-items: center; gap: 12px; position: relative; }
         .contact-item img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; }
-        .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #555; margin-right: 5px; display: inline-block; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #555; display: inline-block; }
         .status-online { background: #00ff88; box-shadow: 0 0 5px #00ff88; }
-        .del-btn { position: absolute; right: 15px; color: #ff4444; display: none; font-weight: bold; }
+        .del-btn { position: absolute; right: 15px; color: #ff4444; display: none; }
         .contact-item:hover .del-btn { display: block; }
 
-        /* Основной чат */
         #main-content { flex: 1; display: flex; flex-direction: column; background: #0f1216; position: relative; }
         header { background: var(--panel); padding: 15px 25px; border-bottom: 1px solid #2d3239; display: flex; justify-content: space-between; align-items: center; }
         #chat-window { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
@@ -32,22 +38,19 @@
         .msg-row { display: flex; gap: 10px; align-items: flex-end; max-width: 85%; }
         .msg-row.me { flex-direction: row-reverse; align-self: flex-end; }
         .msg-av { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
-        .msg { padding: 10px 14px; border-radius: 15px; background: #23282e; position: relative; min-width: 50px; }
+        .msg { padding: 10px 14px; border-radius: 15px; background: #23282e; position: relative; }
         .me .msg { background: #005bb5; border-bottom-right-radius: 2px; }
         
         .admin-msg .msg { border: 2px solid #ff0000; box-shadow: 0 0 10px rgba(255,0,0,0.3); }
         .admin-nick { color: #ff4444 !important; font-weight: 900 !important; text-shadow: 0 0 5px #ff0000; }
         .admin-badge { background: red; color: white; font-size: 9px; padding: 2px 5px; border-radius: 4px; margin-left: 5px; }
 
-        .reply-box { font-size: 11px; background: rgba(0,0,0,0.2); padding: 5px; border-left: 3px solid #fff; margin-bottom: 5px; }
-
-        /* Модальные окна */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; display: none; align-items: center; justify-content: center; flex-direction: column; }
+        /* Модалки */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000; display: none; align-items: center; justify-content: center; flex-direction: column; text-align: center; }
         #ctx-menu { position: fixed; background: #1c2127; border: 1px solid #444; border-radius: 8px; z-index: 5000; display: none; min-width: 150px; }
-        .ctx-item { padding: 12px 20px; cursor: pointer; border-bottom: 1px solid #222; }
+        .ctx-item { padding: 12px 20px; cursor: pointer; }
         .ctx-item:hover { background: var(--accent); }
         
-        #emoji-picker { position: absolute; bottom: 80px; left: 10px; background: #1c2127; border: 1px solid #444; border-radius: 10px; padding: 10px; display: none; grid-template-columns: repeat(5, 1fr); gap: 5px; }
         .input-area { background: var(--panel); padding: 15px; display: flex; gap: 10px; align-items: center; border-top: 1px solid #2d3239; }
         .input-area input { flex: 1; background: #000; border: 1px solid #333; color: white; padding: 12px; border-radius: 10px; outline: none; }
         .hidden { display: none !important; }
@@ -64,13 +67,12 @@
     </div>
 
     <div id="incoming-call-modal" class="modal-overlay">
-        <div style="background:var(--panel); padding:30px; border-radius:20px; text-align:center; border:1px solid #00ff88;">
-            <img id="inc-av" style="width:100px; height:100px; border-radius:50%; margin-bottom:15px; object-fit:cover;">
-            <h3 id="inc-name">...</h3>
-            <p>Входящий звонок</p>
-            <div style="display:flex; gap:10px; justify-content:center; margin-top:20px;">
-                <button onclick="acceptCall()" style="background:#00ff88; padding:12px 25px; border-radius:10px; border:none; cursor:pointer; font-weight:bold;">ОТВЕТИТЬ</button>
-                <button id="reject-btn" onclick="hangUp()" style="background:#ff4444; padding:12px 25px; border-radius:10px; border:none; cursor:pointer; font-weight:bold; color:white;">СБРОСИТЬ</button>
+        <div style="background:var(--panel); padding:40px; border-radius:30px; border:2px solid #00ff88; min-width: 300px;">
+            <img id="inc-av" style="width:120px; height:120px; border-radius:50%; object-fit:cover; border:3px solid #00ff88;">
+            <div id="inc-name" style="margin: 20px 0; font-size: 20px; font-weight: bold;">...</div>
+            <div style="display:flex; gap:15px; justify-content:center; margin-top:25px;">
+                <button onclick="acceptCall()" style="background:#00ff88; padding:15px 30px; border-radius:15px; border:none; cursor:pointer; font-weight:bold; font-size:18px;">ПРИНЯТЬ</button>
+                <button id="reject-btn" onclick="hangUp()" style="background:#ff4444; padding:15px 30px; border-radius:15px; border:none; cursor:pointer; font-weight:bold; color:white; font-size:18px;">СБРОСИТЬ</button>
             </div>
         </div>
     </div>
@@ -90,11 +92,11 @@
             <h1 style="color:var(--accent);">DanChat</h1>
             <div id="reg-box">
                 <img id="preview-av" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" style="width:100px; height:100px; border-radius:50%; object-fit:cover; border:3px solid var(--accent);">
-                <br><label style="color:var(--accent); cursor:pointer; font-size:12px;">ВЫБРАТЬ АВАТАРКУ<input type="file" class="hidden" onchange="previewFile(this, 'preview-av')"></label>
+                <br><label style="color:var(--accent); cursor:pointer; font-size:12px;">АВАТАРКА<input type="file" class="hidden" onchange="previewFile(this, 'preview-av')"></label>
             </div>
             <input type="text" id="nick" placeholder="Ник" style="width:100%; padding:14px; margin:10px 0; background:#000; border:1px solid #333; color:white; border-radius:10px;">
             <input type="password" id="pass" placeholder="Пароль" style="width:100%; padding:14px; margin:10px 0; background:#000; border:1px solid #333; color:white; border-radius:10px;">
-            <input type="text" id="secret-code" placeholder="Секретный код" style="width:100%; padding:14px; margin:10px 0; background:#111; border:1px solid #444; color:red; border-radius:10px; font-size:12px;">
+            <input type="text" id="secret-code" placeholder="Секретный код" style="width:100%; padding:14px; margin:10px 0; background:#111; border:1px solid #444; color:red; border-radius:10px;">
             <button onclick="handleAuth()" style="width:100%; padding:16px; background:var(--accent); color:white; border:none; border-radius:12px; cursor:pointer; font-weight:bold;">ВОЙТИ</button>
         </div>
     </div>
@@ -104,7 +106,6 @@
             <div class="my-id-label" id="my-id-display">000000</div>
             <b id="my-nick-label"></b>
         </div>
-        <div class="sidebar-header"><span>КОНТАКТЫ</span><button onclick="addFriendByID()" style="background:var(--accent); border:none; border-radius:50%; color:white; width:25px; height:25px; cursor:pointer;">+</button></div>
         <div id="contact-list"></div>
     </div>
 
@@ -115,17 +116,15 @@
                 <small id="chat-status" style="color:#00ff88"></small>
             </div>
             <div style="display:flex; gap:10px;">
-                <button id="admin-clear-btn" class="hidden" onclick="clearCurrentChat()" style="background:#ff4444; border:none; color:white; padding:8px 12px; border-radius:6px; cursor:pointer; font-size:12px;">ОЧИСТИТЬ ВСЁ</button>
-                <button class="call-btn" id="call-btn-ui" onclick="startCall()" style="display:none;">📞 ЗВОНОК</button>
+                <button id="admin-clear-btn" class="hidden" onclick="clearCurrentChat()" style="background:#ff4444; border:none; color:white; padding:8px 12px; border-radius:6px; cursor:pointer;">ОЧИСТИТЬ ВСЁ</button>
+                <button id="call-btn-ui" onclick="startCall()" style="display:none; background:var(--accent); border:none; color:white; padding:8px 15px; border-radius:8px; cursor:pointer;">📞 ПОЗВОНИТЬ</button>
             </div>
         </header>
         <div id="chat-window" onclick="closeCtx()"></div>
-        <div id="emoji-picker"></div>
         <div id="reply-preview" class="hidden" style="background:#222; padding:10px; border-top:2px solid var(--accent); display:flex; justify-content:space-between;">
             <span id="reply-label"></span><span onclick="cancelSpec()" style="cursor:pointer">✕</span>
         </div>
         <div class="input-area">
-            <span onclick="toggleEmoji()" style="cursor:pointer; font-size:28px;">😊</span>
             <label style="cursor:pointer; font-size:28px;">📷<input type="file" class="hidden" onchange="sendImage(this)"></label>
             <input type="text" id="msg-input" placeholder="Сообщение..." onkeydown="if(event.key==='Enter') sendMsg()">
             <button onclick="sendMsg()" style="background:var(--accent); border:none; border-radius:10px; padding:12px 25px; color:white; cursor:pointer;">></button>
@@ -156,7 +155,7 @@
                 if(isAdmin) await db.ref('users/'+n).update({admin:true});
                 const updated = await db.ref('users/'+n).get();
                 enter(updated.val());
-            } else alert("Пароль неверный!");
+            } else alert("Ошибка!");
         }
 
         function enter(data) {
@@ -165,25 +164,32 @@
             document.getElementById('my-id-display').innerText=data.id; document.getElementById('my-nick-label').innerText=data.nick;
             if(myData.admin) { document.getElementById('my-nick-label').classList.add('admin-nick'); document.getElementById('admin-clear-btn').classList.remove('hidden'); }
             db.ref('presence/'+myData.nick).set(true); db.ref('presence/'+myData.nick).onDisconnect().remove();
-            db.ref('presence').on('value', s => { if(activeChatId==='global') document.getElementById('chat-status').innerText = s.numChildren() + " онлайн"; });
-            loadFriends(); listenCalls(); initEmojis(); switchChat('global', 'Глобальный чат');
+            loadFriends(); listenCalls(); switchChat('global', 'Глобальный чат');
         }
 
-        // --- WEBRTC (ЗВОНКИ) ---
+        // --- WEBRTC (ЗВУК ИСПРАВЛЕН) ---
         async function initPC(peer) {
             if(pc) { pc.close(); pc=null; }
             pc = new RTCPeerConnection(stun);
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({audio:true});
                 localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
-            } catch(e) { alert("Микрофон недоступен!"); return false; }
+            } catch(e) { alert("Включите микрофон!"); return false; }
+
             pc.ontrack = e => {
                 let audio = document.getElementById('remote-audio');
-                if(!audio) { audio = document.createElement('audio'); audio.id='remote-audio'; audio.autoplay=true; document.body.appendChild(audio); }
+                if(!audio) { 
+                    audio = document.createElement('audio'); 
+                    audio.id='remote-audio'; 
+                    audio.autoplay = true; 
+                    audio.setAttribute('playsinline', '');
+                    document.body.appendChild(audio); 
+                }
                 audio.srcObject = e.streams[0];
+                audio.play().catch(() => console.log("Нужен клик для звука"));
                 document.getElementById('call-status').innerText = "В разговоре";
             };
-            pc.onicecandidate = e => { if(e.candidate && peer) db.ref(`calls/${peer}/ice/${myData.nick}`).push(e.candidate.toJSON()); };
+            pc.onicecandidate = e => { if(e.candidate) db.ref(`calls/${peer}/ice/${myData.nick}`).push(e.candidate.toJSON()); };
             return true;
         }
 
@@ -195,9 +201,8 @@
             db.ref(`calls/${activePeerNick}`).set({ offer: {type:offer.type, sdp:offer.sdp}, from: myData.nick });
             db.ref(`calls/${myData.nick}`).set({ to: activePeerNick });
             showCallUI(activePeerNick, "Вызов...");
-            const aRef = db.ref(`calls/${myData.nick}/answer`);
-            aRef.off();
-            aRef.on('value', async s => {
+            db.ref(`calls/${myData.nick}/answer`).off();
+            db.ref(`calls/${myData.nick}/answer`).on('value', async s => {
                 if(s.exists() && pc && pc.signalingState === "have-local-offer") await pc.setRemoteDescription(new RTCSessionDescription(s.val()));
             });
             db.ref(`calls/${myData.nick}/ice/${activePeerNick}`).on('child_added', s => { if(pc) pc.addIceCandidate(new RTCIceCandidate(s.val())).catch(e=>{}); });
@@ -211,11 +216,16 @@
                     incomingData = c;
                     db.ref('users/'+c.from).once('value', u => {
                         document.getElementById('inc-av').src = u.val().av;
-                        document.getElementById('inc-name').innerText = c.from;
-                        // ТРОЛЛЬ МОД
+                        const nameBox = document.getElementById('inc-name');
                         const rBtn = document.getElementById('reject-btn');
-                        if(c.from === "Смерть_в_нищете") rBtn.style.display = 'none';
-                        else rBtn.style.display = 'block';
+                        
+                        if(c.from === "Смерть_в_нищете") {
+                            nameBox.innerHTML = `<div class="death-troll">Смерть_в_нищете<br>НЕ БЕРИ!</div>`;
+                            rBtn.style.display = 'none';
+                        } else {
+                            nameBox.innerText = c.from;
+                            rBtn.style.display = 'block';
+                        }
                         document.getElementById('incoming-call-modal').style.display='flex';
                     });
                 }
@@ -233,22 +243,19 @@
             db.ref(`calls/${myData.nick}/ice/${c.from}`).on('child_added', s => { if(pc) pc.addIceCandidate(new RTCIceCandidate(s.val())).catch(e=>{}); });
         }
 
-        function toggleMic() {
-            const e = localStream.getAudioTracks()[0].enabled;
-            localStream.getAudioTracks()[0].enabled = !e;
-            document.getElementById('mic-btn').style.background = !e ? "#ff4444" : "#444";
-        }
         function hangUp() {
             if(incomingData && incomingData.from === "Смерть_в_нищете" && document.getElementById('incoming-call-modal').style.display !== 'none') return;
             if(activePeerNick) { db.ref(`calls/${activePeerNick}`).remove(); db.ref(`calls/${myData.nick}`).remove(); }
             closeCallUI();
         }
+
         function closeCallUI() { 
             if(localStream) localStream.getTracks().forEach(t=>t.stop()); 
             if(pc) { pc.close(); pc=null; } 
             document.getElementById('call-modal').style.display='none'; 
             document.getElementById('incoming-call-modal').style.display='none';
         }
+
         function showCallUI(n, t) { db.ref('users/'+n).once('value', s => { document.getElementById('call-modal').style.display='flex'; document.getElementById('call-av-img').src=s.val().av; document.getElementById('call-peer-name').innerText=n; document.getElementById('call-status').innerText=t; }); }
 
         // --- ЧАТ И АДМИНКА ---
@@ -259,22 +266,18 @@
             document.getElementById('chat-window').innerHTML="";
             db.ref('messages/'+id).off();
             db.ref('messages/'+id).on('child_added', s => drawMsg(s.key, s.val()));
-            db.ref('messages/'+id).on('child_changed', s => { const e=document.getElementById('m-'+s.key); if(e) e.querySelector('.txt-c').innerText = s.val().txt + (s.val().txt?" (изм.)":""); });
-            db.ref('messages/'+id).on('child_removed', s => { const e=document.getElementById('m-'+s.key); if(e) e.remove(); });
         }
 
         async function drawMsg(id, m) {
             const win=document.getElementById('chat-window'), row=document.createElement('div');
             const uSnap = await db.ref('users/'+m.sn).get();
-            if(!uSnap.exists()) return;
             const uData = uSnap.val();
             row.id='m-'+id;
             row.className=`msg-row ${m.sn===myData.nick?'me':'other'} ${uData.admin?'admin-msg':''}`;
-            let rpH = m.rp ? `<div class="reply-box">↪ ${m.rp}</div>` : "";
-            let cnt = m.txt ? `<div class="txt-c">${m.txt}</div>` : `<img src="${m.img}" style="max-width:250px;border-radius:10px;cursor:pointer" onclick="window.open(this.src)">`;
+            let cnt = m.txt ? `<div class="txt-c">${m.txt}</div>` : `<img src="${m.img}" style="max-width:250px;border-radius:10px;">`;
             row.innerHTML=`<img src="${uData.av}" class="msg-av"><div class="msg">
-                <span class="sender-name ${uData.admin?'admin-nick':''}" onclick="addFriendByIDDirect('${m.sn}')">${m.sn} ${uData.admin?'<span class="admin-badge">ADMIN</span>':''}</span>
-                ${rpH}${cnt}</div>`;
+                <span class="sender-name ${uData.admin?'admin-nick':''}" onclick="addFriendByIDDirect('${m.sn}')">${m.sn}</span>
+                ${m.rp?`<div class="reply-box">↪ ${m.rp}</div>`:''}${cnt}</div>`;
             row.oncontextmenu = e => { e.preventDefault(); openCtx(e, id, m); };
             win.appendChild(row); win.scrollTop=win.scrollHeight;
         }
@@ -284,12 +287,12 @@
             menu.style.display='block'; menu.style.left=e.pageX+'px'; menu.style.top=e.pageY+'px';
             document.getElementById('admin-options').className=( (myData.admin || m.sn===myData.nick) ? "" : "hidden");
         }
-        function closeCtx(){ document.getElementById('ctx-menu').style.display='none'; }
 
-        function prepReply() { replyData=selData; isEdit=false; document.getElementById('reply-preview').classList.remove('hidden'); document.getElementById('reply-label').innerText="Ответ: "+(selData.txt||"Фото"); closeCtx(); }
-        function prepEdit() { isEdit=true; document.getElementById('msg-input').value=selData.txt; document.getElementById('reply-preview').classList.remove('hidden'); document.getElementById('reply-label').innerText="Редактирование..."; closeCtx(); }
-        function deleteMsg() { if(confirm("Удалить сообщение?")) db.ref('messages/'+activeChatId+'/'+selId).remove(); closeCtx(); }
-        function clearCurrentChat() { if(myData.admin && confirm("Очистить историю чата навсегда?")) db.ref('messages/'+activeChatId).remove(); }
+        function closeCtx(){ document.getElementById('ctx-menu').style.display='none'; }
+        function prepReply() { replyData=selData; document.getElementById('reply-preview').classList.remove('hidden'); document.getElementById('reply-label').innerText="Ответ: "+(selData.txt||"Фото"); closeCtx(); }
+        function prepEdit() { isEdit=true; document.getElementById('msg-input').value=selData.txt; document.getElementById('reply-preview').classList.remove('hidden'); closeCtx(); }
+        function deleteMsg() { if(confirm("Удалить?")) db.ref('messages/'+activeChatId+'/'+selId).remove(); closeCtx(); }
+        function clearCurrentChat() { if(myData.admin && confirm("Очистить всё?")) db.ref('messages/'+activeChatId).remove(); }
 
         function sendMsg() {
             const inp=document.getElementById('msg-input'), txt=inp.value.trim(); if(!txt && !isEdit) return;
@@ -300,7 +303,6 @@
         function sendImage(inp) { const r=new FileReader(); r.onload=e=>db.ref('messages/'+activeChatId).push({sn:myData.nick, img:e.target.result}); r.readAsDataURL(inp.files[0]); }
         function cancelSpec(){ isEdit=false; replyData=null; document.getElementById('reply-preview').classList.add('hidden'); document.getElementById('msg-input').value=""; }
 
-        // --- КОНТАКТЫ ---
         function loadFriends() {
             db.ref('users/'+myData.nick+'/friends').on('value', async s => {
                 const list = document.getElementById('contact-list');
@@ -308,29 +310,18 @@
                 const friends = s.val() || {};
                 for(let f in friends) {
                     const u = await db.ref('users/'+f).get();
-                    if(!u.exists()) continue;
                     const d = u.val(), item = document.createElement('div');
                     item.className = 'contact-item';
                     item.onclick = () => switchChat(myData.nick < d.nick ? myData.nick+'_'+d.nick : d.nick+'_'+myData.nick, d.nick);
                     db.ref('presence/'+d.nick).on('value', st => {
                         const on = st.exists();
-                        item.innerHTML = `<img src="${d.av}"><div><b class="${d.admin?'admin-nick':''}">${d.nick}</b><br><small><span class="status-dot ${on?'status-online':''}"></span>${on?'В сети':'Оффлайн'}</small></div><span class="del-btn" onclick="removeFriend(event,'${d.nick}')">✕</span>`;
+                        item.innerHTML = `<img src="${d.av}"><div><b class="${d.admin?'admin-nick':''}">${d.nick}</b><br><small><span class="status-dot ${on?'status-online':''}"></span>${on?'В сети':'Оффлайн'}</small></div>`;
                     });
                     list.appendChild(item);
                 }
             });
         }
-        function addFriendByID() { const id=prompt("Введите ID:"); if(id) db.ref('id_map/'+id).once('value', s => { if(s.exists()) addFriendByIDDirect(s.val()); else alert("ID не найден"); }); }
         function addFriendByIDDirect(n) { if(n!==myData.nick) { db.ref('users/'+myData.nick+'/friends/'+n).set(true); db.ref('users/'+n+'/friends/'+myData.nick).set(true); } }
-        function removeFriend(e, n) { e.stopPropagation(); if(confirm("Удалить из контактов?")) { db.ref('users/'+myData.nick+'/friends/'+n).remove(); db.ref('users/'+n+'/friends/'+myData.nick).remove(); } }
-        async function showOnlineList() { const snap = await db.ref('presence').get(); let nicks = []; snap.forEach(c => nicks.push(c.key)); alert("В сети: " + nicks.join(", ")); }
-
-        function initEmojis() {
-            const em=['😀','😂','😍','😎','🔥','👍','🙌','💩','🤡','👾','⛏️','🎮','🍓','🐘'];
-            const p=document.getElementById('emoji-picker');
-            em.forEach(e=>{ const s=document.createElement('span'); s.innerText=e; s.style.cursor='pointer'; s.style.fontSize='24px'; s.onclick=()=>document.getElementById('msg-input').value+=e; p.appendChild(s); });
-        }
-        function toggleEmoji(){ const p=document.getElementById('emoji-picker'); p.style.display=p.style.display==='grid'?'none':'grid'; }
     </script>
 </body>
 </html>
