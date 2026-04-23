@@ -10,13 +10,13 @@
         :root { --bg: #0b0d0f; --panel: #16191d; --accent: #00a2ff; --text: #ffffff; --side-w: 300px; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; overflow: hidden; }
         
-        /* Анимация для троллинга Смерть_в_нищете */
+        /* Анимация для Смерть_в_нищете */
         @keyframes death-blink {
             0% { color: #ff0000; text-shadow: 0 0 10px #ff0000; transform: scale(1); }
             50% { color: #4a0000; text-shadow: 0 0 30px #ff0000; transform: scale(1.1); }
             100% { color: #ff0000; text-shadow: 0 0 10px #ff0000; transform: scale(1); }
         }
-        .death-troll { animation: death-blink 0.4s infinite; font-weight: 900; font-size: 26px; line-height: 1.2; margin-top: 10px; }
+        .death-troll-active { animation: death-blink 0.4s infinite !important; display: block !important; }
 
         /* Интерфейс */
         #sidebar { width: var(--side-w); background: var(--panel); border-right: 1px solid #2d3239; display: flex; flex-direction: column; }
@@ -27,8 +27,6 @@
         .contact-item img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; }
         .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #555; display: inline-block; }
         .status-online { background: #00ff88; box-shadow: 0 0 5px #00ff88; }
-        .del-btn { position: absolute; right: 15px; color: #ff4444; display: none; }
-        .contact-item:hover .del-btn { display: block; }
 
         #main-content { flex: 1; display: flex; flex-direction: column; background: #0f1216; position: relative; }
         header { background: var(--panel); padding: 15px 25px; border-bottom: 1px solid #2d3239; display: flex; justify-content: space-between; align-items: center; }
@@ -43,7 +41,6 @@
         
         .admin-msg .msg { border: 2px solid #ff0000; box-shadow: 0 0 10px rgba(255,0,0,0.3); }
         .admin-nick { color: #ff4444 !important; font-weight: 900 !important; text-shadow: 0 0 5px #ff0000; }
-        .admin-badge { background: red; color: white; font-size: 9px; padding: 2px 5px; border-radius: 4px; margin-left: 5px; }
 
         /* Модалки */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000; display: none; align-items: center; justify-content: center; flex-direction: column; text-align: center; }
@@ -51,7 +48,7 @@
         .ctx-item { padding: 12px 20px; cursor: pointer; }
         .ctx-item:hover { background: var(--accent); }
         
-        .input-area { background: var(--panel); padding: 15px; display: flex; gap: 10px; align-items: center; border-top: 1px solid #2d3239; }
+        .input-area { background: var(--panel); padding: 15px; display: flex; gap: 10px; border-top: 1px solid #2d3239; }
         .input-area input { flex: 1; background: #000; border: 1px solid #333; color: white; padding: 12px; border-radius: 10px; outline: none; }
         .hidden { display: none !important; }
     </style>
@@ -67,9 +64,9 @@
     </div>
 
     <div id="incoming-call-modal" class="modal-overlay">
-        <div style="background:var(--panel); padding:40px; border-radius:30px; border:2px solid #00ff88; min-width: 300px;">
+        <div style="background:var(--panel); padding:40px; border-radius:30px; border:2px solid #00ff88; min-width: 320px;">
             <img id="inc-av" style="width:120px; height:120px; border-radius:50%; object-fit:cover; border:3px solid #00ff88;">
-            <div id="inc-name" style="margin: 20px 0; font-size: 20px; font-weight: bold;">...</div>
+            <div id="inc-name-box" style="margin: 20px 0; font-size: 20px; font-weight: bold; min-height: 50px;"></div>
             <div style="display:flex; gap:15px; justify-content:center; margin-top:25px;">
                 <button onclick="acceptCall()" style="background:#00ff88; padding:15px 30px; border-radius:15px; border:none; cursor:pointer; font-weight:bold; font-size:18px;">ПРИНЯТЬ</button>
                 <button id="reject-btn" onclick="hangUp()" style="background:#ff4444; padding:15px 30px; border-radius:15px; border:none; cursor:pointer; font-weight:bold; color:white; font-size:18px;">СБРОСИТЬ</button>
@@ -117,7 +114,7 @@
             </div>
             <div style="display:flex; gap:10px;">
                 <button id="admin-clear-btn" class="hidden" onclick="clearCurrentChat()" style="background:#ff4444; border:none; color:white; padding:8px 12px; border-radius:6px; cursor:pointer;">ОЧИСТИТЬ ВСЁ</button>
-                <button id="call-btn-ui" onclick="startCall()" style="display:none; background:var(--accent); border:none; color:white; padding:8px 15px; border-radius:8px; cursor:pointer;">📞 ПОЗВОНИТЬ</button>
+                <button id="call-btn-ui" onclick="startCall()" style="display:none; background:var(--accent); border:none; color:white; padding:8px 15px; border-radius:8px; cursor:pointer;">📞 ЗВОНОК</button>
             </div>
         </header>
         <div id="chat-window" onclick="closeCtx()"></div>
@@ -138,7 +135,7 @@
 
         let myData = {}, activeChatId = "global", activePeerNick = "";
         let pc, localStream, incomingData = null, selId, selData, isEdit = false, replyData = null;
-        const stun = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+        const stun = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] };
 
         function previewFile(inp, id) { const r = new FileReader(); r.onload=e=>document.getElementById(id).src=e.target.result; r.readAsDataURL(inp.files[0]); }
 
@@ -155,7 +152,7 @@
                 if(isAdmin) await db.ref('users/'+n).update({admin:true});
                 const updated = await db.ref('users/'+n).get();
                 enter(updated.val());
-            } else alert("Ошибка!");
+            } else alert("Пароль неверный!");
         }
 
         function enter(data) {
@@ -171,10 +168,11 @@
         async function initPC(peer) {
             if(pc) { pc.close(); pc=null; }
             pc = new RTCPeerConnection(stun);
+            
             try {
-                localStream = await navigator.mediaDevices.getUserMedia({audio:true});
+                localStream = await navigator.mediaDevices.getUserMedia({audio: { echoCancellation: true, noiseSuppression: true }});
                 localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
-            } catch(e) { alert("Включите микрофон!"); return false; }
+            } catch(e) { alert("Ошибка микрофона!"); return false; }
 
             pc.ontrack = e => {
                 let audio = document.getElementById('remote-audio');
@@ -186,10 +184,15 @@
                     document.body.appendChild(audio); 
                 }
                 audio.srcObject = e.streams[0];
-                audio.play().catch(() => console.log("Нужен клик для звука"));
+                audio.play().catch(() => console.warn("Требуется действие пользователя"));
                 document.getElementById('call-status').innerText = "В разговоре";
             };
-            pc.onicecandidate = e => { if(e.candidate) db.ref(`calls/${peer}/ice/${myData.nick}`).push(e.candidate.toJSON()); };
+
+            pc.oniceconnectionstatechange = () => {
+                if(pc && (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed')) hangUp();
+            };
+
+            pc.onicecandidate = e => { if(e.candidate && peer) db.ref(`calls/${peer}/ice/${myData.nick}`).push(e.candidate.toJSON()); };
             return true;
         }
 
@@ -197,15 +200,23 @@
             if(!(await initPC(activePeerNick))) return;
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
-            await db.ref(`calls/${activePeerNick}`).remove();
+            
+            db.ref(`calls/${activePeerNick}`).remove();
             db.ref(`calls/${activePeerNick}`).set({ offer: {type:offer.type, sdp:offer.sdp}, from: myData.nick });
             db.ref(`calls/${myData.nick}`).set({ to: activePeerNick });
             showCallUI(activePeerNick, "Вызов...");
+
             db.ref(`calls/${myData.nick}/answer`).off();
             db.ref(`calls/${myData.nick}/answer`).on('value', async s => {
-                if(s.exists() && pc && pc.signalingState === "have-local-offer") await pc.setRemoteDescription(new RTCSessionDescription(s.val()));
+                if(s.exists() && pc && pc.signalingState === "have-local-offer") {
+                    await pc.setRemoteDescription(new RTCSessionDescription(s.val()));
+                }
             });
-            db.ref(`calls/${myData.nick}/ice/${activePeerNick}`).on('child_added', s => { if(pc) pc.addIceCandidate(new RTCIceCandidate(s.val())).catch(e=>{}); });
+
+            db.ref(`calls/${myData.nick}/ice/${activePeerNick}`).off();
+            db.ref(`calls/${myData.nick}/ice/${activePeerNick}`).on('child_added', s => { 
+                if(pc && s.exists()) pc.addIceCandidate(new RTCIceCandidate(s.val())).catch(e=>{}); 
+            });
         }
 
         function listenCalls() {
@@ -214,20 +225,20 @@
                 if(!c) { closeCallUI(); return; }
                 if(c.offer && !pc) {
                     incomingData = c;
-                    db.ref('users/'+c.from).once('value', u => {
-                        document.getElementById('inc-av').src = u.val().av;
-                        const nameBox = document.getElementById('inc-name');
-                        const rBtn = document.getElementById('reject-btn');
-                        
-                        if(c.from === "Смерть_в_нищете") {
-                            nameBox.innerHTML = `<div class="death-troll">Смерть_в_нищете<br>НЕ БЕРИ!</div>`;
-                            rBtn.style.display = 'none';
-                        } else {
-                            nameBox.innerText = c.from;
-                            rBtn.style.display = 'block';
-                        }
-                        document.getElementById('incoming-call-modal').style.display='flex';
-                    });
+                    const u = await db.ref('users/'+c.from).get();
+                    const ud = u.val();
+                    document.getElementById('inc-av').src = ud ? ud.av : "";
+                    const nameBox = document.getElementById('inc-name-box');
+                    const rBtn = document.getElementById('reject-btn');
+                    
+                    if(c.from === "Смерть_в_нищете") {
+                        nameBox.innerHTML = `<span class="death-troll-active">Смерть_в_нищете<br>НЕ БЕРИ!!!</span>`;
+                        rBtn.style.display = 'none';
+                    } else {
+                        nameBox.innerHTML = `<span>${c.from}</span>`;
+                        rBtn.style.display = 'block';
+                    }
+                    document.getElementById('incoming-call-modal').style.display='flex';
                 }
             });
         }
@@ -236,27 +247,45 @@
             document.getElementById('incoming-call-modal').style.display='none';
             const c = incomingData; activePeerNick = c.from;
             if(!(await initPC(c.from))) return;
-            await pc.setRemoteDescription(new RTCSessionDescription(c.offer));
-            const answer = await pc.createAnswer(); await pc.setLocalDescription(answer);
-            db.ref(`calls/${c.from}/answer`).set({type:answer.type, sdp:answer.sdp});
-            showCallUI(c.from, "В разговоре");
-            db.ref(`calls/${myData.nick}/ice/${c.from}`).on('child_added', s => { if(pc) pc.addIceCandidate(new RTCIceCandidate(s.val())).catch(e=>{}); });
+            
+            try {
+                await pc.setRemoteDescription(new RTCSessionDescription(c.offer));
+                const answer = await pc.createAnswer(); 
+                await pc.setLocalDescription(answer);
+                db.ref(`calls/${c.from}/answer`).set({type:answer.type, sdp:answer.sdp});
+                showCallUI(c.from, "В разговоре");
+                
+                db.ref(`calls/${myData.nick}/ice/${c.from}`).off();
+                db.ref(`calls/${myData.nick}/ice/${c.from}`).on('child_added', s => { 
+                    if(pc && s.exists()) pc.addIceCandidate(new RTCIceCandidate(s.val())).catch(e=>{}); 
+                });
+            } catch(e) { console.error(e); }
         }
 
         function hangUp() {
             if(incomingData && incomingData.from === "Смерть_в_нищете" && document.getElementById('incoming-call-modal').style.display !== 'none') return;
-            if(activePeerNick) { db.ref(`calls/${activePeerNick}`).remove(); db.ref(`calls/${myData.nick}`).remove(); }
+            if(activePeerNick) {
+                db.ref(`calls/${activePeerNick}`).remove();
+                db.ref(`calls/${myData.nick}`).remove();
+            }
             closeCallUI();
         }
 
         function closeCallUI() { 
-            if(localStream) localStream.getTracks().forEach(t=>t.stop()); 
+            if(localStream) { localStream.getTracks().forEach(t=>t.stop()); localStream = null; }
             if(pc) { pc.close(); pc=null; } 
             document.getElementById('call-modal').style.display='none'; 
             document.getElementById('incoming-call-modal').style.display='none';
         }
 
-        function showCallUI(n, t) { db.ref('users/'+n).once('value', s => { document.getElementById('call-modal').style.display='flex'; document.getElementById('call-av-img').src=s.val().av; document.getElementById('call-peer-name').innerText=n; document.getElementById('call-status').innerText=t; }); }
+        function showCallUI(n, t) { 
+            db.ref('users/'+n).once('value', s => { 
+                document.getElementById('call-modal').style.display='flex'; 
+                document.getElementById('call-av-img').src=s.val().av; 
+                document.getElementById('call-peer-name').innerText=n; 
+                document.getElementById('call-status').innerText=t; 
+            }); 
+        }
 
         // --- ЧАТ И АДМИНКА ---
         function switchChat(id, name) {
@@ -266,6 +295,10 @@
             document.getElementById('chat-window').innerHTML="";
             db.ref('messages/'+id).off();
             db.ref('messages/'+id).on('child_added', s => drawMsg(s.key, s.val()));
+            db.ref('messages/'+id).on('child_removed', s => {
+                const e = document.getElementById('m-'+s.key);
+                if(e) e.remove();
+            });
         }
 
         async function drawMsg(id, m) {
@@ -274,10 +307,10 @@
             const uData = uSnap.val();
             row.id='m-'+id;
             row.className=`msg-row ${m.sn===myData.nick?'me':'other'} ${uData.admin?'admin-msg':''}`;
-            let cnt = m.txt ? `<div class="txt-c">${m.txt}</div>` : `<img src="${m.img}" style="max-width:250px;border-radius:10px;">`;
+            let cnt = m.txt ? `<div class="txt-c">${m.txt}</div>` : `<img src="${m.img}" style="max-width:250px;border-radius:10px;cursor:pointer" onclick="window.open(this.src)">`;
             row.innerHTML=`<img src="${uData.av}" class="msg-av"><div class="msg">
-                <span class="sender-name ${uData.admin?'admin-nick':''}" onclick="addFriendByIDDirect('${m.sn}')">${m.sn}</span>
-                ${m.rp?`<div class="reply-box">↪ ${m.rp}</div>`:''}${cnt}</div>`;
+                <b class="sender-name ${uData.admin?'admin-nick':''}" style="font-size:11px; cursor:pointer;" onclick="addFriendByIDDirect('${m.sn}')">${m.sn}</b>
+                ${m.rp?`<div style="font-size:10px; opacity:0.6; border-left:2px solid #fff; padding-left:5px;">${m.rp}</div>`:''}${cnt}</div>`;
             row.oncontextmenu = e => { e.preventDefault(); openCtx(e, id, m); };
             win.appendChild(row); win.scrollTop=win.scrollHeight;
         }
@@ -290,9 +323,9 @@
 
         function closeCtx(){ document.getElementById('ctx-menu').style.display='none'; }
         function prepReply() { replyData=selData; document.getElementById('reply-preview').classList.remove('hidden'); document.getElementById('reply-label').innerText="Ответ: "+(selData.txt||"Фото"); closeCtx(); }
-        function prepEdit() { isEdit=true; document.getElementById('msg-input').value=selData.txt; document.getElementById('reply-preview').classList.remove('hidden'); closeCtx(); }
+        function prepEdit() { isEdit=true; document.getElementById('msg-input').value=selData.txt; document.getElementById('reply-preview').classList.remove('hidden'); document.getElementById('reply-label').innerText="Правка..."; closeCtx(); }
         function deleteMsg() { if(confirm("Удалить?")) db.ref('messages/'+activeChatId+'/'+selId).remove(); closeCtx(); }
-        function clearCurrentChat() { if(myData.admin && confirm("Очистить всё?")) db.ref('messages/'+activeChatId).remove(); }
+        function clearCurrentChat() { if(myData.admin && confirm("Стереть историю?")) db.ref('messages/'+activeChatId).remove(); }
 
         function sendMsg() {
             const inp=document.getElementById('msg-input'), txt=inp.value.trim(); if(!txt && !isEdit) return;
@@ -322,6 +355,7 @@
             });
         }
         function addFriendByIDDirect(n) { if(n!==myData.nick) { db.ref('users/'+myData.nick+'/friends/'+n).set(true); db.ref('users/'+n+'/friends/'+myData.nick).set(true); } }
+        async function showOnlineList() { const snap = await db.ref('presence').get(); let n=0; snap.forEach(()=>{n++}); alert("Сейчас в сети: " + n); }
     </script>
 </body>
 </html>
