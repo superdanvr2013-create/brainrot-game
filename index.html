@@ -3,135 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DanChat Ultimate Edition</title>
+    <title>DanChat Official</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
         :root { --bg: #0b0d0f; --panel: #16191d; --accent: #00a2ff; --text: #ffffff; --side-w: 300px; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; overflow: hidden; }
         
-        /* Тролль анимация */
-        @keyframes warn-flicker { 0%, 100% { opacity: 1; color: #ff0000; } 50% { opacity: 0.3; } }
-        .warn-text { animation: warn-flicker 0.2s infinite; font-weight: 900; }
+        /* Админский стиль */
+        .admin-nick { color: #ff4444 !important; font-weight: 900 !important; text-shadow: 0 0 10px rgba(255,0,0,0.5); }
+        
+        /* Анимация Смерти */
+        @keyframes death-blink { 0%, 100% { opacity: 1; color: #ff0000; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.05); } }
+        .death-warn { animation: death-blink 0.3s infinite; font-weight: 900; font-size: 20px; }
 
-        /* Сайдбар */
+        /* Интерфейс */
         #sidebar { width: var(--side-w); background: var(--panel); border-right: 1px solid #2d3239; display: flex; flex-direction: column; position: relative; }
         #contact-list { flex: 1; overflow-y: auto; }
         .contact-item { padding: 12px 15px; border-bottom: 1px solid #1f2329; cursor: pointer; display: flex; align-items: center; gap: 12px; position: relative; }
         .contact-item:hover { background: #1c2127; }
         .contact-item img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; }
-        .del-contact { position: absolute; right: 10px; color: #ff4444; opacity: 0; transition: 0.2s; }
-        .contact-item:hover .del-contact { opacity: 1; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #555; }
+        .online-dot { background: #00ff88; box-shadow: 0 0 5px #00ff88; }
 
-        /* Чат */
         #main-content { flex: 1; display: flex; flex-direction: column; background: #0f1216; }
         header { background: var(--panel); padding: 15px 25px; border-bottom: 1px solid #2d3239; display: flex; justify-content: space-between; align-items: center; }
-        #chat-window { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-        
-        .msg-row { display: flex; gap: 10px; max-width: 85%; margin-bottom: 8px; }
-        .msg-row.me { flex-direction: row-reverse; align-self: flex-end; }
-        .msg-av { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; align-self: flex-end; }
-        .msg { padding: 10px 15px; border-radius: 15px; background: #23282e; position: relative; }
-        .me .msg { background: var(--accent); }
-        .admin-nick { color: #ff4444 !important; font-weight: bold; }
+        #chat-window { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
 
-        /* Модалки и Меню */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; display: none; align-items: center; justify-content: center; }
-        .win { background: var(--panel); padding: 25px; border-radius: 20px; border: 1px solid #333; text-align: center; width: 320px; }
-        #ctx-menu { position: fixed; background: #1c2127; border: 1px solid #444; border-radius: 8px; z-index: 5000; display: none; min-width: 160px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
-        .ctx-item { padding: 10px 15px; cursor: pointer; font-size: 14px; }
-        .ctx-item:hover { background: var(--accent); }
+        /* Сообщения */
+        .msg-row { display: flex; gap: 10px; max-width: 85%; }
+        .msg-row.me { flex-direction: row-reverse; align-self: flex-end; }
+        .msg-av { width: 38px; height: 38px; border-radius: 50%; cursor: pointer; object-fit: cover; }
+        .msg { padding: 10px 15px; border-radius: 18px; background: #23282e; position: relative; }
+        .me .msg { background: var(--accent); }
+
+        /* Модалки */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000; display: none; align-items: center; justify-content: center; flex-direction: column; }
+        .win { background: var(--panel); padding: 30px; border-radius: 25px; border: 1px solid #333; text-align: center; width: 320px; }
+        .inp { width: 90%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #444; color: #fff; border-radius: 10px; }
+        .btn { padding: 12px 20px; border-radius: 12px; border: none; cursor: pointer; font-weight: bold; margin: 5px; transition: 0.2s; }
         
-        .inp { width: 90%; padding: 10px; margin: 8px 0; background: #000; border: 1px solid #444; color: #fff; border-radius: 8px; }
-        .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; }
+        #settings-trigger { position: absolute; bottom: 15px; left: 15px; font-size: 24px; cursor: pointer; z-index: 100; opacity: 0.6; }
+        #ctx-menu { position: fixed; background: #1c2127; border: 1px solid #444; border-radius: 8px; z-index: 5000; display: none; min-width: 160px; }
+        .ctx-item { padding: 12px; cursor: pointer; }
+        .ctx-item:hover { background: var(--accent); }
         .hidden { display: none !important; }
-        #settings-btn { position: absolute; bottom: 15px; left: 15px; cursor: pointer; font-size: 24px; opacity: 0.5; }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
     <div id="ctx-menu">
-        <div id="msg-ctx">
-            <div class="ctx-item" onclick="prepReply()">Ответить</div>
-            <div id="admin-msg-ops" class="hidden">
-                <div class="ctx-item" onclick="prepEdit()">Изменить</div>
-                <div class="ctx-item" style="color:red" onclick="deleteMsg()">Удалить сообщение</div>
-            </div>
+        <div class="ctx-item" onclick="prepReply()">Ответить</div>
+        <div id="admin-tools" class="hidden">
+            <div class="ctx-item" onclick="prepEdit()">Изменить</div>
+            <div class="ctx-item" style="color:red" onclick="deleteMsg()">Удалить</div>
         </div>
-        <div id="user-ctx" class="hidden">
-            <div class="ctx-item" style="color:red" onclick="adminBanUser()">Удалить аккаунт (BAN)</div>
-        </div>
-    </div>
-
-    <div id="online-modal" class="modal" onclick="this.style.display='none'">
-        <div class="win" onclick="event.stopPropagation()">
-            <h3>Люди в сети</h3>
-            <div id="online-list-full" style="max-height: 300px; overflow-y: auto; text-align: left;"></div>
+        <div id="super-admin-tools" class="hidden">
+            <div class="ctx-item" style="color:red; font-weight:bold" onclick="banUser()">УДАЛИТЬ АККАУНТ</div>
         </div>
     </div>
 
     <div id="settings-modal" class="modal">
         <div class="win">
-            <h3>Настройки</h3>
-            <img id="set-pre" style="width:80px; height:80px; border-radius:50%; object-fit:cover; margin-bottom:10px;">
-            <input type="file" id="file-inp" class="hidden" onchange="loadPre(this)">
-            <button class="btn" onclick="document.getElementById('file-inp').click()">Сменить фото</button>
+            <h3>Настройки профиля</h3>
+            <p style="font-size: 12px; color: var(--accent);">Ваш ID: <span id="display-id">000000</span></p>
+            <img id="set-pre" style="width:90px; height:90px; border-radius:50%; object-fit:cover; border:2px solid var(--accent);">
+            <input type="file" id="file-inp" class="hidden" onchange="previewAv(this)">
+            <br><button class="btn" onclick="document.getElementById('file-inp').click()">Сменить фото</button>
             <input type="text" id="set-nick" class="inp" placeholder="Ник">
-            <input type="text" id="set-admin-code" class="inp" style="border-color:red" placeholder="Секретный код админа">
-            <div style="display:flex; gap:5px; margin-top:10px;">
-                <button class="btn" style="background:var(--accent); color:white; flex:1" onclick="saveSet()">Сохранить</button>
-                <button class="btn" style="background:#444; color:white;" onclick="toggleSet(false)">Закрыть</button>
+            <input type="text" id="set-admin" class="inp" style="border-color:red" placeholder="Секретный код">
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <button class="btn" style="background:var(--accent); color:white; flex:1" onclick="saveSettings()">Сохранить</button>
+                <button class="btn" style="background:#444; color:white;" onclick="closeSettings()">Закрыть</button>
             </div>
         </div>
     </div>
 
-    <div id="inc-call-modal" class="modal">
-        <div class="win" id="inc-win">
-            <div id="warn-box" style="display:none; justify-content:space-between; margin-bottom:15px;">
-                <span class="warn-text">НЕ БЕРИ!!!</span><span class="warn-text">НЕ БЕРИ!!!</span>
+    <div id="incoming-modal" class="modal">
+        <div class="win" id="inc-box">
+            <div id="death-labels" class="hidden" style="display:flex; justify-content:space-between; width:100%; margin-bottom:10px;">
+                <span class="death-warn">НЕ БЕРИ!!!</span><span class="death-warn">НЕ БЕРИ!!!</span>
             </div>
-            <img id="inc-av" style="width:100px; height:100px; border-radius:50%; object-fit:cover;">
-            <h2 id="inc-nick">...</h2>
-            <div style="display:flex; gap:10px; margin-top:15px;">
-                <button class="btn" onclick="answerCall()" style="background:#00ff88; flex:1">ОТВЕТИТЬ</button>
+            <img id="inc-av" style="width:120px; height:120px; border-radius:50%; border:3px solid #00ff88; object-fit:cover;">
+            <h2 id="inc-name" style="margin:15px 0;">...</h2>
+            <div style="display:flex; gap:10px;">
+                <button class="btn" onclick="acceptCall()" style="background:#00ff88; flex:1">ОТВЕТИТЬ</button>
                 <button id="reject-btn" class="btn" onclick="endCall()" style="background:#ff4444; color:white; flex:1">СБРОСИТЬ</button>
             </div>
         </div>
     </div>
 
+    <div id="active-call-modal" class="modal">
+        <div class="win">
+            <img id="active-av" style="width:110px; height:110px; border-radius:50%; border:3px solid var(--accent); object-fit:cover;">
+            <h3 id="active-name">...</h3>
+            <p id="call-status">Соединение...</p>
+            <button class="btn" onclick="endCall()" style="background:#ff4444; color:white; width:100%; padding:15px;">ЗАВЕРШИТЬ</button>
+        </div>
+    </div>
+
     <div id="auth-screen" style="position:fixed; inset:0; background:var(--bg); z-index:20000; display:flex; align-items:center; justify-content:center;">
         <div class="win">
-            <h2>DanChat</h2>
+            <h1 style="color:var(--accent); margin-bottom:20px;">DanChat</h1>
             <input type="text" id="auth-n" class="inp" placeholder="Ник">
             <input type="password" id="auth-p" class="inp" placeholder="Пароль">
-            <button class="btn" style="background:var(--accent); color:white; width:100%" onclick="auth()">Войти</button>
+            <button class="btn" style="background:var(--accent); color:white; width:100%" onclick="login()">Войти</button>
         </div>
     </div>
 
     <div id="sidebar" class="hidden">
-        <div style="padding:15px; text-align:center; border-bottom:1px solid #333;">
-            <img id="my-av" style="width:50px; height:50px; border-radius:50%; object-fit:cover;"><br>
-            <b id="my-n"></b>
-            <div style="margin-top:10px;">
-                <input type="text" id="add-id-inp" placeholder="Добавить по ID" class="inp" style="font-size:10px; padding:5px;">
-                <button onclick="addFriendByID()" class="btn" style="font-size:10px; padding:5px 10px;">+</button>
-            </div>
+        <div style="padding:20px; text-align:center; border-bottom:1px solid #333;">
+            <img id="side-my-av" style="width:60px; height:60px; border-radius:50%; object-fit:cover; margin-bottom:10px;">
+            <div id="side-my-n" style="font-weight:bold;"></div>
         </div>
         <div id="contact-list"></div>
-        <div id="settings-btn" onclick="toggleSet(true)">⚙️</div>
+        <div id="settings-trigger" onclick="openSettings()">⚙️</div>
     </div>
 
     <div id="main-content" class="hidden">
         <header>
-            <div onclick="showOnlineModal()" style="cursor:pointer">
+            <div onclick="showOnlineList()" style="cursor:pointer">
                 <b id="chat-title">Глобальный чат</b><br>
-                <small id="chat-status" style="color:#00ff88"></small>
+                <small id="chat-sub" style="color:#00ff88"></small>
             </div>
-            <button id="call-ui-btn" onclick="makeCall()" style="display:none; background:var(--accent); color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer">📞 Звонок</button>
+            <button id="call-btn" onclick="startCall()" style="display:none; background:var(--accent); color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer;">📞 ЗВОНОК</button>
         </header>
         <div id="chat-window" onclick="closeCtx()"></div>
-        <div id="reply-preview" class="hidden" style="background:#222; padding:10px; border-top:1px solid var(--accent); display:flex; justify-content:space-between;">
-            <span id="reply-label"></span><span onclick="cancelReply()" style="cursor:pointer">✕</span>
+        <div id="reply-bar" class="hidden" style="background:#222; padding:10px; border-top:2px solid var(--accent); display:flex; justify-content:space-between;">
+            <span id="reply-text"></span><span onclick="cancelReply()" style="cursor:pointer">✕</span>
         </div>
         <div style="padding:15px; background:var(--panel); display:flex; gap:10px;">
             <input type="text" id="msg-in" class="inp" style="margin:0" placeholder="Сообщение..." onkeydown="if(event.key==='Enter') send()">
@@ -146,9 +145,9 @@
 
         let myData = null, curChat = 'global', curPeer = '', pc = null, localStream = null;
         let selId = null, selData = null, isEdit = false, replyData = null;
-        const ice = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+        const ice = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] };
 
-        async function auth() {
+        async function login() {
             const n = document.getElementById('auth-n').value.trim(), p = document.getElementById('auth-p').value.trim();
             if(!n) return;
             const s = await db.ref('users/'+n).get();
@@ -157,91 +156,81 @@
                 const user = { nick: n, pass: p, av: 'https://cdn-icons-png.flaticon.com/512/149/149071.png', id: id };
                 await db.ref('users/'+n).set(user); await db.ref('id_map/'+id).set(n); start(user);
             } else if(s.val().pass === p) start(s.val());
-            else alert("Неверный пароль");
+            else alert("Пароль неверный!");
         }
 
         function start(u) {
             myData = u;
-            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('sidebar').classList.remove('hidden');
             document.getElementById('main-content').classList.remove('hidden');
-            document.getElementById('my-av').src = u.av;
-            document.getElementById('my-n').innerText = u.nick;
+            refreshProfileUI();
             db.ref('presence/'+u.nick).set(true); db.ref('presence/'+u.nick).onDisconnect().remove();
             
-            // Следим за своим профилем (на случай бана)
-            db.ref('users/'+u.nick).on('value', s => { if(!s.exists()) location.reload(); myData = s.val(); });
-
-            loadContacts(); listenForCalls(); switchChat('global', 'Глобальный чат');
-            setInterval(updateGlobalOnline, 3000);
+            loadContacts(); listenCalls(); switchChat('global', 'Глобальный чат');
+            setInterval(updateGlobalStats, 2000);
         }
 
-        // --- КОНТАКТЫ ---
+        function refreshProfileUI() {
+            document.getElementById('side-my-av').src = myData.av;
+            document.getElementById('side-my-n').innerText = myData.nick;
+            document.getElementById('display-id').innerText = myData.id;
+            if(myData.admin) document.getElementById('side-my-n').classList.add('admin-nick');
+        }
+
+        // --- КОНТАКТЫ И ЛС ---
         function loadContacts() {
-            db.ref('users/'+myData.nick+'/friends').on('value', async s => {
+            db.ref('users').on('value', s => {
                 const list = document.getElementById('contact-list');
                 list.innerHTML = `<div class="contact-item" onclick="switchChat('global','Глобальный чат')"><b>🌍 Глобальный чат</b></div>`;
-                const friends = s.val() || {};
-                for(let f in friends) {
-                    const u = await db.ref('users/'+f).get();
-                    if(!u.exists()) continue;
-                    const d = u.val(), item = document.createElement('div');
+                s.forEach(snap => {
+                    const d = snap.val(); if(d.nick === myData.nick) return;
+                    const item = document.createElement('div');
                     item.className = 'contact-item';
-                    item.onclick = () => switchChat(myData.nick<d.nick?myData.nick+'_'+d.nick:d.nick+'_'+myData.nick, d.nick);
-                    item.oncontextmenu = (e) => { e.preventDefault(); openUserCtx(e, d.nick); };
-                    
-                    db.ref('presence/'+d.nick).on('value', st => {
-                        const on = st.exists();
-                        item.innerHTML = `<img src="${d.av}"><div><b>${d.nick}</b><br><small style="color:${on?'#00ff88':'#777'}">${on?'В сети':'Оффлайн'}</small></div>
-                        <span class="del-contact" onclick="event.stopPropagation();removeFriend('${d.nick}')">✕</span>`;
+                    item.onclick = () => openPrivate(d.nick);
+                    item.oncontextmenu = (e) => { e.preventDefault(); if(myData.admin) openUserCtx(e, d.nick); };
+                    db.ref('presence/'+d.nick).on('value', p => {
+                        const on = p.exists();
+                        item.innerHTML = `<img src="${d.av}"><div><b class="${d.admin?'admin-nick':''}">${d.nick}</b><br><small><span class="status-dot ${on?'online-dot':''}"></span> ${on?'В сети':'Оффлайн'}</small></div>`;
                     });
                     list.appendChild(item);
-                }
+                });
             });
         }
 
-        async function addFriendByID() {
-            const id = document.getElementById('add-id-inp').value.trim();
-            const snap = await db.ref('id_map/'+id).get();
-            if(snap.exists()) {
-                const n = snap.val();
-                if(n === myData.nick) return;
-                db.ref('users/'+myData.nick+'/friends/'+n).set(true);
-                db.ref('users/'+n+'/friends/'+myData.nick).set(true);
-                document.getElementById('add-id-inp').value = '';
-            } else alert("ID не найден");
+        function openPrivate(nick) {
+            const id = myData.nick < nick ? myData.nick+'_'+nick : nick+'_'+myData.nick;
+            switchChat(id, nick);
         }
-
-        function removeFriend(n) { if(confirm(`Удалить ${n}?`)) db.ref('users/'+myData.nick+'/friends/'+n).remove(); }
 
         // --- ЧАТ ---
         function switchChat(id, title) {
-            curChat = id; curPeer = (id==='global'?'':title);
+            curChat = id; curPeer = (id === 'global' ? '' : title);
             document.getElementById('chat-title').innerText = title;
-            document.getElementById('call-ui-btn').style.display = (id==='global'?'none':'block');
+            document.getElementById('call-btn').style.display = (id === 'global' ? 'none' : 'block');
             document.getElementById('chat-window').innerHTML = '';
             
             db.ref('messages/'+id).off();
             db.ref('messages/'+id).on('child_added', s => drawMsg(s.key, s.val()));
             db.ref('messages/'+id).on('child_removed', s => document.getElementById('m-'+s.key)?.remove());
             db.ref('messages/'+id).on('child_changed', s => {
-                const e = document.getElementById('m-'+s.key);
-                if(e) e.querySelector('.txt-c').innerText = s.val().txt;
+                const el = document.getElementById('m-'+s.key);
+                if(el) el.querySelector('.txt-c').innerText = s.val().txt;
             });
         }
 
-        async function drawMsg(id, m) {
+        async function drawMsg(mid, m) {
             const win = document.getElementById('chat-window'), row = document.createElement('div');
-            const u = await db.ref('users/'+m.sn).get();
-            const ud = u.val();
-            row.id = 'm-'+id;
-            row.className = `msg-row ${m.sn===myData.nick?'me':''}`;
-            row.oncontextmenu = (e) => { e.preventDefault(); openMsgCtx(e, id, m); };
+            const uSnap = await db.ref('users/'+m.sn).get();
+            const ud = uSnap.val() || { av: '', nick: m.sn };
+            row.id = 'm-'+mid;
+            row.className = `msg-row ${m.sn === myData.nick ? 'me' : ''}`;
+            row.oncontextmenu = (e) => { e.preventDefault(); openMsgCtx(e, mid, m); };
             
-            row.innerHTML = `<img src="${ud.av}" class="msg-av">
+            row.innerHTML = `<img src="${ud.av}" class="msg-av" onclick="openPrivate('${m.sn}')">
                 <div class="msg">
-                    <b class="sender-name ${ud.admin?'admin-nick':''}" style="font-size:10px">${m.sn}</b>
-                    ${m.rp?`<div style="font-size:10px; opacity:0.5; border-left:2px solid #fff; padding-left:5px; margin-bottom:5px;">↪ ${m.rp}</div>`:''}
+                    <b class="${ud.admin?'admin-nick':''}" style="font-size:10px; cursor:pointer;" onclick="openPrivate('${m.sn}')">${m.sn}</b>
+                    ${m.rp ? `<div style="font-size:10px; opacity:0.5; border-left:2px solid #fff; padding-left:5px; margin-bottom:4px;">↪ ${m.rp}</div>` : ''}
                     <div class="txt-c">${m.txt}</div>
                 </div>`;
             win.appendChild(row); win.scrollTop = win.scrollHeight;
@@ -250,82 +239,9 @@
         function send() {
             const i = document.getElementById('msg-in'), txt = i.value.trim();
             if(!txt && !isEdit) return;
-            if(isEdit) {
-                db.ref('messages/'+curChat+'/'+selId).update({txt: txt});
-            } else {
-                db.ref('messages/'+curChat).push({ sn: myData.nick, txt: txt, rp: replyData ? replyData.txt : null });
-            }
-            cancelReply(); i.value = '';
-        }
-
-        // --- КОНТЕКСТНОЕ МЕНЮ ---
-        function openMsgCtx(e, id, m) {
-            selId = id; selData = m; closeCtx();
-            const menu = document.getElementById('ctx-menu');
-            document.getElementById('msg-ctx').classList.remove('hidden');
-            document.getElementById('user-ctx').classList.add('hidden');
-            document.getElementById('admin-msg-ops').className = (myData.admin || m.sn === myData.nick) ? "" : "hidden";
-            menu.style.display = 'block'; menu.style.left = e.pageX+'px'; menu.style.top = e.pageY+'px';
-        }
-
-        function openUserCtx(e, nick) {
-            selPeer = nick; closeCtx();
-            if(!myData.admin) return;
-            const menu = document.getElementById('ctx-menu');
-            document.getElementById('msg-ctx').classList.add('hidden');
-            document.getElementById('user-ctx').classList.remove('hidden');
-            menu.style.display = 'block'; menu.style.left = e.pageX+'px'; menu.style.top = e.pageY+'px';
-        }
-
-        function closeCtx() { document.getElementById('ctx-menu').style.display='none'; }
-        function prepReply() { replyData = selData; document.getElementById('reply-preview').classList.remove('hidden'); document.getElementById('reply-label').innerText = "Ответ: " + selData.txt; closeCtx(); }
-        function prepEdit() { isEdit = true; document.getElementById('msg-in').value = selData.txt; document.getElementById('reply-preview').classList.remove('hidden'); document.getElementById('reply-label').innerText = "Редактирование..."; closeCtx(); }
-        function cancelReply() { isEdit = false; replyData = null; document.getElementById('reply-preview').classList.add('hidden'); document.getElementById('msg-in').value = ''; }
-        function deleteMsg() { if(confirm("Удалить сообщение?")) db.ref('messages/'+curChat+'/'+selId).remove(); closeCtx(); }
-
-        async function adminBanUser() {
-            const reason = prompt("Причина удаления аккаунта:");
-            if(reason) {
-                await db.ref('messages/global').push({sn: 'SYSTEM', txt: `Аккаунт ${selPeer} удален админом. Причина: ${reason}`});
-                await db.ref('users/'+selPeer).remove();
-                alert("Аккаунт удален");
-            }
-            closeCtx();
-        }
-
-        // --- ОНЛАЙН ---
-        async function updateGlobalOnline() {
-            const s = await db.ref('presence').get();
-            let count = 0; s.forEach(() => count++);
-            document.getElementById('chat-status').innerText = curChat === 'global' ? `В сети: ${count}` : "";
-        }
-
-        async function showOnlineModal() {
-            const s = await db.ref('presence').get();
-            const list = document.getElementById('online-list-full');
-            list.innerHTML = '';
-            s.forEach(child => {
-                const nick = child.key;
-                list.innerHTML += `<div style="padding:5px; border-bottom:1px solid #333;">🟢 ${nick}</div>`;
-            });
-            document.getElementById('online-modal').style.display = 'flex';
-        }
-
-        // --- НАСТРОЙКИ ---
-        function toggleSet(show) {
-            if(show) {
-                document.getElementById('set-pre').src = myData.av;
-                document.getElementById('set-nick').value = myData.nick;
-                document.getElementById('settings-modal').style.display = 'flex';
-            } else document.getElementById('settings-modal').style.display = 'none';
-        }
-        function loadPre(i) { const r=new FileReader(); r.onload=e=>document.getElementById('set-pre').src=e.target.result; r.readAsDataURL(i.files[0]); }
-        async function saveSet() {
-            const code = document.getElementById('set-admin-code').value;
-            const update = { av: document.getElementById('set-pre').src };
-            if(code === "DanAdminPanel") update.admin = true;
-            await db.ref('users/'+myData.nick).update(update);
-            alert("Обновлено!"); toggleSet(false);
+            if(isEdit) db.ref('messages/'+curChat+'/'+selId).update({txt: txt});
+            else db.ref('messages/'+curChat).push({ sn: myData.nick, txt: txt, rp: replyData ? replyData.txt : null });
+            i.value = ''; cancelReply();
         }
 
         // --- ЗВОНКИ ---
@@ -335,58 +251,136 @@
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
-            } catch(e) { alert("Микрофон!"); return false; }
+            } catch(e) { alert("Ошибка микрофона!"); return false; }
+
             pc.ontrack = e => {
                 let a = document.getElementById('remote-audio') || document.createElement('audio');
                 a.id = 'remote-audio'; a.autoplay = true; a.srcObject = e.streams[0];
                 document.body.appendChild(a);
+                document.getElementById('call-status').innerText = "В разговоре";
             };
             pc.onicecandidate = e => { if(e.candidate) db.ref(`calls/${peer}/ice/${myData.nick}`).push(e.candidate.toJSON()); };
             return true;
         }
 
-        async function makeCall() {
+        async function startCall() {
             if(!(await initRTC(curPeer))) return;
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
             db.ref(`calls/${curPeer}`).set({ from: myData.nick, offer: offer });
+            
+            showActiveCall(curPeer, "Вызов...");
             db.ref(`calls/${myData.nick}/answer`).on('value', async s => {
                 if(s.exists()) await pc.setRemoteDescription(new RTCSessionDescription(s.val()));
             });
-            db.ref(`calls/${myData.nick}/ice/${curPeer}`).on('child_added', s => { if(pc) pc.addIceCandidate(new RTCIceCandidate(s.val())); });
-            alert("Звоним...");
+            db.ref(`calls/${myData.nick}/ice/${curPeer}`).on('child_added', s => {
+                if(pc && s.exists()) pc.addIceCandidate(new RTCIceCandidate(s.val())).catch(()=>{});
+            });
         }
 
-        function listenForCalls() {
+        function listenCalls() {
             db.ref(`calls/${myData.nick}`).on('value', async s => {
-                const call = s.val();
-                if(!call) { document.getElementById('inc-call-modal').style.display='none'; return; }
-                if(call.offer && !pc) {
-                    const u = await db.ref('users/'+call.from).get();
+                const c = s.val();
+                if(!c) { closeAllCalls(); return; }
+                if(c.offer && !pc) {
+                    const u = await db.ref('users/'+c.from).get();
                     document.getElementById('inc-av').src = u.val().av;
-                    document.getElementById('inc-nick').innerText = call.from;
-                    const isTroll = call.from === "Смерть_в_нищете";
-                    document.getElementById('warn-box').style.display = isTroll ? 'flex' : 'none';
-                    document.getElementById('reject-btn').style.display = isTroll ? 'none' : 'block';
-                    document.getElementById('inc-call-modal').style.display = 'flex';
+                    document.getElementById('inc-name').innerText = c.from;
+                    const isDeath = (c.from === "Смерть_в_нищете");
+                    document.getElementById('death-labels').className = isDeath ? "" : "hidden";
+                    document.getElementById('reject-btn').style.display = isDeath ? 'none' : 'block';
+                    document.getElementById('inc-box').style.borderColor = isDeath ? 'red' : '#333';
+                    document.getElementById('incoming-modal').style.display = 'flex';
                 }
             });
         }
 
-        async function answerCall() {
+        async function acceptCall() {
             const call = (await db.ref(`calls/${myData.nick}`).get()).val();
             if(!call || !(await initRTC(call.from))) return;
             await pc.setRemoteDescription(new RTCSessionDescription(call.offer));
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
             db.ref(`calls/${call.from}/answer`).set(answer);
-            db.ref(`calls/${myData.nick}/ice/${call.from}`).on('child_added', s => { if(pc) pc.addIceCandidate(new RTCIceCandidate(s.val())); });
+            db.ref(`calls/${myData.nick}/ice/${call.from}`).on('child_added', s => {
+                if(pc && s.exists()) pc.addIceCandidate(new RTCIceCandidate(s.val())).catch(()=>{});
+            });
+            showActiveCall(call.from, "В разговоре");
         }
 
         function endCall() {
+            if(curPeer) db.ref(`calls/${curPeer}`).remove();
             db.ref(`calls/${myData.nick}`).remove();
             if(localStream) localStream.getTracks().forEach(t => t.stop());
             if(pc) pc.close(); pc = null;
+            closeAllCalls();
+        }
+
+        function showActiveCall(n, s) {
+            db.ref('users/'+n).once('value', snap => {
+                document.getElementById('incoming-modal').style.display = 'none';
+                document.getElementById('active-call-modal').style.display = 'flex';
+                document.getElementById('active-av').src = snap.val().av;
+                document.getElementById('active-name').innerText = n;
+                document.getElementById('call-status').innerText = s;
+            });
+        }
+
+        function closeAllCalls() {
+            document.getElementById('incoming-modal').style.display = 'none';
+            document.getElementById('active-call-modal').style.display = 'none';
+        }
+
+        // --- МЕНЮ И НАСТРОЙКИ ---
+        function openSettings() {
+            document.getElementById('set-pre').src = myData.av;
+            document.getElementById('set-nick').value = myData.nick;
+            document.getElementById('settings-modal').style.display = 'flex';
+        }
+        function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; }
+        function previewAv(i) { const r = new FileReader(); r.onload = e => document.getElementById('set-pre').src = e.target.result; r.readAsDataURL(i.files[0]); }
+        async function saveSettings() {
+            const upd = { av: document.getElementById('set-pre').src };
+            if(document.getElementById('set-admin').value === "DanAdminPanel") upd.admin = true;
+            await db.ref('users/'+myData.nick).update(upd);
+            myData.av = upd.av; if(upd.admin) myData.admin = true;
+            refreshProfileUI(); closeSettings();
+        }
+
+        function openMsgCtx(e, id, m) {
+            selId = id; selData = m; closeCtx();
+            const menu = document.getElementById('ctx-menu');
+            document.getElementById('admin-tools').className = (myData.admin || m.sn === myData.nick) ? "" : "hidden";
+            document.getElementById('super-admin-tools').className = "hidden";
+            menu.style.display = 'block'; menu.style.left = e.pageX+'px'; menu.style.top = e.pageY+'px';
+        }
+
+        function openUserCtx(e, nick) {
+            selPeer = nick; closeCtx();
+            const menu = document.getElementById('ctx-menu');
+            document.getElementById('admin-tools').className = "hidden";
+            document.getElementById('super-admin-tools').className = "";
+            menu.style.display = 'block'; menu.style.left = e.pageX+'px'; menu.style.top = e.pageY+'px';
+        }
+
+        function closeCtx() { document.getElementById('ctx-menu').style.display = 'none'; }
+        function prepReply() { replyData = selData; document.getElementById('reply-bar').classList.remove('hidden'); document.getElementById('reply-text').innerText = "Ответ: "+selData.txt; closeCtx(); }
+        function prepEdit() { isEdit = true; document.getElementById('msg-in').value = selData.txt; document.getElementById('reply-bar').classList.remove('hidden'); document.getElementById('reply-text').innerText = "Редактирование..."; closeCtx(); }
+        function cancelReply() { isEdit = false; replyData = null; document.getElementById('reply-bar').classList.add('hidden'); document.getElementById('msg-in').value = ''; }
+        function deleteMsg() { if(confirm("Удалить?")) db.ref('messages/'+curChat+'/'+selId).remove(); closeCtx(); }
+        async function banUser() { if(confirm("Удалить аккаунт "+selPeer+" навсегда?")) { await db.ref('users/'+selPeer).remove(); alert("Удален"); } closeCtx(); }
+
+        async function updateGlobalStats() {
+            const s = await db.ref('presence').get();
+            let c = 0; s.forEach(() => c++);
+            document.getElementById('chat-sub').innerText = curChat === 'global' ? "В сети: " + c : "";
+        }
+
+        async function showOnlineList() {
+            if(curChat !== 'global') return;
+            const s = await db.ref('presence').get();
+            let nicks = []; s.forEach(snap => nicks.push(snap.key));
+            alert("Сейчас в сети:\n" + nicks.join("\n"));
         }
     </script>
 </body>
