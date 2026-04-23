@@ -3,130 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DanChat Premium</title>
+    <title>DanChat Ultimate</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
-        :root { --bg: #0b0d0f; --panel: #16191d; --accent: #00a2ff; --text: #ffffff; --side-w: 300px; }
+        :root { --bg: #0b0d0f; --panel: #16191d; --accent: #00ff88; --text: #ffffff; --side-w: 300px; --error: #ff4444; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; overflow: hidden; }
         
         /* Стили админа */
-        .admin-msg { border: 2px solid #ff4444 !important; box-shadow: 0 0 10px rgba(255, 68, 68, 0.4); }
-        .admin-nick { color: #ff4444 !important; font-weight: 900 !important; text-shadow: 0 0 5px red; }
+        .admin-msg { border: 2px solid var(--error) !important; box-shadow: 0 0 10px rgba(255, 68, 68, 0.4); }
+        .admin-tag { color: var(--error); font-weight: bold; margin-left: 5px; font-size: 9px; border: 1px solid var(--error); padding: 1px 3px; border-radius: 4px; }
 
-        /* Сайдбар */
+        /* Интерфейс */
         #sidebar { width: var(--side-w); background: var(--panel); border-right: 1px solid #2d3239; display: flex; flex-direction: column; position: relative; }
+        .top-nav { padding: 15px; display: flex; gap: 15px; border-bottom: 1px solid #333; }
+        .nav-icon { font-size: 20px; cursor: pointer; opacity: 0.7; transition: 0.3s; }
+        .nav-icon:hover { opacity: 1; transform: scale(1.1); }
+
         #contact-list { flex: 1; overflow-y: auto; }
         .contact-item { padding: 12px 15px; border-bottom: 1px solid #1f2329; cursor: pointer; display: flex; align-items: center; gap: 12px; }
-        .contact-item img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; }
-        .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #555; }
-        .on { background: #00ff88; box-shadow: 0 0 5px #00ff88; }
+        .contact-item img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: #333; }
 
-        /* Чат */
         #main-content { flex: 1; display: flex; flex-direction: column; background: #0f1216; }
         header { background: var(--panel); padding: 15px 25px; border-bottom: 1px solid #2d3239; display: flex; justify-content: space-between; align-items: center; }
         #chat-window { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
-        
-        .msg-row { display: flex; gap: 10px; max-width: 85%; }
+
+        /* Сообщения */
+        .msg-row { display: flex; gap: 10px; max-width: 85%; margin-bottom: 5px; }
         .msg-row.me { flex-direction: row-reverse; align-self: flex-end; }
-        .msg-av { width: 38px; height: 38px; border-radius: 50%; cursor: pointer; object-fit: cover; }
-        .msg { padding: 10px 15px; border-radius: 18px; background: #23282e; position: relative; border: 1px solid transparent; }
-        .me .msg { background: var(--accent); }
+        .msg-av { width: 35px; height: 35px; border-radius: 50%; cursor: pointer; object-fit: cover; background: #333; }
+        .msg { padding: 10px 15px; border-radius: 18px; background: #23282e; position: relative; border: 1px solid transparent; max-width: 100%; word-wrap: break-word; }
+        .me .msg { background: #0078ff; }
 
-        /* Модалки */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; display: none; align-items: center; justify-content: center; }
-        .win { background: var(--panel); padding: 25px; border-radius: 20px; border: 1px solid #333; text-align: center; width: 320px; }
-        .inp { width: 90%; padding: 10px; margin: 8px 0; background: #000; border: 1px solid #444; color: #fff; border-radius: 10px; }
-        .btn { padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; margin: 5px; }
+        /* Красивые меню (как Смерть_в_нищете) */
+        .custom-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; display: none; align-items: center; justify-content: center; }
+        .win-frame { background: var(--panel); padding: 30px; border-radius: 20px; border: 2px solid var(--accent); text-align: center; width: 340px; box-shadow: 0 0 20px var(--accent); }
+        .win-frame h3 { margin-top: 0; color: var(--accent); }
 
-        #ctx-menu { position: fixed; background: #1c2127; border: 1px solid #444; border-radius: 8px; z-index: 5000; display: none; min-width: 160px; }
-        .ctx-item { padding: 12px; cursor: pointer; border-bottom: 1px solid #333; }
-        .ctx-item:hover { background: var(--accent); }
+        /* Контекстное меню */
+        #ctx-menu { position: fixed; background: #1c2127; border: 1px solid #444; border-radius: 10px; z-index: 5000; display: none; min-width: 180px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .ctx-item { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #333; font-size: 14px; }
+        .ctx-item:hover { background: var(--accent); color: #000; }
+
+        .inp { width: 90%; padding: 12px; margin: 8px 0; background: #000; border: 1px solid #444; color: #fff; border-radius: 8px; }
+        .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .hidden { display: none !important; }
-        #settings-btn { position: absolute; bottom: 15px; left: 15px; font-size: 24px; cursor: pointer; opacity: 0.6; }
     </style>
 </head>
-<body oncontextmenu="return false;">
+<body onclick="closeCtx()" oncontextmenu="return false;">
 
-    <div id="ctx-menu">
+    <div id="users-modal" class="custom-modal" onclick="this.style.display='none'">
+        <div class="win-frame" onclick="event.stopPropagation()">
+            <h3>Все пользователи</h3>
+            <div id="all-users-list" style="max-height: 400px; overflow-y: auto; text-align: left;"></div>
+            <button class="btn" style="margin-top:15px; background:#444; color:white" onclick="document.getElementById('users-modal').style.display='none'">Закрыть</button>
+        </div>
+    </div>
+
+    <div id="online-modal" class="custom-modal" onclick="this.style.display='none'">
+        <div class="win-frame" onclick="event.stopPropagation()">
+            <h3>Люди в сети</h3>
+            <div id="online-list-ui" style="text-align: left; max-height: 300px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <div id="ctx-menu" onclick="event.stopPropagation()">
         <div id="msg-ops">
             <div class="ctx-item" onclick="prepReply()">Ответить</div>
             <div id="admin-msg-ops" class="hidden">
                 <div class="ctx-item" onclick="prepEdit()">Изменить</div>
-                <div class="ctx-item" style="color:red" onclick="deleteMsg()">Удалить</div>
+                <div class="ctx-item" style="color:var(--error)" onclick="deleteMsg()">Удалить сообщение</div>
             </div>
         </div>
         <div id="chat-ops" class="hidden">
-            <div class="ctx-item" style="color:red" onclick="clearCurrentChat()">Очистить весь чат</div>
+            <div class="ctx-item" style="color:var(--error)" onclick="clearFullChat()">Очистить историю чата</div>
         </div>
         <div id="user-ops" class="hidden">
-            <div class="ctx-item" style="color:red" onclick="banAccount()">Удалить аккаунт</div>
+            <div class="ctx-item" style="color:var(--error)" onclick="banUser()">Удалить аккаунт навсегда</div>
         </div>
     </div>
 
-    <div id="inc-modal" class="modal">
-        <div class="win" id="inc-win">
-            <div id="death-warn" class="hidden" style="display:flex; justify-content:space-between; color:red; font-weight:bold; margin-bottom:10px;">
-                <span>НЕ БЕРИ!!!</span><span>НЕ БЕРИ!!!</span>
+    <div id="call-modal" class="custom-modal">
+        <div class="win-frame" id="call-box" style="border-color: var(--accent);">
+            <div id="scary-labels" class="hidden" style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <b style="color:red; animation: blink 0.3s infinite;">НЕ БЕРИ!</b>
+                <b style="color:red; animation: blink 0.3s infinite;">ОПАСНО!</b>
             </div>
-            <img id="inc-av" style="width:100px; height:100px; border-radius:50%; object-fit:cover;">
-            <h2 id="inc-nick">...</h2>
-            <button class="btn" style="background:#00ff88" onclick="answerCall()">ОТВЕТИТЬ</button>
-            <button id="reject-btn" class="btn" style="background:#ff4444; color:white" onclick="endCall()">СБРОСИТЬ</button>
+            <img id="call-av" style="width:120px; height:120px; border-radius:50%; border:3px solid var(--accent); object-fit:cover;">
+            <h2 id="call-nick" style="margin:15px 0;">...</h2>
+            <div id="call-actions" style="display:flex; gap:10px; justify-content:center;">
+                <button class="btn" style="background:var(--accent); color:#000; flex:1" onclick="acceptCall()">ОТВЕТИТЬ</button>
+                <button id="hangup-btn" class="btn" style="background:var(--error); color:white; flex:1" onclick="endCall()">СБРОСИТЬ</button>
+            </div>
         </div>
     </div>
 
-    <div id="settings-modal" class="modal">
-        <div class="win">
+    <div id="settings-modal" class="custom-modal">
+        <div class="win-frame">
             <h3>Настройки</h3>
-            <p style="font-size:12px; color:var(--accent)">Ваш ID: <span id="my-id-val">000000</span></p>
-            <img id="set-pre" style="width:80px; height:80px; border-radius:50%; object-fit:cover; margin-bottom:10px;">
-            <input type="file" id="f-inp" class="hidden" onchange="previewAv(this)">
-            <button class="btn" onclick="document.getElementById('f-inp').click()">Фото</button>
-            <input type="text" id="set-nick" class="inp" placeholder="Ник">
-            <input type="text" id="set-code" class="inp" placeholder="Админ-код">
-            <button class="btn" style="background:var(--accent); color:white" onclick="saveSettings()">Сохранить</button>
-            <button class="btn" onclick="document.getElementById('settings-modal').style.display='none'">Закрыть</button>
+            <img id="set-pre" style="width:80px; height:80px; border-radius:50%; object-fit:cover; border:2px solid var(--accent)">
+            <input type="file" id="f-inp" class="hidden" onchange="loadPreview(this)">
+            <br><button class="btn" onclick="document.getElementById('f-inp').click()">Загрузить фото</button>
+            <input type="text" id="set-nick" class="inp" placeholder="Ваш ник">
+            <div style="display:flex; align-items:center; gap:10px; margin: 10px 0;">
+                <span>Цвет ника:</span>
+                <input type="color" id="set-color" style="cursor:pointer">
+            </div>
+            <input type="text" id="set-code" class="inp" placeholder="Секретный код">
+            <button class="btn" style="background:var(--accent); color:#000; width:100%" onclick="saveSettings()">Сохранить</button>
+            <button class="btn" style="margin-top:10px;" onclick="document.getElementById('settings-modal').style.display='none'">Отмена</button>
         </div>
     </div>
 
     <div id="auth-screen" style="position:fixed; inset:0; background:var(--bg); z-index:20000; display:flex; align-items:center; justify-content:center;">
-        <div class="win">
-            <h2>DanChat</h2>
+        <div class="win-frame">
+            <h1 style="color:var(--accent)">DanChat</h1>
             <input type="text" id="auth-n" class="inp" placeholder="Ник">
             <input type="password" id="auth-p" class="inp" placeholder="Пароль">
-            <button class="btn" style="background:var(--accent); color:white; width:100%" onclick="login()">Войти</button>
+            <button class="btn" style="background:var(--accent); color:#000; width:100%" onclick="auth()">Войти / Создать</button>
         </div>
     </div>
 
     <div id="sidebar" class="hidden">
-        <div style="padding:15px; text-align:center; border-bottom:1px solid #333;">
-            <img id="side-av" style="width:50px; height:50px; border-radius:50%; object-fit:cover;">
-            <div id="side-n" style="font-weight:bold; margin:5px 0;"></div>
-            <div style="display:flex; gap:5px;">
-                <input type="text" id="add-id" class="inp" style="font-size:10px; padding:5px;" placeholder="ID игрока">
-                <button onclick="addFriend()" class="btn" style="padding:5px 10px;">+</button>
-            </div>
+        <div class="top-nav">
+            <span class="nav-icon" onclick="openSettings()">⚙️</span>
+            <span class="nav-icon" onclick="openUsersList()">👤</span>
+            <div id="my-name-display" style="margin-left:auto; font-weight:bold;"></div>
         </div>
         <div id="contact-list"></div>
-        <div id="settings-btn" onclick="openSettings()">⚙️</div>
     </div>
 
     <div id="main-content" class="hidden">
         <header>
-            <div onclick="showOnlineList()" style="cursor:pointer">
+            <div onclick="showOnlineMenu()" style="cursor:pointer">
                 <b id="chat-title">Глобальный чат</b><br>
-                <small id="chat-sub" style="color:#00ff88"></small>
+                <small id="chat-sub" style="color:var(--accent)"></small>
             </div>
-            <button id="call-btn" onclick="startCall()" style="display:none; background:var(--accent); color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer">📞 Звонок</button>
+            <button id="call-btn" onclick="startCall()" style="display:none; background:var(--accent); color:#000; border:none; padding:8px 15px; border-radius:8px; font-weight:bold; cursor:pointer;">📞 Звонок</button>
         </header>
-        <div id="chat-window" oncontextmenu="openChatCtx(event)"></div>
-        <div id="reply-box" class="hidden" style="background:#222; padding:10px; border-top:2px solid var(--accent); display:flex; justify-content:space-between;">
-            <span id="reply-txt" style="font-size:12px;"></span><span onclick="cancelReply()" style="cursor:pointer">✕</span>
+        <div id="chat-window" oncontextmenu="openChatMenu(event)"></div>
+        <div id="reply-ui" class="hidden" style="background:#222; padding:10px; border-top:2px solid var(--accent); display:flex; justify-content:space-between;">
+            <span id="reply-msg" style="font-size:12px;"></span><span onclick="cancelReply()" style="cursor:pointer">✕</span>
         </div>
         <div style="padding:15px; background:var(--panel); display:flex; gap:10px;">
-            <input type="text" id="msg-in" class="inp" style="margin:0" placeholder="Сообщение..." maxlength="100" onkeydown="if(event.key==='Enter') send()">
-            <button class="btn" style="background:var(--accent); color:white" onclick="send()">></button>
+            <input type="text" id="msg-in" class="inp" style="margin:0" placeholder="Сообщение (до 100 симв)..." maxlength="100" onkeydown="if(event.key==='Enter') send()">
+            <button class="btn" style="background:var(--accent); color:#000" onclick="send()">➤</button>
         </div>
     </div>
 
@@ -134,20 +155,21 @@
         const firebaseConfig = { apiKey: "AIzaSyAocmcoBH2Q8_QENuE9AuaGwtDOSSg-WpE", authDomain: "danblox-e209f.firebaseapp.com", databaseURL: "https://danblox-e209f-default-rtdb.firebaseio.com", projectId: "danblox-e209f" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        const defAv = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
         let myData = null, curChat = 'global', curPeer = '', pc = null, localStream = null;
         let selId = null, selData = null, isEdit = false, replyData = null;
 
-        async function login() {
+        async function auth() {
             const n = document.getElementById('auth-n').value.trim(), p = document.getElementById('auth-p').value.trim();
             if(!n) return;
             const s = await db.ref('users/'+n).get();
             if(!s.exists()) {
                 const id = Math.floor(100000+Math.random()*899999);
-                const user = { nick: n, pass: p, av: 'https://cdn-icons-png.flaticon.com/512/149/149071.png', id: id };
+                const user = { nick: n, pass: p, av: defAv, id: id, color: '#ffffff' };
                 await db.ref('users/'+n).set(user); await db.ref('id_map/'+id).set(n); start(user);
             } else if(s.val().pass === p) start(s.val());
-            else alert("Ошибка");
+            else alert("Ошибка пароля");
         }
 
         function start(u) {
@@ -155,46 +177,53 @@
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('sidebar').classList.remove('hidden');
             document.getElementById('main-content').classList.remove('hidden');
-            refreshUI();
+            refreshMyUI();
             db.ref('presence/'+u.nick).set(true); db.ref('presence/'+u.nick).onDisconnect().remove();
-            loadContacts(); listenCalls(); switchChat('global', 'Глобальный чат');
-            setInterval(updateStats, 2000);
+            loadMyContacts(); listenCalls(); switchChat('global', 'Глобальный чат');
+            setInterval(updateGlobalCount, 2000);
         }
 
-        function refreshUI() {
-            document.getElementById('side-av').src = myData.av;
-            document.getElementById('side-n').innerText = myData.nick;
-            document.getElementById('side-n').className = myData.admin ? 'admin-nick' : '';
-            document.getElementById('my-id-val').innerText = myData.id;
+        function refreshMyUI() {
+            const el = document.getElementById('my-name-display');
+            el.innerText = myData.nick;
+            el.style.color = myData.color || '#fff';
         }
 
         // --- КОНТАКТЫ ---
-        function loadContacts() {
-            db.ref('users').on('value', s => {
+        function loadMyContacts() {
+            db.ref(`users/${myData.nick}/friends`).on('value', async s => {
                 const list = document.getElementById('contact-list');
                 list.innerHTML = `<div class="contact-item" onclick="switchChat('global','Глобальный чат')"><b>🌍 Глобальный чат</b></div>`;
-                s.forEach(snap => {
-                    const d = snap.val(); if(d.nick === myData.nick) return;
+                const friends = s.val() || {};
+                for(let f in friends) {
+                    const snap = await db.ref('users/'+f).get();
+                    if(!snap.exists()) continue;
+                    const d = snap.val();
                     const item = document.createElement('div'); item.className = 'contact-item';
-                    item.onclick = () => openLSChat(d.nick);
-                    item.oncontextmenu = (e) => { e.preventDefault(); if(myData.admin) openUserCtx(e, d.nick); };
-                    db.ref('presence/'+d.nick).on('value', p => {
-                        const on = p.exists();
-                        item.innerHTML = `<img src="${d.av}"><div><b class="${d.admin?'admin-nick':''}">${d.nick}</b><br><small><span class="status-dot ${on?'on':''}"></span> ${on?'В сети':'Оффлайн'}</small></div>`;
-                    });
+                    item.onclick = () => openPrivate(d.nick);
+                    item.oncontextmenu = (e) => { e.preventDefault(); if(myData.admin) openUserMenu(e, d.nick); };
+                    item.innerHTML = `<img src="${d.av || defAv}"><div><b style="color:${d.color}">${d.nick}</b>${d.admin?'<span class="admin-tag">Admin</span>':''}<br><small>Нажми чтобы открыть чат</small></div>`;
                     list.appendChild(item);
-                });
+                }
             });
         }
 
-        async function addFriend() {
-            const id = document.getElementById('add-id').value.trim();
-            const s = await db.ref('id_map/'+id).get();
-            if(s.exists()) openLSChat(s.val());
-            else alert("ID не найден");
+        async function openUsersList() {
+            const s = await db.ref('users').get();
+            const list = document.getElementById('all-users-list');
+            list.innerHTML = '';
+            s.forEach(snap => {
+                const d = snap.val(); if(d.nick === myData.nick) return;
+                const row = document.createElement('div');
+                row.style = "padding:10px; border-bottom:1px solid #333; display:flex; align-items:center; gap:10px; cursor:pointer;";
+                row.innerHTML = `<img src="${d.av || defAv}" style="width:30px; height:30px; border-radius:50%"> <span>${d.nick}</span>`;
+                row.onclick = () => { db.ref(`users/${myData.nick}/friends/${d.nick}`).set(true); alert("Добавлен в контакты!"); };
+                list.appendChild(row);
+            });
+            document.getElementById('users-modal').style.display = 'flex';
         }
 
-        function openLSChat(nick) {
+        function openPrivate(nick) {
             const id = myData.nick < nick ? myData.nick+'_'+nick : nick+'_'+myData.nick;
             switchChat(id, nick);
         }
@@ -206,25 +235,25 @@
             document.getElementById('call-btn').style.display = (id==='global'?'none':'block');
             document.getElementById('chat-window').innerHTML = '';
             db.ref('messages/'+id).off();
-            db.ref('messages/'+id).on('child_added', s => drawMsg(s.key, s.val()));
+            db.ref('messages/'+id).on('child_added', s => draw(s.key, s.val()));
             db.ref('messages/'+id).on('child_removed', s => document.getElementById('m-'+s.key)?.remove());
             db.ref('messages/'+id).on('child_changed', s => {
-                const el = document.getElementById('m-'+s.key);
-                if(el) el.querySelector('.txt-c').innerText = s.val().txt;
+                const e = document.getElementById('m-'+s.key);
+                if(e) e.querySelector('.txt-c').innerText = s.val().txt;
             });
         }
 
-        async function drawMsg(mid, m) {
+        async function draw(mid, m) {
             const win = document.getElementById('chat-window'), row = document.createElement('div');
             const u = await db.ref('users/'+m.sn).get();
-            const ud = u.val() || { av: '', nick: m.sn };
+            const ud = u.val() || { av: defAv, nick: m.sn, color: '#fff' };
             row.id = 'm-'+mid;
             row.className = `msg-row ${m.sn===myData.nick?'me':''}`;
-            row.oncontextmenu = (e) => { e.preventDefault(); openMsgCtx(e, mid, m); };
-            row.innerHTML = `<img src="${ud.av}" class="msg-av" onclick="openLSChat('${m.sn}')">
+            row.oncontextmenu = (e) => { e.preventDefault(); e.stopPropagation(); openMsgMenu(e, mid, m); };
+            row.innerHTML = `<img src="${ud.av || defAv}" class="msg-av" onclick="openPrivate('${m.sn}')">
                 <div class="msg ${ud.admin?'admin-msg':''}">
-                    <b class="${ud.admin?'admin-nick':''}" style="font-size:10px; cursor:pointer" onclick="openLSChat('${m.sn}')">${m.sn}</b>
-                    ${m.rp ? `<div style="font-size:10px; opacity:0.5; border-left:2px solid #fff; padding-left:5px; margin-bottom:5px;">↪ ${m.rp}</div>` : ''}
+                    <b style="color:${ud.color}; font-size:11px; cursor:pointer" onclick="openPrivate('${m.sn}')">${m.sn}</b>${ud.admin?'<span class="admin-tag">Admin</span>':''}
+                    ${m.rp ? `<div style="font-size:10px; opacity:0.6; border-left:2px solid var(--accent); padding-left:5px; margin:4px 0;">↪ ${m.rp}</div>` : ''}
                     <div class="txt-c">${m.txt}</div>
                 </div>`;
             win.appendChild(row); win.scrollTop = win.scrollHeight;
@@ -238,58 +267,41 @@
             i.value = ''; cancelReply();
         }
 
-        // --- ЗВОНКИ (WebRTC) ---
-        async function initRTC(peer) {
-            if(pc) pc.close();
-            pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
-            try {
-                localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
-            } catch(e) { return false; }
-            pc.ontrack = e => {
-                let a = document.getElementById('remote-audio') || document.createElement('audio');
-                a.id = 'remote-audio'; a.autoplay = true; a.srcObject = e.streams[0];
-                document.body.appendChild(a);
-            };
-            pc.onicecandidate = e => { if(e.candidate) db.ref(`calls/${peer}/ice/${myData.nick}`).push(e.candidate.toJSON()); };
-            return true;
-        }
-
+        // --- ЗВОНКИ ---
         async function startCall() {
-            if(!(await initRTC(curPeer))) return;
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
+            pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+            try { localStream = await navigator.mediaDevices.getUserMedia({ audio: true }); localStream.getTracks().forEach(t => pc.addTrack(t, localStream)); } catch(e) {}
+            const offer = await pc.createOffer(); await pc.setLocalDescription(offer);
             db.ref(`calls/${curPeer}`).set({ from: myData.nick, offer: offer });
-            db.ref(`calls/${myData.nick}/answer`).on('value', async s => {
-                if(s.exists()) await pc.setRemoteDescription(new RTCSessionDescription(s.val()));
-            });
-            db.ref(`calls/${myData.nick}/ice/${curPeer}`).on('child_added', s => { if(pc) pc.addIceCandidate(new RTCIceCandidate(s.val())); });
-            alert("Вызов начат...");
+            
+            document.getElementById('call-nick').innerText = "Звонок " + curPeer + "...";
+            document.getElementById('call-modal').style.display = 'flex';
         }
 
         function listenCalls() {
             db.ref(`calls/${myData.nick}`).on('value', async s => {
                 const c = s.val();
-                if(!c) { document.getElementById('inc-modal').style.display='none'; return; }
+                if(!c) { document.getElementById('call-modal').style.display='none'; return; }
                 if(c.offer && !pc) {
                     const u = await db.ref('users/'+c.from).get();
-                    document.getElementById('inc-av').src = u.val().av;
-                    document.getElementById('inc-nick').innerText = c.from;
+                    document.getElementById('call-av').src = u.val().av || defAv;
+                    document.getElementById('call-nick').innerText = c.from;
                     const isDeath = (c.from === "Смерть_в_нищете");
-                    document.getElementById('death-warn').className = isDeath ? "" : "hidden";
-                    document.getElementById('reject-btn').style.display = isDeath ? 'none' : 'block';
-                    document.getElementById('inc-modal').style.display = 'flex';
+                    document.getElementById('scary-labels').className = isDeath ? "" : "hidden";
+                    document.getElementById('hangup-btn').style.display = isDeath ? 'none' : 'block';
+                    document.getElementById('call-box').style.borderColor = isDeath ? 'red' : 'var(--accent)';
+                    document.getElementById('call-modal').style.display = 'flex';
                 }
             });
         }
 
-        async function answerCall() {
-            const call = (await db.ref(`calls/${myData.nick}`).get()).val();
-            if(!call || !(await initRTC(call.from))) return;
-            await pc.setRemoteDescription(new RTCSessionDescription(call.offer));
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-            db.ref(`calls/${call.from}/answer`).set(answer);
+        async function acceptCall() {
+            const c = (await db.ref(`calls/${myData.nick}`).get()).val();
+            pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+            await pc.setRemoteDescription(new RTCSessionDescription(c.offer));
+            const ans = await pc.createAnswer(); await pc.setLocalDescription(ans);
+            db.ref(`calls/${c.from}/answer`).set(ans);
+            document.getElementById('call-nick').innerText = "В разговоре...";
         }
 
         function endCall() {
@@ -299,8 +311,8 @@
             if(pc) pc.close(); pc = null;
         }
 
-        // --- МЕНЮ И АДМИНКА ---
-        function openMsgCtx(e, id, m) {
+        // --- МЕНЮ ---
+        function openMsgMenu(e, id, m) {
             selId = id; selData = m; closeCtx();
             const menu = document.getElementById('ctx-menu');
             document.getElementById('msg-ops').classList.remove('hidden');
@@ -309,8 +321,7 @@
             document.getElementById('admin-msg-ops').className = (myData.admin || m.sn === myData.nick) ? "" : "hidden";
             menu.style.display = 'block'; menu.style.left = e.pageX+'px'; menu.style.top = e.pageY+'px';
         }
-
-        function openChatCtx(e) {
+        function openChatMenu(e) {
             if(!myData.admin) return;
             e.preventDefault(); closeCtx();
             const menu = document.getElementById('ctx-menu');
@@ -319,8 +330,7 @@
             document.getElementById('user-ops').classList.add('hidden');
             menu.style.display = 'block'; menu.style.left = e.pageX+'px'; menu.style.top = e.pageY+'px';
         }
-
-        function openUserCtx(e, nick) {
+        function openUserMenu(e, nick) {
             selPeer = nick; closeCtx();
             const menu = document.getElementById('ctx-menu');
             document.getElementById('msg-ops').classList.add('hidden');
@@ -328,40 +338,43 @@
             document.getElementById('user-ops').classList.remove('hidden');
             menu.style.display = 'block'; menu.style.left = e.pageX+'px'; menu.style.top = e.pageY+'px';
         }
-
         function closeCtx() { document.getElementById('ctx-menu').style.display='none'; }
-        function prepReply() { replyData = selData; document.getElementById('reply-box').classList.remove('hidden'); document.getElementById('reply-txt').innerText = "Ответ: "+selData.txt; closeCtx(); }
-        function prepEdit() { isEdit = true; document.getElementById('msg-in').value = selData.txt; document.getElementById('reply-box').classList.remove('hidden'); document.getElementById('reply-txt').innerText = "Редактирование..."; closeCtx(); }
-        function cancelReply() { isEdit = false; replyData = null; document.getElementById('reply-box').classList.add('hidden'); document.getElementById('msg-in').value = ''; }
-        function deleteMsg() { db.ref('messages/'+curChat+'/'+selId).remove(); closeCtx(); }
-        function clearCurrentChat() { if(confirm("Очистить чат?")) db.ref('messages/'+curChat).remove(); closeCtx(); }
-        function banAccount() { if(confirm("Удалить аккаунт "+selPeer+"?")) db.ref('users/'+selPeer).remove(); closeCtx(); }
 
+        function prepReply() { replyData = selData; document.getElementById('reply-ui').classList.remove('hidden'); document.getElementById('reply-msg').innerText = "Ответ: "+selData.txt; closeCtx(); }
+        function prepEdit() { isEdit = true; document.getElementById('msg-in').value = selData.txt; document.getElementById('reply-ui').classList.remove('hidden'); document.getElementById('reply-msg').innerText = "Редактирование..."; closeCtx(); }
+        function cancelReply() { isEdit = false; replyData = null; document.getElementById('reply-ui').classList.add('hidden'); document.getElementById('msg-in').value = ''; }
+        function deleteMsg() { db.ref('messages/'+curChat+'/'+selId).remove(); closeCtx(); }
+        function clearFullChat() { if(confirm("Очистить всё?")) db.ref('messages/'+curChat).remove(); closeCtx(); }
+        function banUser() { if(confirm("Удалить "+selPeer+"?")) db.ref('users/'+selPeer).remove(); closeCtx(); }
+
+        // --- ПРОЧЕЕ ---
         function openSettings() {
-            document.getElementById('set-pre').src = myData.av;
+            document.getElementById('set-pre').src = myData.av || defAv;
             document.getElementById('set-nick').value = myData.nick;
+            document.getElementById('set-color').value = myData.color || '#ffffff';
             document.getElementById('settings-modal').style.display = 'flex';
         }
-        function previewAv(i) { const r = new FileReader(); r.onload = e => document.getElementById('set-pre').src = e.target.result; r.readAsDataURL(i.files[0]); }
+        function loadPreview(i) { const r = new FileReader(); r.onload = e => document.getElementById('set-pre').src = e.target.result; r.readAsDataURL(i.files[0]); }
         async function saveSettings() {
-            const upd = { av: document.getElementById('set-pre').src };
+            const upd = { av: document.getElementById('set-pre').src, color: document.getElementById('set-color').value };
             if(document.getElementById('set-code').value === "DanAdminPanel") upd.admin = true;
             await db.ref('users/'+myData.nick).update(upd);
-            myData.av = upd.av; if(upd.admin) myData.admin = true;
-            refreshUI(); document.getElementById('settings-modal').style.display='none';
+            Object.assign(myData, upd); refreshMyUI();
+            document.getElementById('settings-modal').style.display='none';
         }
 
-        async function updateStats() {
+        async function updateGlobalCount() {
             const s = await db.ref('presence').get();
             let c = 0; s.forEach(() => c++);
-            document.getElementById('chat-sub').innerText = curChat === 'global' ? "В сети: " + c : "";
+            document.getElementById('chat-sub').innerText = "Онлайн: " + c;
         }
 
-        async function showOnlineList() {
-            if(curChat !== 'global') return;
+        async function showOnlineMenu() {
             const s = await db.ref('presence').get();
-            let n = []; s.forEach(snap => n.push(snap.key));
-            alert("Сейчас онлайн:\n" + n.join("\n"));
+            const list = document.getElementById('online-list-ui');
+            list.innerHTML = '';
+            s.forEach(snap => { list.innerHTML += `<div style="padding:8px; border-bottom:1px solid #333">🟢 ${snap.key}</div>`; });
+            document.getElementById('online-modal').style.display = 'flex';
         }
     </script>
 </body>
