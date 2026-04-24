@@ -3,550 +3,662 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DanChat Ultimate v5 Max</title>
+    <title>DanChat Ultimate v6 Extreme Edition</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
-        :root { --bg: #0b0d0f; --panel: #16191d; --accent: #00ff88; --text: #ffffff; --side-w: 320px; --error: #ff4444; --blue: #0078ff; }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; overflow: hidden; }
+        :root { 
+            --bg: #0b0d0f; --panel: #16191d; --accent: #00ff88; --text: #ffffff; 
+            --side-w: 320px; --error: #ff4444; --blue: #0078ff; --warn: #ffcc00;
+        }
+        * { box-sizing: border-box; }
+        body { 
+            margin: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background: var(--bg); color: var(--text); height: 100vh; display: flex; overflow: hidden; 
+        }
         
-        /* Стили Сайдбара */
-        #sidebar { width: var(--side-w); background: var(--panel); border-right: 1px solid #333; display: flex; flex-direction: column; z-index: 10; }
-        .top-nav { padding: 15px; display: flex; gap: 12px; border-bottom: 1px solid #333; align-items: center; }
-        .nav-icon { font-size: 20px; cursor: pointer; transition: 0.2s; }
-        .nav-icon:hover { transform: scale(1.1); }
+        /* Боковая панель */
+        #sidebar { width: var(--side-w); background: var(--panel); border-right: 1px solid #2d3239; display: flex; flex-direction: column; z-index: 100; }
+        .top-nav { padding: 15px; display: flex; gap: 15px; border-bottom: 1px solid #333; align-items: center; }
+        .nav-icon { font-size: 22px; cursor: pointer; opacity: 0.8; transition: 0.3s; }
+        .nav-icon:hover { opacity: 1; transform: scale(1.15); }
 
-        #contact-list { flex: 1; overflow-y: auto; }
-        .contact-item { padding: 12px 15px; border-bottom: 1px solid #1f2329; cursor: pointer; display: flex; align-items: center; gap: 12px; }
+        #contact-list { flex: 1; overflow-y: auto; scrollbar-width: thin; }
+        .contact-item { 
+            padding: 12px 15px; border-bottom: 1px solid #1f2329; cursor: pointer; 
+            display: flex; align-items: center; gap: 12px; transition: background 0.2s;
+        }
         .contact-item:hover { background: #1c2127; }
-        .contact-item img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 1px solid #444; }
+        .contact-item img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #2d3239; }
         .contact-info { flex: 1; min-width: 0; }
-        .status-dot { font-size: 10px; font-weight: bold; }
+        .contact-info b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .status-dot { font-size: 10px; font-weight: bold; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+        .status-dot::before { content: '●'; }
         .on { color: var(--accent); } .off { color: #555; }
 
-        /* Чат */
-        #main-content { flex: 1; display: flex; flex-direction: column; background: #0f1216; }
-        header { background: var(--panel); padding: 15px 25px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        /* Основная область */
+        #main-content { flex: 1; display: flex; flex-direction: column; background: #0f1216; position: relative; }
+        header { 
+            background: var(--panel); padding: 15px 25px; border-bottom: 1px solid #2d3239; 
+            display: flex; justify-content: space-between; align-items: center; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
         
-        #chat-window { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-        .msg-row { display: flex; gap: 12px; max-width: 80%; }
+        #chat-window { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 18px; scroll-behavior: smooth; }
+        .msg-row { display: flex; gap: 12px; max-width: 85%; animation: msgSlide 0.3s ease-out; }
         .msg-row.me { flex-direction: row-reverse; align-self: flex-end; }
-        .msg-av { width: 38px; height: 38px; border-radius: 50%; cursor: pointer; object-fit: cover; }
-        .msg-content { padding: 10px 15px; border-radius: 18px; background: #23282e; position: relative; }
-        .me .msg-content { background: var(--blue); }
-        .admin-msg { border: 2px solid var(--error) !important; }
-        .admin-tag { color: var(--error); font-size: 9px; font-weight: bold; border: 1px solid var(--error); padding: 1px 3px; border-radius: 4px; margin-left: 5px; }
+        .msg-av { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; object-fit: cover; border: 1px solid #333; }
+        .msg-content { 
+            padding: 10px 16px; border-radius: 18px; background: #23282e; position: relative; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); line-height: 1.4;
+        }
+        .me .msg-content { background: var(--blue); color: #fff; }
+        .admin-msg { border: 2px solid var(--error) !important; box-shadow: 0 0 10px rgba(255, 68, 68, 0.2); }
+        .admin-tag { 
+            background: var(--error); color: #fff; font-size: 9px; padding: 2px 5px; 
+            border-radius: 4px; margin-left: 6px; vertical-align: middle;
+        }
+        .msg-content b { font-size: 12px; margin-bottom: 4px; display: block; opacity: 0.9; }
+        .msg-content img { max-width: 100%; border-radius: 12px; margin-top: 8px; cursor: zoom-in; }
+        .reply-ref { 
+            font-size: 11px; background: rgba(0,0,0,0.15); padding: 6px; 
+            border-left: 3px solid var(--accent); margin-bottom: 6px; border-radius: 4px; opacity: 0.8;
+        }
 
-        /* Голосовой канал */
-        #voice-panel { background: #1a1e23; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--accent); }
+        /* Панель Голоса */
+        #voice-panel { 
+            background: linear-gradient(90deg, #1a1e23, #0b0d0f); padding: 12px 25px; 
+            display: flex; align-items: center; justify-content: space-between; 
+            border-bottom: 2px solid var(--accent); animation: voiceIn 0.5s ease;
+        }
+        .voice-user-tag { background: #2d3239; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-right: 5px; }
 
-        /* Модалки */
-        .custom-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 10000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-        .win-frame { background: var(--panel); padding: 30px; border-radius: 24px; border: 2px solid var(--accent); text-align: center; width: 380px; }
+        /* Модальные окна */
+        .custom-modal { 
+            position: fixed; inset: 0; background: rgba(0,0,0,0.94); 
+            z-index: 5000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(8px); 
+        }
+        .win-frame { 
+            background: var(--panel); padding: 35px; border-radius: 28px; 
+            border: 2px solid var(--accent); text-align: center; width: 400px; 
+            box-shadow: 0 0 50px rgba(0,255,136,0.1);
+        }
         
-        @keyframes blink { 0%, 100% { color: red; opacity: 1; } 50% { opacity: 0.3; } }
-        .scary { animation: blink 0.3s infinite; font-weight: bold; }
+        @keyframes msgSlide { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes voiceIn { from { height: 0; opacity: 0; } to { height: auto; opacity: 1; } }
+        @keyframes scaryBlink { 0%, 100% { color: red; transform: scale(1); } 50% { color: #500; transform: scale(1.1); } }
+        .scary-ui { animation: scaryBlink 0.4s infinite; font-weight: 900; letter-spacing: 2px; }
 
-        /* Ввод */
-        #input-area { padding: 15px; background: var(--panel); display: flex; align-items: center; gap: 12px; border-top: 1px solid #333; }
-        .inp { flex: 1; padding: 12px; background: #0b0d0f; border: 1px solid #333; color: #fff; border-radius: 10px; outline: none; }
-        .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; }
+        /* Ввод сообщений */
+        #input-area { padding: 15px 20px; background: var(--panel); display: flex; align-items: center; gap: 15px; border-top: 1px solid #2d3239; }
+        .inp { 
+            flex: 1; padding: 12px 18px; background: #0b0d0f; border: 1px solid #333; 
+            color: #fff; border-radius: 12px; outline: none; transition: 0.3s;
+        }
+        .inp:focus { border-color: var(--accent); box-shadow: 0 0 8px rgba(0,255,136,0.2); }
+        .tool-btn { font-size: 24px; cursor: pointer; transition: 0.2s; filter: grayscale(0.5); }
+        .tool-btn:hover { filter: grayscale(0); transform: translateY(-3px); }
+        .btn { 
+            padding: 12px 24px; border-radius: 10px; border: none; cursor: pointer; 
+            font-weight: bold; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .btn:active { transform: scale(0.96); }
 
-        #ctx-menu { position: fixed; background: #1c2127; border: 1px solid #444; border-radius: 12px; z-index: 5000; display: none; min-width: 180px; overflow: hidden; }
-        .ctx-item { padding: 12px 18px; cursor: pointer; border-bottom: 1px solid #2d3239; }
-        .ctx-item:hover { background: var(--accent); color: #000; }
+        #ctx-menu { 
+            position: fixed; background: #1c2127; border: 1px solid #444; 
+            border-radius: 14px; z-index: 10000; display: none; min-width: 200px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6); overflow: hidden;
+        }
+        .ctx-item { padding: 14px 20px; cursor: pointer; font-size: 14px; border-bottom: 1px solid #2d3239; }
+        .ctx-item:hover { background: var(--accent); color: #000; font-weight: bold; }
+        
         .hidden { display: none !important; }
+        #admin-badge { color: var(--error); font-weight: bold; font-size: 12px; }
     </style>
 </head>
 <body onclick="closeCtx()" oncontextmenu="return false;">
 
     <div id="auth-screen" style="position:fixed; inset:0; background:var(--bg); z-index:20000; display:flex; align-items:center; justify-content:center;">
         <div class="win-frame">
-            <h1 style="color:var(--accent)">DANCHAT V5</h1>
-            <input type="text" id="auth-n" class="inp" placeholder="Имя">
-            <input type="password" id="auth-p" class="inp" placeholder="Пароль">
-            <button class="btn" style="background:var(--accent); color:#000; width:100%; margin-top:15px" onclick="auth()">ВОЙТИ</button>
+            <h1 style="color:var(--accent); font-size:32px; margin-bottom:10px;">DANCHAT</h1>
+            <p style="opacity:0.6; margin-bottom:25px;">Ultimate Communication Platform</p>
+            <input type="text" id="auth-n" class="inp" placeholder="Ваш никнейм" style="margin-bottom:10px; width:100%">
+            <input type="password" id="auth-p" class="inp" placeholder="Ваш пароль" style="width:100%">
+            <button class="btn" style="background:var(--accent); color:#000; width:100%; margin-top:20px" onclick="auth()">ВОЙТИ В СИСТЕМУ</button>
         </div>
     </div>
 
     <div id="settings-modal" class="custom-modal">
         <div class="win-frame">
-            <h3>Настройки</h3>
-            <img id="set-pre" style="width:80px; height:80px; border-radius:50%; border:2px solid var(--accent); object-fit:cover;">
+            <h3>ПАРАМЕТРЫ ПРОФИЛЯ</h3>
+            <img id="set-pre" style="width:100px; height:100px; border-radius:50%; border:3px solid var(--accent); object-fit:cover; margin-bottom:15px;">
             <input type="file" id="f-set" class="hidden" onchange="preview(this, 'set-pre')">
-            <button class="btn" style="margin:10px 0" onclick="document.getElementById('f-set').click()">Сменить фото</button>
-            <input type="color" id="set-color" style="width:100%; height:40px; border:none; background:none; margin:10px 0">
-            <div style="text-align:left; font-size:12px; margin-bottom:5px;">Админ-код:</div>
-            <input type="text" id="admin-key" class="inp" placeholder="Введите код">
-            <button class="btn" style="background:var(--accent); color:#000; width:100%; margin-top:15px" onclick="saveSettings()">СОХРАНИТЬ</button>
-            <button class="btn" style="margin-top:10px; width:100%" onclick="hideModal('settings-modal')">Закрыть</button>
+            <button class="btn" style="font-size:12px; margin-bottom:15px" onclick="document.getElementById('f-set').click()">ОБНОВИТЬ ФОТО</button>
+            <div style="text-align:left; margin-bottom:15px;">
+                <label style="font-size:12px; opacity:0.7">Цвет ника:</label>
+                <input type="color" id="set-color" style="width:100%; height:40px; border:none; background:none; cursor:pointer;">
+            </div>
+            <div style="text-align:left; margin-bottom:15px;">
+                <label style="font-size:12px; opacity:0.7">Ключ администратора:</label>
+                <input type="text" id="admin-key" class="inp" placeholder="Код доступа (буквы видны)">
+            </div>
+            <button class="btn" style="background:var(--accent); color:#000; width:100%" onclick="saveSettings()">СОХРАНИТЬ ИЗМЕНЕНИЯ</button>
+            <button class="btn" style="margin-top:10px; width:100%; background:#333; color:#fff;" onclick="hideModal('settings-modal')">ЗАКРЫТЬ</button>
         </div>
     </div>
 
     <div id="call-modal" class="custom-modal">
         <div class="win-frame">
             <div id="scary-labels" class="hidden" style="display:flex; justify-content:space-between; margin-bottom:15px;">
-                <span class="scary">НЕ БЕРИ!!!</span><span class="scary">НЕ БЕРИ!!!</span>
+                <span class="scary-ui">НЕ БЕРИ!!!</span><span class="scary-ui">НЕ БЕРИ!!!</span>
             </div>
-            <img id="call-av" style="width:120px; height:120px; border-radius:50%; border:4px solid var(--accent); object-fit:cover;">
-            <h2 id="call-nick" style="margin:20px 0;">Ник</h2>
-            <div id="call-status" style="margin-bottom:10px; color:var(--accent)">Вызов...</div>
-            <div id="mic-status" style="font-size:12px; margin-bottom:15px; opacity:0.7">Микрофон: ВКЛ</div>
-            <div id="call-actions" style="display:flex; gap:10px; justify-content:center;"></div>
+            <img id="call-av" style="width:130px; height:130px; border-radius:50%; border:5px solid var(--accent); object-fit:cover;">
+            <h2 id="call-nick" style="margin:20px 0; font-size:28px;">Пользователь</h2>
+            <div id="call-status" style="margin-bottom:10px; color:var(--accent); font-weight:bold; font-size:18px;">СОЕДИНЕНИЕ...</div>
+            <div id="mic-info" style="font-size:13px; margin-bottom:20px; color:var(--warn)">МИКРОФОН: ВКЛЮЧЕН</div>
+            <div id="call-actions" style="display:flex; gap:15px; justify-content:center;"></div>
         </div>
     </div>
 
     <div id="group-modal" class="custom-modal">
         <div class="win-frame">
-            <h3 id="g-modal-title">Создать группу</h3>
-            <img id="g-pre" style="width:80px; height:80px; border-radius:50%; border:2px solid var(--accent); object-fit:cover;" src="https://cdn-icons-png.flaticon.com/512/6387/6387947.png">
+            <h3 id="g-title">НОВАЯ ГРУППА</h3>
+            <img id="g-pre" style="width:90px; height:90px; border-radius:50%; border:2px solid var(--accent); object-fit:cover; margin-bottom:15px;" src="https://cdn-icons-png.flaticon.com/512/6387/6387947.png">
             <input type="file" id="g-f" class="hidden" onchange="preview(this, 'g-pre')">
-            <button class="btn" style="margin:10px 0" onclick="document.getElementById('g-f').click()">Выбрать фото</button>
-            <input type="text" id="g-name" class="inp" placeholder="Название">
-            <div id="g-manage-area" class="hidden" style="margin-top:15px; border:1px solid #333; padding:10px; max-height:150px; overflow-y:auto;"></div>
-            <button id="g-btn-main" class="btn" style="background:var(--accent); color:#000; width:100%; margin-top:15px" onclick="createGroup()">СОЗДАТЬ</button>
-            <button class="btn" style="margin-top:10px; width:100%" onclick="hideModal('group-modal')">ОТМЕНА</button>
+            <button class="btn" style="font-size:11px; margin-bottom:15px" onclick="document.getElementById('g-f').click()">ВЫБРАТЬ АВАТАР</button>
+            <input type="text" id="g-name" class="inp" placeholder="Название группы" style="width:100%; margin-bottom:20px;">
+            <button class="btn" style="background:var(--accent); color:#000; width:100%" onclick="createGroup()">ПОДТВЕРДИТЬ</button>
+            <button class="btn" style="margin-top:10px; width:100%; background:#333;" onclick="hideModal('group-modal')">ОТМЕНА</button>
         </div>
     </div>
 
     <div id="members-modal" class="custom-modal">
-        <div class="win-frame">
-            <h3 id="mem-title">Участники</h3>
-            <div id="mem-list" style="max-height:300px; overflow-y:auto; text-align:left;"></div>
-            <button class="btn" style="margin-top:15px; width:100%" onclick="hideModal('members-modal')">Закрыть</button>
+        <div class="win-frame" style="width:450px;">
+            <h3 id="mem-h">УЧАСТНИКИ</h3>
+            <div id="mem-list" style="max-height:350px; overflow-y:auto; text-align:left; border:1px solid #333; border-radius:10px; padding:10px;"></div>
+            <button class="btn" style="margin-top:20px; width:100%" onclick="hideModal('members-modal')">ЗАКРЫТЬ</button>
         </div>
     </div>
 
     <div id="sidebar" class="hidden">
         <div class="top-nav">
             <span class="nav-icon" onclick="showModal('settings-modal')">⚙️</span>
-            <span class="nav-icon" onclick="openGlobalSearch()">👤</span>
-            <span class="nav-icon" onclick="openGroupCreate()">➕</span>
-            <div id="my-name-display" style="margin-left:auto; font-weight:bold;"></div>
+            <span class="nav-icon" onclick="openSearch()">👤</span>
+            <span class="nav-icon" onclick="showModal('group-modal')">➕</span>
+            <div id="my-name-display" style="margin-left:auto; font-weight:bold; font-size:14px;"></div>
         </div>
         <div id="contact-list"></div>
     </div>
 
     <div id="main-content" class="hidden">
-        <header onclick="showChatMembers()">
-            <div id="chat-header-text">
-                <b id="chat-title">Глобальный чат</b><br>
-                <small id="chat-stat" style="color:var(--accent)"></small>
+        <header onclick="openChatInfo()">
+            <div id="header-text">
+                <b id="chat-title" style="font-size:18px;">Глобальный чат</b><br>
+                <small id="chat-stat" style="color:var(--accent); font-weight:bold;"></small>
             </div>
-            <div style="display:flex; gap:10px;">
-                <button id="admin-wipe" class="hidden" onclick="event.stopPropagation(); wipeChat()" style="background:none; border:none; cursor:pointer; font-size:20px;">🗑️</button>
-                <button id="call-btn" class="hidden" onclick="event.stopPropagation(); startCall()" style="background:var(--accent); border:none; padding:8px 15px; border-radius:5px; font-weight:bold; cursor:pointer;">📞</button>
+            <div style="display:flex; gap:15px; align-items:center;">
+                <span id="admin-indicator" class="hidden" style="color:var(--error); font-weight:bold; font-size:12px;">[ADMIN MODE]</span>
+                <button id="admin-wipe" class="hidden" onclick="event.stopPropagation(); wipeAll()" style="background:none; border:none; cursor:pointer; font-size:24px;">🗑️</button>
+                <button id="call-btn" class="hidden" onclick="event.stopPropagation(); triggerCallAction()" style="background:var(--accent); border:none; padding:10px 20px; border-radius:10px; font-weight:900; cursor:pointer;">ПОЗВОНИТЬ</button>
             </div>
         </header>
 
         <div id="voice-panel" class="hidden">
-            <span>🎙️ <b>Голосовой канал активен</b></span>
-            <span id="voice-count">Участников: 0</span>
-            <button class="btn" style="background:var(--error)" onclick="leaveVoice()">Выйти</button>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span style="font-size:20px;">🎙️</span>
+                <div>
+                    <b id="voice-status-text">Голосовой канал активен</b><br>
+                    <small id="voice-users-list" style="opacity:0.7">В канале: 0 чел.</small>
+                </div>
+            </div>
+            <button class="btn" style="background:var(--error); font-size:11px;" onclick="leaveVoiceChannel()">ВЫЙТИ</button>
         </div>
 
         <div id="chat-window"></div>
 
-        <div id="action-bar" class="hidden" style="background:#1c2127; padding:10px 20px; border-top:2px solid var(--accent); display:flex; justify-content:space-between;">
-            <span id="action-text" style="font-size:12px; opacity:0.8"></span>
-            <span onclick="cancelAction()" style="cursor:pointer; color:var(--error)">✕</span>
+        <div id="action-bar" class="hidden" style="background:#1c2127; padding:12px 25px; border-top:3px solid var(--accent); display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; flex-direction:column;">
+                <b id="action-type" style="font-size:10px; color:var(--accent); text-transform:uppercase;">Ответ</b>
+                <span id="action-text" style="font-size:13px; opacity:0.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:400px;"></span>
+            </div>
+            <span onclick="cancelAction()" style="cursor:pointer; color:var(--error); font-weight:bold; font-size:20px;">✕</span>
         </div>
 
         <div id="input-area">
             <span class="tool-btn" onclick="showModal('emoji-picker')">😊</span>
             <span class="tool-btn" onclick="document.getElementById('msg-img').click()">📷</span>
-            <input type="file" id="msg-img" class="hidden" onchange="sendPhoto(this)">
-            <input type="text" id="msg-in" class="inp" placeholder="Ваше сообщение..." onkeydown="if(event.key==='Enter') sendMessage()">
-            <button class="btn" style="background:var(--accent); color:#000" onclick="sendMessage()">➤</button>
+            <input type="file" id="msg-img" class="hidden" onchange="uploadImage(this)">
+            <input type="text" id="msg-in" class="inp" placeholder="Введите сообщение..." onkeydown="if(event.key==='Enter') send()">
+            <button class="btn" style="background:var(--accent); color:#000" onclick="send()">ОТПРАВИТЬ</button>
+        </div>
+    </div>
+
+    <div id="emoji-picker" class="custom-modal" onclick="this.style.display='none'">
+        <div class="win-frame" onclick="event.stopPropagation()" style="width:340px; display:grid; grid-template-columns:repeat(4,1fr); gap:15px; padding:20px;">
+            <span class="tool-btn" onclick="addEmoji('😊')">😊</span><span class="tool-btn" onclick="addEmoji('😂')">😂</span>
+            <span class="tool-btn" onclick="addEmoji('💀')">💀</span><span class="tool-btn" onclick="addEmoji('🔥')">🔥</span>
+            <span class="tool-btn" onclick="addEmoji('🤡')">🤡</span><span class="tool-btn" onclick="addEmoji('❤')">❤</span>
+            <span class="tool-btn" onclick="addEmoji('👍')">👍</span><span class="tool-btn" onclick="addEmoji('🤔')">🤔</span>
+            <span class="tool-btn" onclick="addEmoji('✅')">✅</span><span class="tool-btn" onclick="addEmoji('🚀')">🚀</span>
+            <span class="tool-btn" onclick="addEmoji('😈')">😈</span><span class="tool-btn" onclick="addEmoji('🌈')">🌈</span>
         </div>
     </div>
 
     <div id="ctx-menu">
-        <div class="ctx-item" onclick="replyMsg()">Ответить</div>
-        <div id="admin-tools" class="hidden">
-            <div class="ctx-item" onclick="editMsg()">Изменить</div>
-            <div class="ctx-item" style="color:var(--error)" onclick="deleteMsg()">Удалить</div>
+        <div class="ctx-item" onclick="replyMessage()">Ответить</div>
+        <div id="owner-tools" class="hidden">
+            <div class="ctx-item" onclick="editMessage()">Изменить</div>
+            <div class="ctx-item" style="color:var(--error)" onclick="deleteMessage()">Удалить</div>
         </div>
     </div>
 
     <script>
-        const firebaseConfig = { apiKey: "AIzaSyAocmcoBH2Q8_QENuE9AuaGwtDOSSg-WpE", authDomain: "danblox-e209f.firebaseapp.com", databaseURL: "https://danblox-e209f-default-rtdb.firebaseio.com", projectId: "danblox-e209f" };
+        const firebaseConfig = { 
+            apiKey: "AIzaSyAocmcoBH2Q8_QENuE9AuaGwtDOSSg-WpE", 
+            authDomain: "danblox-e209f.firebaseapp.com", 
+            databaseURL: "https://danblox-e209f-default-rtdb.firebaseio.com", 
+            projectId: "danblox-e209f" 
+        };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const defAv = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
         let myData = null, curChat = 'global', curPeer = '', selId = null, selData = null;
-        let isEdit = false, replyData = null, micOn = true, localStream = null;
+        let isEditing = false, replyData = null, micEnabled = true, myStream = null;
 
-        // --- АВТОРИЗАЦИЯ ---
+        // --- БЛОК АВТОРИЗАЦИИ ---
         async function auth() {
-            const n = document.getElementById('auth-n').value.trim(), p = document.getElementById('auth-p').value.trim();
+            const n = document.getElementById('auth-n').value.trim();
+            const p = document.getElementById('auth-p').value.trim();
             if(!n || !p) return;
-            const s = await db.ref('users/'+n).get();
-            if(!s.exists()) {
-                myData = { nick: n, pass: p, av: defAv, color: '#fff', id: Date.now() };
+            const snap = await db.ref('users/'+n).get();
+            if(!snap.exists()) {
+                myData = { nick: n, pass: p, av: defAv, color: '#ffffff', admin: false };
                 await db.ref('users/'+n).set(myData);
             } else {
-                if(s.val().pass !== p) return alert("Пароль неверный!");
-                myData = s.val();
+                if(snap.val().pass !== p) return alert("ПАРОЛЬ НЕВЕРНЫЙ!");
+                myData = snap.val();
             }
-            start();
+            enterApp();
         }
 
-        function start() {
+        function enterApp() {
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('sidebar').classList.remove('hidden');
             document.getElementById('main-content').classList.remove('hidden');
-            refreshUI();
+            updateSidebarInfo();
             
-            db.ref('presence/'+myData.nick).set(true); 
+            db.ref('presence/'+myData.nick).set(true);
             db.ref('presence/'+myData.nick).onDisconnect().remove();
             
-            listenContacts();
-            listenCalls();
+            listenToContacts();
+            listenToCalls();
             switchChat('global', 'Глобальный чат');
-            
-            // Чистка "зависших" звонков при входе
-            db.ref(`calls/${myData.nick}`).remove();
         }
 
-        function refreshUI() {
-            const nameEl = document.getElementById('my-name-display');
-            nameEl.innerText = myData.nick;
-            nameEl.style.color = myData.color;
+        function updateSidebarInfo() {
+            const el = document.getElementById('my-name-display');
+            el.innerText = myData.nick;
+            el.style.color = myData.color;
+            document.getElementById('admin-indicator').classList.toggle('hidden', !myData.admin);
             document.getElementById('admin-wipe').classList.toggle('hidden', !myData.admin);
         }
 
-        // --- КОНТАКТЫ (БЕЗ ДУБЛЕЙ) ---
-        function listenContacts() {
-            db.ref(`users/${myData.nick}/friends`).on('value', async s => {
+        // --- БЛОК КОНТАКТОВ ---
+        function listenToContacts() {
+            db.ref(`users/${myData.nick}/friends`).on('value', async snap => {
                 const list = document.getElementById('contact-list');
-                list.innerHTML = `<div class="contact-item" onclick="switchChat('global','Глобальный чат')">🌍 <b>Глобальный чат</b></div>`;
+                list.innerHTML = `<div class="contact-item" onclick="switchChat('global','Глобальный чат')">🌍 <div class="contact-info"><b>Глобальный чат</b></div></div>`;
                 
-                const raw = s.val() || {};
-                const uniqueKeys = [...new Set(Object.keys(raw))]; // Убираем дубли в памяти
-                
-                for(let f of uniqueKeys) {
-                    const isG = (raw[f] === 'group');
-                    const snap = await db.ref(isG ? 'groups/'+f : 'users/'+f).get();
-                    if(!snap.exists()) continue;
-                    const d = snap.val();
-                    
+                const data = snap.val() || {};
+                const keys = Object.keys(data);
+                const uniqueKeys = [...new Set(keys)]; // ПРОВЕРКА НА ДУБЛИ
+
+                for(let key of uniqueKeys) {
+                    const type = data[key];
+                    const isGroup = type === 'group';
+                    const infoSnap = await db.ref(isGroup ? 'groups/'+key : 'users/'+key).get();
+                    if(!infoSnap.exists()) continue;
+                    const info = infoSnap.val();
+
                     const item = document.createElement('div');
                     item.className = 'contact-item';
-                    item.onclick = () => isG ? switchChat(f, d.name) : openPrivate(d.nick);
+                    item.onclick = () => isGroup ? switchChat(key, info.name) : startPrivateChat(info.nick);
                     item.innerHTML = `
-                        <img src="${d.av || defAv}">
+                        <img src="${info.av || defAv}">
                         <div class="contact-info">
-                            <b style="color:${isG ? '#fff' : d.color}">${isG ? d.name : d.nick}</b>
-                            <div class="status-dot" id="st-${f}">...</div>
+                            <b style="color:${isGroup ? '#fff' : info.color}">${isGroup ? info.name : info.nick}</b>
+                            <div class="status-dot" id="dot-${key}">...</div>
                         </div>
-                        <span onclick="event.stopPropagation(); removeFriend('${f}')" style="color:red">🗑️</span>`;
+                        <span onclick="event.stopPropagation(); removeContact('${key}')" style="color:var(--error); font-weight:bold;">🗑️</span>
+                    `;
                     list.appendChild(item);
 
-                    if(!isG) db.ref('presence/'+f).on('value', p => {
-                        const el = document.getElementById('st-'+f);
-                        if(el) {
-                            el.innerText = p.exists() ? 'ONLINE' : 'OFFLINE';
-                            el.className = 'status-dot ' + (p.exists() ? 'on' : 'off');
+                    if(!isGroup) db.ref('presence/'+key).on('value', p => {
+                        const dot = document.getElementById('dot-'+key);
+                        if(dot) {
+                            dot.innerText = p.exists() ? 'ONLINE' : 'OFFLINE';
+                            dot.className = 'status-dot ' + (p.exists() ? 'on' : 'off');
                         }
                     });
                 }
             });
         }
 
-        async function openPrivate(n) {
+        async function startPrivateChat(n) {
             if(n === myData.nick) return;
-            // Двустороннее добавление
+            // Двусторонняя связь
             await db.ref(`users/${myData.nick}/friends/${n}`).set('user');
             await db.ref(`users/${n}/friends/${myData.nick}`).set('user');
             
-            const id = myData.nick < n ? myData.nick+'_'+n : n+'_'+myData.nick;
-            switchChat(id, n);
+            const chatID = myData.nick < n ? myData.nick+'_'+n : n+'_'+myData.nick;
+            switchChat(chatID, n);
         }
 
-        // --- ЧАТ ---
+        // --- БЛОК ЧАТА ---
         function switchChat(id, title) {
-            curChat = id; 
-            const isGroup = id === 'global' || id.startsWith('group');
-            curPeer = isGroup ? '' : title;
-            
+            curChat = id;
+            const isBroad = id === 'global' || id.startsWith('group');
+            curPeer = isBroad ? '' : title;
+
             document.getElementById('chat-title').innerText = title;
-            document.getElementById('call-btn').classList.remove('hidden');
             document.getElementById('chat-window').innerHTML = '';
+            document.getElementById('call-btn').classList.remove('hidden');
+            
+            // Сброс голоса
             document.getElementById('voice-panel').classList.add('hidden');
 
             db.ref('messages/'+id).off();
-            db.ref('messages/'+id).on('child_added', s => drawMsg(s.key, s.val()));
+            db.ref('messages/'+id).on('child_added', s => renderMsg(s.key, s.val()));
             db.ref('messages/'+id).on('child_changed', s => {
-                const e = document.getElementById('m-'+s.key);
-                if(e) e.querySelector('.txt-node').innerText = s.val().txt;
+                const el = document.getElementById('m-'+s.key);
+                if(el) el.querySelector('.txt-node').innerText = s.val().txt;
             });
             db.ref('messages/'+id).on('child_removed', s => document.getElementById('m-'+s.key)?.remove());
 
-            updateHeaderStat();
+            syncHeaderStat();
+            if(isBroad) syncVoiceChannel();
         }
 
-        async function updateHeaderStat() {
+        function syncHeaderStat() {
             const stat = document.getElementById('chat-stat');
-            if(curChat === 'global' || curChat.startsWith('group')) {
+            db.ref('presence').off();
+            if(!curPeer) {
                 db.ref('presence').on('value', s => {
                     let c = 0; s.forEach(() => c++);
-                    stat.innerText = "В сети: " + c;
+                    stat.innerText = "В СЕТИ: " + c;
                 });
-                if(curChat.startsWith('group')) {
-                   db.ref(`voice/${curChat}`).on('value', s => {
-                       const v = s.val() || {};
-                       const count = Object.keys(v).length;
-                       if(count > 0) {
-                           document.getElementById('voice-panel').classList.remove('hidden');
-                           document.getElementById('voice-count').innerText = "В канале: " + count;
-                       }
-                   });
-                }
             } else {
                 db.ref('presence/'+curPeer).on('value', p => {
-                    stat.innerText = p.exists() ? "Online" : "Offline";
+                    stat.innerText = p.exists() ? "ONLINE" : "OFFLINE";
+                    stat.style.color = p.exists() ? "var(--accent)" : "#555";
                 });
             }
         }
 
-        async function drawMsg(mid, m) {
-            const win = document.getElementById('chat-window'), row = document.createElement('div');
+        async function renderMsg(mid, m) {
+            const win = document.getElementById('chat-window');
+            const row = document.createElement('div');
             const u = (await db.ref('users/'+m.sn).get()).val() || { av: defAv, color: '#fff' };
-            row.id = 'm-'+mid;
-            row.className = `msg-row ${m.sn===myData.nick?'me':''}`;
-            row.oncontextmenu = (e) => { e.preventDefault(); e.stopPropagation(); openCtx(e, mid, m); };
             
-            let content = m.type === 'img' ? `<img src="${m.txt}">` : `<div class="txt-node">${m.txt}</div>`;
+            row.id = 'm-'+mid;
+            row.className = `msg-row ${m.sn === myData.nick ? 'me' : ''}`;
+            row.oncontextmenu = (e) => { e.preventDefault(); e.stopPropagation(); openContextMenu(e, mid, m); };
+
+            let body = m.type === 'img' ? `<img src="${m.txt}" onclick="window.open(this.src)">` : `<div class="txt-node">${m.txt}</div>`;
             row.innerHTML = `
-                <img src="${u.av || defAv}" class="msg-av" onclick="openPrivate('${m.sn}')">
-                <div class="msg-content ${u.admin?'admin-msg':''}">
-                    <b style="color:${u.color}">${m.sn} ${u.admin?'<span class="admin-tag">ADMIN</span>':''}</b>
-                    ${m.rp ? `<div style="font-size:10px; opacity:0.5; border-left:2px solid var(--accent); padding-left:5px;">↪ ${m.rp}</div>` : ''}
-                    ${content}
-                </div>`;
-            win.appendChild(row); win.scrollTop = win.scrollHeight;
+                <img src="${u.av || defAv}" class="msg-av" onclick="startPrivateChat('${m.sn}')">
+                <div class="msg-content ${u.admin ? 'admin-msg' : ''}">
+                    <b style="color:${u.color}">${m.sn} ${u.admin ? '<span class="admin-tag">ADMIN</span>' : ''}</b>
+                    ${m.rp ? `<div class="reply-ref">↪ ${m.rp}</div>` : ''}
+                    ${body}
+                </div>
+            `;
+            win.appendChild(row);
+            win.scrollTop = win.scrollHeight;
         }
 
-        function sendMessage() {
-            const i = document.getElementById('msg-in'), t = i.value.trim();
-            if(!t && !isEdit) return;
-            if(isEdit) {
-                db.ref(`messages/${curChat}/${selId}`).update({ txt: t });
+        function send() {
+            const input = document.getElementById('msg-in');
+            const text = input.value.trim();
+            if(!text && !isEditing) return;
+
+            if(isEditing) {
+                db.ref(`messages/${curChat}/${selId}`).update({ txt: text });
             } else {
-                db.ref('messages/'+curChat).push({ 
-                    sn: myData.nick, txt: t, type: 'text', 
-                    rp: replyData ? (replyData.txt.substring(0,15)+'...') : null 
+                db.ref('messages/'+curChat).push({
+                    sn: myData.nick, txt: text, type: 'text',
+                    rp: replyData ? (replyData.txt.substring(0,25) + '...') : null
                 });
-                // Если ЛС - форсим добавление контакта получателю
                 if(curPeer) db.ref(`users/${curPeer}/friends/${myData.nick}`).set('user');
             }
-            i.value = ''; cancelAction();
+            input.value = '';
+            cancelAction();
         }
 
-        // --- ЗВОНКИ И ГОЛОС (WEBRTC-STYLE) ---
-        async function startCall() {
+        // --- БЛОК ЗВОНКОВ И СИНХРОНИЗАЦИИ ---
+        async function triggerCallAction() {
             if(curChat === 'global' || curChat.startsWith('group')) {
-                // Вход в голосовой канал
-                await db.ref(`voice/${curChat}/${myData.nick}`).set(true);
-                document.getElementById('voice-panel').classList.remove('hidden');
-                initMic();
+                // Вход в голос. канал
+                await db.ref(`voice_rooms/${curChat}/${myData.nick}`).set(true);
+                initMedia();
                 return;
             }
-
             // Личный звонок
-            const u = (await db.ref('users/'+curPeer).get()).val();
+            const target = curPeer;
+            const u = (await db.ref('users/'+target).get()).val();
             document.getElementById('call-av').src = u.av || defAv;
-            document.getElementById('call-nick').innerText = curPeer;
-            document.getElementById('call-status').innerText = "Исходящий вызов...";
-            
-            const acts = document.getElementById('call-actions');
-            acts.innerHTML = `<button class="btn" style="background:var(--error)" onclick="endCall()">СБРОСИТЬ</button>`;
+            document.getElementById('call-nick').innerText = target;
+            document.getElementById('call-status').innerText = "ВЫЗОВ...";
+            document.getElementById('call-actions').innerHTML = `<button class="btn" style="background:var(--error)" onclick="endPersonalCall()">ОТМЕНА</button>`;
             
             showModal('call-modal');
-            await db.ref(`calls/${curPeer}`).set({ from: myData.nick, status: 'calling', timestamp: Date.now() });
-            initMic();
+            await db.ref(`calls/${target}`).set({ from: myData.nick, status: 'calling', time: Date.now() });
+            initMedia();
         }
 
-        function listenCalls() {
-            db.ref(`calls/${myData.nick}`).on('value', async s => {
-                const c = s.val();
-                if(!c) return hideModal('call-modal');
-                
-                // Если звонок старее 1 минуты - игнорим (защита от багов после перезахода)
-                if(Date.now() - c.timestamp > 60000) { db.ref(`calls/${myData.nick}`).remove(); return; }
+        function listenToCalls() {
+            // Входящие звонки
+            db.ref(`calls/${myData.nick}`).on('value', async snap => {
+                const c = snap.val();
+                if(!c) { hideModal('call-modal'); return; }
+
+                // Авто-сброс если звонок висит более 40 сек
+                if(Date.now() - c.time > 40000) { db.ref(`calls/${myData.nick}`).remove(); return; }
 
                 const u = (await db.ref('users/'+c.from).get()).val();
-                const isDeath = (c.from === "Смерть_в_нищете");
+                const isHorror = c.from === "Смерть_в_нищете";
                 
                 document.getElementById('call-av').src = u.av || defAv;
                 document.getElementById('call-nick').innerText = c.from;
-                document.getElementById('scary-labels').classList.toggle('hidden', !isDeath);
+                document.getElementById('scary-labels').classList.toggle('hidden', !isHorror);
                 
-                const acts = document.getElementById('call-actions');
-                acts.innerHTML = '';
+                const box = document.getElementById('call-actions');
+                box.innerHTML = '';
 
                 if(c.status === 'calling') {
-                    document.getElementById('call-status').innerText = "Входящий вызов...";
-                    if(isDeath) {
-                        acts.innerHTML = `<button class="btn" style="background:var(--accent)" onclick="acceptCall()">ПРИНЯТЬ</button>
-                                          <button class="btn" style="background:var(--accent)" onclick="acceptCall()">ПРИНЯТЬ</button>`;
+                    document.getElementById('call-status').innerText = "ВХОДЯЩИЙ ВЫЗОВ";
+                    if(isHorror) {
+                        box.innerHTML = `<button class="btn" style="background:var(--accent)" onclick="acceptCall()">ПРИНЯТЬ</button>
+                                         <button class="btn" style="background:var(--accent)" onclick="acceptCall()">ПРИНЯТЬ</button>`;
                     } else {
-                        acts.innerHTML = `<button class="btn" style="background:var(--accent)" onclick="acceptCall()">ПРИНЯТЬ</button>
-                                          <button class="btn" style="background:var(--error)" onclick="endCall()">ОТКЛОНИТЬ</button>`;
+                        box.innerHTML = `<button class="btn" style="background:var(--accent)" onclick="acceptCall()">ПРИНЯТЬ</button>
+                                         <button class="btn" style="background:var(--error)" onclick="endPersonalCall()">ОТКЛОНИТЬ</button>`;
                     }
-                } else if(c.status === 'talking') {
-                    document.getElementById('call-status').innerText = "Разговор...";
-                    acts.innerHTML = `<button class="btn" id="mic-btn" style="background:#555" onclick="toggleMic()">ВЫКЛ МИК</button>
-                                      <button class="btn" style="background:var(--error)" onclick="endCall()">ЗАВЕРШИТЬ</button>`;
+                } else if(c.status === 'active') {
+                    document.getElementById('call-status').innerText = "ИДЕТ РАЗГОВОР";
+                    box.innerHTML = `<button class="btn" id="m-btn" style="background:#444" onclick="toggleMic()">ВЫКЛ МИК</button>
+                                     <button class="btn" style="background:var(--error)" onclick="endPersonalCall()">ЗАВЕРШИТЬ</button>`;
                 }
                 showModal('call-modal');
             });
 
-            // Для звонящего (отслеживание принятия)
+            // Слушатель для звонящего (если собеседник принял)
             db.ref('calls').on('child_changed', s => {
                 const c = s.val();
-                if(c.from === myData.nick && c.status === 'talking') {
-                    document.getElementById('call-status').innerText = "Разговор...";
+                if(c.from === myData.nick && c.status === 'active') {
+                    document.getElementById('call-status').innerText = "ИДЕТ РАЗГОВОР";
                     document.getElementById('call-actions').innerHTML = `
-                        <button class="btn" id="mic-btn" style="background:#555" onclick="toggleMic()">ВЫКЛ МИК</button>
-                        <button class="btn" style="background:var(--error)" onclick="endCall()">ЗАВЕРШИТЬ</button>`;
+                        <button class="btn" id="m-btn" style="background:#444" onclick="toggleMic()">ВЫКЛ МИК</button>
+                        <button class="btn" style="background:var(--error)" onclick="endPersonalCall()">ЗАВЕРШИТЬ</button>`;
                 }
             });
         }
 
-        async function initMic() {
+        function syncVoiceChannel() {
+            db.ref(`voice_rooms/${curChat}`).on('value', s => {
+                const members = s.val() || {};
+                const count = Object.keys(members).length;
+                const panel = document.getElementById('voice-panel');
+                
+                if(count > 0) {
+                    panel.classList.remove('hidden');
+                    document.getElementById('voice-users-list').innerText = "В канале: " + count + " чел.";
+                    let names = Object.keys(members).join(', ');
+                    document.getElementById('voice-status-text').innerText = "Голос (" + names + ")";
+                } else {
+                    panel.classList.add('hidden');
+                }
+            });
+        }
+
+        async function initMedia() {
             try {
-                localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                console.log("Микрофон активирован");
-            } catch(e) { alert("Микрофон не найден или доступ запрещен!"); }
+                myStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                console.log("Mic OK");
+            } catch(e) { alert("Микрофон не обнаружен!"); }
         }
 
         function toggleMic() {
-            micOn = !micOn;
-            if(localStream) localStream.getAudioTracks()[0].enabled = micOn;
-            document.getElementById('mic-status').innerText = "Микрофон: " + (micOn ? "ВКЛ" : "ВЫКЛ");
-            document.getElementById('mic-btn').innerText = micOn ? "ВЫКЛ МИК" : "ВКЛ МИК";
+            micEnabled = !micEnabled;
+            if(myStream) myStream.getAudioTracks()[0].enabled = micEnabled;
+            document.getElementById('mic-info').innerText = "МИКРОФОН: " + (micEnabled ? "ВКЛЮЧЕН" : "ВЫКЛЮЧЕН");
+            document.getElementById('m-btn').innerText = micEnabled ? "ВЫКЛ МИК" : "ВКЛ МИК";
         }
 
         async function acceptCall() {
-            await db.ref(`calls/${myData.nick}`).update({ status: 'talking' });
-            initMic();
+            await db.ref(`calls/${myData.nick}`).update({ status: 'active' });
+            initMedia();
         }
 
-        async function endCall() {
-            if(localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+        async function endPersonalCall() {
+            if(myStream) { myStream.getTracks().forEach(t => t.stop()); myStream = null; }
+            // Удаляем свою входящую запись
             await db.ref(`calls/${myData.nick}`).remove();
-            if(curPeer) await db.ref(`calls/${curPeer}`).remove();
-            // Поиск если мы были инициатором
-            db.ref('calls').once('value', snap => {
-                snap.forEach(c => { if(c.val().from === myData.nick) db.ref('calls/'+c.key).remove(); });
+            // Ищем и удаляем если мы звонили
+            db.ref('calls').once('value', s => {
+                s.forEach(snap => { if(snap.val().from === myData.nick) db.ref('calls/'+snap.key).remove(); });
             });
             hideModal('call-modal');
         }
 
-        async function leaveVoice() {
-            await db.ref(`voice/${curChat}/${myData.nick}`).remove();
-            document.getElementById('voice-panel').classList.add('hidden');
+        async function leaveVoiceChannel() {
+            await db.ref(`voice_rooms/${curChat}/${myData.nick}`).remove();
         }
 
-        // --- УПРАВЛЕНИЕ ГРУППОЙ ---
-        function openGroupCreate() {
-            document.getElementById('g-modal-title').innerText = "Создать группу";
-            document.getElementById('g-btn-main').innerText = "СОЗДАТЬ";
-            document.getElementById('g-btn-main').onclick = createGroup;
-            document.getElementById('g-manage-area').classList.add('hidden');
-            showModal('group-modal');
+        // --- БЛОК ГРУПП И АДМИНКИ ---
+        async function openChatInfo() {
+            const list = document.getElementById('mem-list');
+            list.innerHTML = 'Загрузка...';
+            showModal('members-modal');
+
+            if(curChat === 'global') {
+                document.getElementById('mem-h').innerText = "ГЛОБАЛЬНЫЙ СПИСОК";
+                db.ref('presence').once('value', s => {
+                    list.innerHTML = '';
+                    s.forEach(u => { list.innerHTML += `<div style="padding:8px; border-bottom:1px solid #222;">👤 ${u.key} <span class="on" style="float:right">ONLINE</span></div>`; });
+                });
+            } else if(curChat.startsWith('group')) {
+                const g = (await db.ref('groups/'+curChat).get()).val();
+                document.getElementById('mem-h').innerText = g.name.toUpperCase();
+                list.innerHTML = '';
+                for(let m in g.members) {
+                    const isAdm = g.owner === myData.nick;
+                    list.innerHTML += `
+                        <div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #222;">
+                            <span>👤 ${m} ${m === g.owner ? '<b style="color:var(--accent)">(Владелец)</b>' : ''}</span>
+                            ${isAdm && m !== myData.nick ? `<button onclick="kick('${curChat}','${m}')" style="color:red; background:none; border:none; cursor:pointer">Исключить</button>` : ''}
+                        </div>`;
+                }
+                if(g.owner === myData.nick) {
+                    list.innerHTML += `<div style="margin-top:15px; border-top:1px solid #444; padding-top:10px;"><b>Добавить друга:</b><br>`;
+                    const f = (await db.ref(`users/${myData.nick}/friends`).get()).val() || {};
+                    for(let k in f) {
+                        if(f[k] !== 'group' && !g.members[k]) {
+                            list.innerHTML += `<button class="btn" style="font-size:10px; padding:5px; margin:2px;" onclick="addToG('${curChat}','${k}')">+ ${k}</button>`;
+                        }
+                    }
+                    list.innerHTML += `</div>`;
+                }
+            }
         }
+
+        async function addToG(gid, n) { await db.ref(`groups/${gid}/members/${n}`).set(true); await db.ref(`users/${n}/friends/${gid}`).set('group'); openChatInfo(); }
+        async function kick(gid, n) { await db.ref(`groups/${gid}/members/${n}`).remove(); await db.ref(`users/${n}/friends/${gid}`).remove(); openChatInfo(); }
 
         async function createGroup() {
-            const n = document.getElementById('g-name').value.trim();
-            if(!n) return;
+            const name = document.getElementById('g-name').value.trim();
+            if(!name) return;
             const gid = 'group_' + Date.now();
-            const gdata = { name: n, av: document.getElementById('g-pre').src, owner: myData.nick, members: { [myData.nick]: true } };
-            await db.ref('groups/'+gid).set(gdata);
+            const payload = {
+                name: name, av: document.getElementById('g-pre').src,
+                owner: myData.nick, members: { [myData.nick]: true }
+            };
+            await db.ref('groups/'+gid).set(payload);
             await db.ref(`users/${myData.nick}/friends/${gid}`).set('group');
             hideModal('group-modal');
         }
 
-        async function showChatMembers() {
-            const list = document.getElementById('mem-list'); list.innerHTML = '';
-            if(curChat === 'global') {
-                db.ref('presence').once('value', s => {
-                   s.forEach(u => { list.innerHTML += `<div style="padding:5px;">👤 ${u.key} <span class="on">[ONLINE]</span></div>`; });
-                   showModal('members-modal');
-                });
-            } else if(curChat.startsWith('group')) {
-                const g = (await db.ref('groups/'+curChat).get()).val();
-                for(let m in g.members) {
-                    const isOwner = g.owner === myData.nick;
-                    list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:5px;">
-                        <span>👤 ${m} ${m===g.owner?'<b>(Admin)</b>':''}</span>
-                        ${isOwner && m!==myData.nick ? `<button onclick="kickMember('${curChat}','${m}')" style="color:red">Исключить</button>` : ''}
-                    </div>`;
-                }
-                if(g.owner === myData.nick) {
-                    list.innerHTML += `<hr><b>Добавить:</b><br>`;
-                    const f = (await db.ref(`users/${myData.nick}/friends`).get()).val() || {};
-                    for(let k in f) {
-                        if(f[k] !== 'group' && !g.members[k]) {
-                            list.innerHTML += `<button onclick="addToGroup('${curChat}','${k}')">+ ${k}</button> `;
-                        }
-                    }
-                }
-                showModal('members-modal');
-            }
-        }
-
-        async function addToGroup(gid, n) { await db.ref(`groups/${gid}/members/${n}`).set(true); await db.ref(`users/${n}/friends/${gid}`).set('group'); showChatMembers(); }
-        async function kickMember(gid, n) { await db.ref(`groups/${gid}/members/${n}`).remove(); await db.ref(`users/${n}/friends/${gid}`).remove(); showChatMembers(); }
-
-        // --- АДМИНКА И ПРОЧЕЕ ---
         async function saveSettings() {
-            const code = document.getElementById('admin-key').value;
-            const upd = { av: document.getElementById('set-pre').src, color: document.getElementById('set-color').value };
-            if(code === "DanAdmin777") upd.admin = true; else upd.admin = false;
-            
-            await db.ref('users/'+myData.nick).update(upd);
+            const key = document.getElementById('admin-key').value;
+            const updates = { 
+                av: document.getElementById('set-pre').src, 
+                color: document.getElementById('set-color').value,
+                admin: (key === "DanAdmin777")
+            };
+            await db.ref('users/'+myData.nick).update(updates);
             myData = (await db.ref('users/'+myData.nick).get()).val();
-            refreshUI(); hideModal('settings-modal');
+            updateSidebarInfo();
+            hideModal('settings-modal');
         }
 
-        function openGlobalSearch() {
-            db.ref('users').once('value', s => {
-                const list = document.getElementById('all-users-list'); list.innerHTML = '';
-                s.forEach(u => {
-                    if(u.key === myData.nick) return;
-                    list.innerHTML += `<div onclick="openPrivate('${u.key}'); hideModal('members-modal')" style="padding:10px; border-bottom:1px solid #333; cursor:pointer">👤 ${u.key}</div>`;
-                });
-                document.getElementById('mem-title').innerText = "Все пользователи";
-                document.getElementById('mem-list').innerHTML = list.innerHTML;
-                showModal('members-modal');
-            });
-        }
-
-        function openCtx(e, mid, m) {
+        // --- ВСПОМОГАТЕЛЬНЫЕ ---
+        function openContextMenu(e, mid, m) {
             selId = mid; selData = m;
             const menu = document.getElementById('ctx-menu');
-            document.getElementById('admin-tools').classList.toggle('hidden', !(m.sn === myData.nick || myData.admin));
+            document.getElementById('owner-tools').classList.toggle('hidden', !(m.sn === myData.nick || myData.admin));
             menu.style.display = 'block'; menu.style.left = e.pageX+'px'; menu.style.top = e.pageY+'px';
         }
 
-        function replyMsg() { replyData = selData; showAction("Ответ: " + selData.sn); }
-        function editMsg() { isEdit = true; document.getElementById('msg-in').value = selData.txt; showAction("Редактирование..."); }
-        function deleteMsg() { if(confirm("Удалить?")) db.ref(`messages/${curChat}/${selId}`).remove(); }
-        function wipeChat() { if(confirm("ОЧИСТИТЬ ВСЁ?")) db.ref('messages/'+curChat).remove(); }
+        function replyMessage() { replyData = selData; showAction("ОТВЕТ: " + selData.sn, "Ответ"); }
+        function editMessage() { isEditing = true; document.getElementById('msg-in').value = selData.txt; showAction(selData.txt, "Редактирование"); }
+        function deleteMessage() { if(confirm("Удалить?")) db.ref(`messages/${curChat}/${selId}`).remove(); }
+        function wipeAll() { if(confirm("ОЧИСТИТЬ ЧАТ ПОЛНОСТЬЮ?")) db.ref('messages/'+curChat).remove(); }
         
-        function showAction(t) { document.getElementById('action-bar').classList.remove('hidden'); document.getElementById('action-text').innerText = t; }
-        function cancelAction() { isEdit = false; replyData = null; document.getElementById('action-bar').classList.add('hidden'); document.getElementById('msg-in').value = ''; }
+        function showAction(t, type) { 
+            document.getElementById('action-bar').classList.remove('hidden'); 
+            document.getElementById('action-type').innerText = type;
+            document.getElementById('action-text').innerText = t; 
+        }
+        function cancelAction() { isEditing = false; replyData = null; document.getElementById('action-bar').classList.add('hidden'); document.getElementById('msg-in').value = ''; }
         function showModal(id) { document.getElementById(id).style.display = 'flex'; }
         function hideModal(id) { document.getElementById(id).style.display = 'none'; }
         function closeCtx() { document.getElementById('ctx-menu').style.display='none'; }
-        function preview(i, t) { const r = new FileReader(); r.onload = e => document.getElementById(t).src = e.target.result; r.readAsDataURL(i.files[0]); }
         function addEmoji(e) { document.getElementById('msg-in').value += e; }
-        async function removeFriend(id) { if(confirm("Удалить?")) await db.ref(`users/${myData.nick}/friends/${id}`).remove(); }
-        function sendPhoto(input) {
+        function preview(i, t) { const r = new FileReader(); r.onload = e => document.getElementById(t).src = e.target.result; r.readAsDataURL(i.files[0]); }
+        async function removeContact(id) { if(confirm("Удалить контакт?")) await db.ref(`users/${myData.nick}/friends/${id}`).remove(); }
+        function openSearch() {
+            db.ref('users').once('value', s => {
+                const list = document.getElementById('mem-list'); list.innerHTML = '';
+                document.getElementById('mem-h').innerText = "ПОИСК ПОЛЬЗОВАТЕЛЕЙ";
+                s.forEach(u => {
+                    if(u.key === myData.nick) return;
+                    list.innerHTML += `<div onclick="startPrivateChat('${u.key}'); hideModal('members-modal')" style="padding:12px; border-bottom:1px solid #333; cursor:pointer">👤 ${u.key}</div>`;
+                });
+                showModal('members-modal');
+            });
+        }
+        function uploadImage(input) {
             const f = input.files[0]; if(!f) return;
             const r = new FileReader();
             r.onload = e => db.ref('messages/'+curChat).push({ sn: myData.nick, txt: e.target.result, type: 'img' });
