@@ -8,25 +8,47 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
         :root { 
-            --bg: #0b0d0f; --panel: #16191d; --accent: #00ff88; --text: #ffffff; 
-            --side-w: 320px; --error: #ff4444; --blue: #0078ff; --warn: #ffcc00;
+            --bg: #0b0d0f;
+            --panel: #16191d; 
+            --accent: #00ff88; 
+            --text: #ffffff; 
+            --side-w: 320px; 
+            --error: #ff4444; 
+            --blue: #0078ff; 
+            --warn: #ffcc00;
         }
         * { box-sizing: border-box; }
         body { 
-            margin: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            background: var(--bg); color: var(--text); height: 100vh; display: flex; overflow: hidden; 
+            margin: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background: var(--bg); 
+            color: var(--text); 
+            height: 100vh; 
+            display: flex; 
+            overflow: hidden;
         }
         
-        /* Боковая панель */
-        #sidebar { width: var(--side-w); background: var(--panel); border-right: 1px solid #2d3239; display: flex; flex-direction: column; z-index: 100; }
+        #sidebar { 
+            width: var(--side-w);
+            background: var(--panel); 
+            border-right: 1px solid #2d3239; 
+            display: flex; 
+            flex-direction: column; 
+            z-index: 100;
+        }
         .top-nav { padding: 15px; display: flex; gap: 15px; border-bottom: 1px solid #333; align-items: center; }
         .nav-icon { font-size: 22px; cursor: pointer; opacity: 0.8; transition: 0.3s; }
         .nav-icon:hover { opacity: 1; transform: scale(1.15); }
 
         #contact-list { flex: 1; overflow-y: auto; scrollbar-width: thin; }
         .contact-item { 
-            padding: 12px 15px; border-bottom: 1px solid #1f2329; cursor: pointer; 
-            display: flex; align-items: center; gap: 12px; transition: background 0.2s;
+            padding: 12px 15px;
+            border-bottom: 1px solid #1f2329; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            transition: background 0.2s;
         }
         .contact-item:hover { background: #1c2127; }
         .contact-item img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #2d3239; }
@@ -34,13 +56,18 @@
         .contact-info b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .status-dot { font-size: 10px; font-weight: bold; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
         .status-dot::before { content: '●'; }
-        .on { color: var(--accent); } .off { color: #555; }
+        .on { color: var(--accent); } 
+        .off { color: #555; }
 
-        /* Основная область */
         #main-content { flex: 1; display: flex; flex-direction: column; background: #0f1216; position: relative; }
         header { 
-            background: var(--panel); padding: 15px 25px; border-bottom: 1px solid #2d3239; 
-            display: flex; justify-content: space-between; align-items: center; cursor: pointer;
+            background: var(--panel);
+            padding: 15px 25px; 
+            border-bottom: 1px solid #2d3239; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            cursor: pointer;
             box-shadow: 0 4px 15px rgba(0,0,0,0.4);
         }
         
@@ -49,38 +76,64 @@
         .msg-row.me { flex-direction: row-reverse; align-self: flex-end; }
         .msg-av { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; object-fit: cover; border: 1px solid #333; }
         .msg-content { 
-            padding: 10px 16px; border-radius: 18px; background: #23282e; position: relative; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2); line-height: 1.4;
+            padding: 10px 16px;
+            border-radius: 18px; 
+            background: #23282e; 
+            position: relative; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
+            line-height: 1.4;
         }
         .me .msg-content { background: var(--blue); color: #fff; }
         .admin-msg { border: 2px solid var(--error) !important; box-shadow: 0 0 10px rgba(255, 68, 68, 0.2); }
         .admin-tag { 
-            background: var(--error); color: #fff; font-size: 9px; padding: 2px 5px; 
-            border-radius: 4px; margin-left: 6px; vertical-align: middle;
+            background: var(--error);
+            color: #fff; 
+            font-size: 9px; 
+            padding: 2px 5px; 
+            border-radius: 4px; 
+            margin-left: 6px; 
+            vertical-align: middle;
         }
         .msg-content b { font-size: 12px; margin-bottom: 4px; display: block; opacity: 0.9; }
         .msg-content img { max-width: 100%; border-radius: 12px; margin-top: 8px; cursor: zoom-in; }
         .reply-ref { 
-            font-size: 11px; background: rgba(0,0,0,0.15); padding: 6px; 
-            border-left: 3px solid var(--accent); margin-bottom: 6px; border-radius: 4px; opacity: 0.8;
+            font-size: 11px;
+            background: rgba(0,0,0,0.15); 
+            padding: 6px; 
+            border-left: 3px solid var(--accent); 
+            margin-bottom: 6px; 
+            border-radius: 4px; 
+            opacity: 0.8;
         }
 
-        /* Панель Голоса */
         #voice-panel { 
-            background: linear-gradient(90deg, #1a1e23, #0b0d0f); padding: 12px 25px; 
-            display: flex; align-items: center; justify-content: space-between; 
-            border-bottom: 2px solid var(--accent); animation: voiceIn 0.5s ease;
+            background: linear-gradient(90deg, #1a1e23, #0b0d0f);
+            padding: 12px 25px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            border-bottom: 2px solid var(--accent); 
+            animation: voiceIn 0.5s ease;
         }
         .voice-user-tag { background: #2d3239; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-right: 5px; }
 
-        /* Модальные окна */
         .custom-modal { 
-            position: fixed; inset: 0; background: rgba(0,0,0,0.94); 
-            z-index: 5000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(8px); 
+            position: fixed;
+            inset: 0; 
+            background: rgba(0,0,0,0.94); 
+            z-index: 5000; 
+            display: none; 
+            align-items: center; 
+            justify-content: center; 
+            backdrop-filter: blur(8px);
         }
         .win-frame { 
-            background: var(--panel); padding: 35px; border-radius: 28px; 
-            border: 2px solid var(--accent); text-align: center; width: 400px; 
+            background: var(--panel);
+            padding: 35px; 
+            border-radius: 28px; 
+            border: 2px solid var(--accent); 
+            text-align: center; 
+            width: 400px; 
             box-shadow: 0 0 50px rgba(0,255,136,0.1);
         }
         
@@ -89,31 +142,47 @@
         @keyframes scaryBlink { 0%, 100% { color: red; transform: scale(1); } 50% { color: #500; transform: scale(1.1); } }
         .scary-ui { animation: scaryBlink 0.4s infinite; font-weight: 900; letter-spacing: 2px; }
 
-        /* Ввод сообщений */
         #input-area { padding: 15px 20px; background: var(--panel); display: flex; align-items: center; gap: 15px; border-top: 1px solid #2d3239; }
         .inp { 
-            flex: 1; padding: 12px 18px; background: #0b0d0f; border: 1px solid #333; 
-            color: #fff; border-radius: 12px; outline: none; transition: 0.3s;
+            flex: 1;
+            padding: 12px 18px; 
+            background: #0b0d0f; 
+            border: 1px solid #333; 
+            color: #fff; 
+            border-radius: 12px; 
+            outline: none; 
+            transition: 0.3s;
         }
         .inp:focus { border-color: var(--accent); box-shadow: 0 0 8px rgba(0,255,136,0.2); }
         .tool-btn { font-size: 24px; cursor: pointer; transition: 0.2s; filter: grayscale(0.5); }
         .tool-btn:hover { filter: grayscale(0); transform: translateY(-3px); }
         .btn { 
-            padding: 12px 24px; border-radius: 10px; border: none; cursor: pointer; 
-            font-weight: bold; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px;
+            padding: 12px 24px;
+            border-radius: 10px; 
+            border: none; 
+            cursor: pointer; 
+            font-weight: bold; 
+            transition: 0.2s; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
         }
         .btn:active { transform: scale(0.96); }
 
         #ctx-menu { 
-            position: fixed; background: #1c2127; border: 1px solid #444; 
-            border-radius: 14px; z-index: 10000; display: none; min-width: 200px; 
-            box-shadow: 0 10px 40px rgba(0,0,0,0.6); overflow: hidden;
+            position: fixed;
+            background: #1c2127; 
+            border: 1px solid #444; 
+            border-radius: 14px; 
+            z-index: 10000; 
+            display: none; 
+            min-width: 200px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            overflow: hidden;
         }
         .ctx-item { padding: 14px 20px; cursor: pointer; font-size: 14px; border-bottom: 1px solid #2d3239; }
         .ctx-item:hover { background: var(--accent); color: #000; font-weight: bold; }
         
         .hidden { display: none !important; }
-        #admin-badge { color: var(--error); font-weight: bold; font-size: 12px; }
     </style>
 </head>
 <body onclick="closeCtx()" oncontextmenu="return false;">
@@ -140,7 +209,7 @@
             </div>
             <div style="text-align:left; margin-bottom:15px;">
                 <label style="font-size:12px; opacity:0.7">Ключ администратора:</label>
-                <input type="text" id="admin-key" class="inp" placeholder="Код доступа (буквы видны)">
+                <input type="text" id="admin-key" class="inp" placeholder="Код доступа">
             </div>
             <button class="btn" style="background:var(--accent); color:#000; width:100%" onclick="saveSettings()">СОХРАНИТЬ ИЗМЕНЕНИЯ</button>
             <button class="btn" style="margin-top:10px; width:100%; background:#333; color:#fff;" onclick="hideModal('settings-modal')">ЗАКРЫТЬ</button>
@@ -155,7 +224,7 @@
             <img id="call-av" style="width:130px; height:130px; border-radius:50%; border:5px solid var(--accent); object-fit:cover;">
             <h2 id="call-nick" style="margin:20px 0; font-size:28px;">Пользователь</h2>
             <div id="call-status" style="margin-bottom:10px; color:var(--accent); font-weight:bold; font-size:18px;">СОЕДИНЕНИЕ...</div>
-            <div id="mic-info" style="font-size:13px; margin-bottom:20px; color:var(--warn)">МИКРОФОН: ВКЛЮЧЕН</div>
+            <div id="mic-info" style="font-size:13px; margin-bottom:20px; color:var(--warn)">МИКРОФОН: ВЫКЛЮЧЕН</div>
             <div id="call-actions" style="display:flex; gap:15px; justify-content:center;"></div>
         </div>
     </div>
@@ -264,9 +333,9 @@
         const defAv = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
         let myData = null, curChat = 'global', curPeer = '', selId = null, selData = null;
-        let isEditing = false, replyData = null, micEnabled = true, myStream = null;
+        let isEditing = false, replyData = null, micEnabled = false, myStream = null;
+        let activeCallRef = null;
 
-        // --- БЛОК АВТОРИЗАЦИИ ---
         async function auth() {
             const n = document.getElementById('auth-n').value.trim();
             const p = document.getElementById('auth-p').value.trim();
@@ -287,10 +356,8 @@
             document.getElementById('sidebar').classList.remove('hidden');
             document.getElementById('main-content').classList.remove('hidden');
             updateSidebarInfo();
-            
             db.ref('presence/'+myData.nick).set(true);
             db.ref('presence/'+myData.nick).onDisconnect().remove();
-            
             listenToContacts();
             listenToCalls();
             switchChat('global', 'Глобальный чат');
@@ -304,23 +371,17 @@
             document.getElementById('admin-wipe').classList.toggle('hidden', !myData.admin);
         }
 
-        // --- БЛОК КОНТАКТОВ ---
         function listenToContacts() {
             db.ref(`users/${myData.nick}/friends`).on('value', async snap => {
                 const list = document.getElementById('contact-list');
                 list.innerHTML = `<div class="contact-item" onclick="switchChat('global','Глобальный чат')">🌍 <div class="contact-info"><b>Глобальный чат</b></div></div>`;
-                
                 const data = snap.val() || {};
-                const keys = Object.keys(data);
-                const uniqueKeys = [...new Set(keys)]; // ПРОВЕРКА НА ДУБЛИ
-
-                for(let key of uniqueKeys) {
+                for(let key in data) {
                     const type = data[key];
                     const isGroup = type === 'group';
                     const infoSnap = await db.ref(isGroup ? 'groups/'+key : 'users/'+key).get();
                     if(!infoSnap.exists()) continue;
                     const info = infoSnap.val();
-
                     const item = document.createElement('div');
                     item.className = 'contact-item';
                     item.onclick = () => isGroup ? switchChat(key, info.name) : startPrivateChat(info.nick);
@@ -333,7 +394,6 @@
                         <span onclick="event.stopPropagation(); removeContact('${key}')" style="color:var(--error); font-weight:bold;">🗑️</span>
                     `;
                     list.appendChild(item);
-
                     if(!isGroup) db.ref('presence/'+key).on('value', p => {
                         const dot = document.getElementById('dot-'+key);
                         if(dot) {
@@ -347,27 +407,19 @@
 
         async function startPrivateChat(n) {
             if(n === myData.nick) return;
-            // Двусторонняя связь
             await db.ref(`users/${myData.nick}/friends/${n}`).set('user');
             await db.ref(`users/${n}/friends/${myData.nick}`).set('user');
-            
             const chatID = myData.nick < n ? myData.nick+'_'+n : n+'_'+myData.nick;
             switchChat(chatID, n);
         }
 
-        // --- БЛОК ЧАТА ---
         function switchChat(id, title) {
             curChat = id;
             const isBroad = id === 'global' || id.startsWith('group');
             curPeer = isBroad ? '' : title;
-
             document.getElementById('chat-title').innerText = title;
             document.getElementById('chat-window').innerHTML = '';
-            document.getElementById('call-btn').classList.remove('hidden');
-            
-            // Сброс голоса
-            document.getElementById('voice-panel').classList.add('hidden');
-
+            document.getElementById('call-btn').classList.toggle('hidden', isBroad);
             db.ref('messages/'+id).off();
             db.ref('messages/'+id).on('child_added', s => renderMsg(s.key, s.val()));
             db.ref('messages/'+id).on('child_changed', s => {
@@ -375,9 +427,7 @@
                 if(el) el.querySelector('.txt-node').innerText = s.val().txt;
             });
             db.ref('messages/'+id).on('child_removed', s => document.getElementById('m-'+s.key)?.remove());
-
             syncHeaderStat();
-            if(isBroad) syncVoiceChannel();
         }
 
         function syncHeaderStat() {
@@ -400,11 +450,9 @@
             const win = document.getElementById('chat-window');
             const row = document.createElement('div');
             const u = (await db.ref('users/'+m.sn).get()).val() || { av: defAv, color: '#fff' };
-            
             row.id = 'm-'+mid;
             row.className = `msg-row ${m.sn === myData.nick ? 'me' : ''}`;
             row.oncontextmenu = (e) => { e.preventDefault(); e.stopPropagation(); openContextMenu(e, mid, m); };
-
             let body = m.type === 'img' ? `<img src="${m.txt}" onclick="window.open(this.src)">` : `<div class="txt-node">${m.txt}</div>`;
             row.innerHTML = `
                 <img src="${u.av || defAv}" class="msg-av" onclick="startPrivateChat('${m.sn}')">
@@ -422,7 +470,6 @@
             const input = document.getElementById('msg-in');
             const text = input.value.trim();
             if(!text && !isEditing) return;
-
             if(isEditing) {
                 db.ref(`messages/${curChat}/${selId}`).update({ txt: text });
             } else {
@@ -436,132 +483,118 @@
             cancelAction();
         }
 
-        // --- БЛОК ЗВОНКОВ И СИНХРОНИЗАЦИИ ---
+        // --- ЛОГИКА ЗВОНКОВ (ИСПРАВЛЕНА) ---
         async function triggerCallAction() {
-            if(curChat === 'global' || curChat.startsWith('group')) {
-                // Вход в голос. канал
-                await db.ref(`voice_rooms/${curChat}/${myData.nick}`).set(true);
-                initMedia();
-                return;
-            }
-            // Личный звонок
             const target = curPeer;
             const u = (await db.ref('users/'+target).get()).val();
             document.getElementById('call-av').src = u.av || defAv;
             document.getElementById('call-nick').innerText = target;
             document.getElementById('call-status').innerText = "ВЫЗОВ...";
-            document.getElementById('call-actions').innerHTML = `<button class="btn" style="background:var(--error)" onclick="endPersonalCall()">ОТМЕНА</button>`;
+            document.getElementById('call-actions').innerHTML = `<button class="btn" style="background:var(--error)" onclick="terminateCall('${target}')">ОТМЕНА</button>`;
             
             showModal('call-modal');
-            await db.ref(`calls/${target}`).set({ from: myData.nick, status: 'calling', time: Date.now() });
+            const callData = { from: myData.nick, to: target, status: 'calling', time: Date.now() };
+            await db.ref(`calls/${target}`).set(callData);
+            await db.ref(`calls/${myData.nick}`).set(callData); // Дублируем запись себе для синхронизации
             initMedia();
         }
 
         function listenToCalls() {
-            // Входящие звонки
             db.ref(`calls/${myData.nick}`).on('value', async snap => {
                 const c = snap.val();
-                if(!c) { hideModal('call-modal'); return; }
+                if(!c) { 
+                    closeMedia();
+                    hideModal('call-modal'); 
+                    return; 
+                }
 
-                // Авто-сброс если звонок висит более 40 сек
-                if(Date.now() - c.time > 40000) { db.ref(`calls/${myData.nick}`).remove(); return; }
+                // Тайм-аут звонка
+                if(c.status === 'calling' && (Date.now() - c.time > 40000)) {
+                    terminateCall(c.from === myData.nick ? c.to : c.from);
+                    return;
+                }
 
-                const u = (await db.ref('users/'+c.from).get()).val();
-                const isHorror = c.from === "Смерть_в_нищете";
+                const otherParty = (c.from === myData.nick) ? c.to : c.from;
+                const u = (await db.ref('users/'+otherParty).get()).val();
+                const isHorror = otherParty === "Смерть_в_нищете";
                 
                 document.getElementById('call-av').src = u.av || defAv;
-                document.getElementById('call-nick').innerText = c.from;
+                document.getElementById('call-nick').innerText = otherParty;
                 document.getElementById('scary-labels').classList.toggle('hidden', !isHorror);
                 
                 const box = document.getElementById('call-actions');
                 box.innerHTML = '';
 
                 if(c.status === 'calling') {
-                    document.getElementById('call-status').innerText = "ВХОДЯЩИЙ ВЫЗОВ";
-                    if(isHorror) {
-                        box.innerHTML = `<button class="btn" style="background:var(--accent)" onclick="acceptCall()">ПРИНЯТЬ</button>
-                                         <button class="btn" style="background:var(--accent)" onclick="acceptCall()">ПРИНЯТЬ</button>`;
+                    if(c.from === myData.nick) {
+                        document.getElementById('call-status').innerText = "ИСХОДЯЩИЙ ВЫЗОВ...";
+                        box.innerHTML = `<button class="btn" style="background:var(--error)" onclick="terminateCall('${c.to}')">ОТМЕНА</button>`;
                     } else {
-                        box.innerHTML = `<button class="btn" style="background:var(--accent)" onclick="acceptCall()">ПРИНЯТЬ</button>
-                                         <button class="btn" style="background:var(--error)" onclick="endPersonalCall()">ОТКЛОНИТЬ</button>`;
+                        document.getElementById('call-status').innerText = "ВХОДЯЩИЙ ВЫЗОВ";
+                        if(isHorror) {
+                            box.innerHTML = `<button class="btn" style="background:var(--accent)" onclick="acceptCall('${c.from}')">ПРИНЯТЬ</button>
+                                             <button class="btn" style="background:var(--accent)" onclick="acceptCall('${c.from}')">ПРИНЯТЬ</button>`;
+                        } else {
+                            box.innerHTML = `<button class="btn" style="background:var(--accent)" onclick="acceptCall('${c.from}')">ПРИНЯТЬ</button>
+                                             <button class="btn" style="background:var(--error)" onclick="terminateCall('${c.from}')">ОТКЛОНИТЬ</button>`;
+                        }
                     }
                 } else if(c.status === 'active') {
                     document.getElementById('call-status').innerText = "ИДЕТ РАЗГОВОР";
-                    box.innerHTML = `<button class="btn" id="m-btn" style="background:#444" onclick="toggleMic()">ВЫКЛ МИК</button>
-                                     <button class="btn" style="background:var(--error)" onclick="endPersonalCall()">ЗАВЕРШИТЬ</button>`;
+                    box.innerHTML = `<button class="btn" id="m-btn" style="background:#444" onclick="toggleMic()">${micEnabled?'ВЫКЛ':'ВКЛ'} МИК</button>
+                                     <button class="btn" style="background:var(--error)" onclick="terminateCall('${otherParty}')">ЗАВЕРШИТЬ</button>`;
                 }
                 showModal('call-modal');
             });
-
-            // Слушатель для звонящего (если собеседник принял)
-            db.ref('calls').on('child_changed', s => {
-                const c = s.val();
-                if(c.from === myData.nick && c.status === 'active') {
-                    document.getElementById('call-status').innerText = "ИДЕТ РАЗГОВОР";
-                    document.getElementById('call-actions').innerHTML = `
-                        <button class="btn" id="m-btn" style="background:#444" onclick="toggleMic()">ВЫКЛ МИК</button>
-                        <button class="btn" style="background:var(--error)" onclick="endPersonalCall()">ЗАВЕРШИТЬ</button>`;
-                }
-            });
         }
 
-        function syncVoiceChannel() {
-            db.ref(`voice_rooms/${curChat}`).on('value', s => {
-                const members = s.val() || {};
-                const count = Object.keys(members).length;
-                const panel = document.getElementById('voice-panel');
-                
-                if(count > 0) {
-                    panel.classList.remove('hidden');
-                    document.getElementById('voice-users-list').innerText = "В канале: " + count + " чел.";
-                    let names = Object.keys(members).join(', ');
-                    document.getElementById('voice-status-text').innerText = "Голос (" + names + ")";
-                } else {
-                    panel.classList.add('hidden');
-                }
-            });
+        async function acceptCall(from) {
+            const update = { status: 'active' };
+            await db.ref(`calls/${myData.nick}`).update(update);
+            await db.ref(`calls/${from}`).update(update);
+            initMedia();
+        }
+
+        async function terminateCall(target) {
+            await db.ref(`calls/${myData.nick}`).remove();
+            await db.ref(`calls/${target}`).remove();
+            closeMedia();
+            hideModal('call-modal');
         }
 
         async function initMedia() {
             try {
-                myStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                console.log("Mic OK");
-            } catch(e) { alert("Микрофон не обнаружен!"); }
+                if(!myStream) {
+                    myStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    micEnabled = true;
+                    myStream.getAudioTracks()[0].enabled = true;
+                    document.getElementById('mic-info').innerText = "МИКРОФОН: ВКЛЮЧЕН";
+                }
+            } catch(e) { console.error("Микрофон не доступен"); }
+        }
+
+        function closeMedia() {
+            if(myStream) {
+                myStream.getTracks().forEach(t => t.stop());
+                myStream = null;
+            }
+            micEnabled = false;
+            document.getElementById('mic-info').innerText = "МИКРОФОН: ВЫКЛЮЧЕН";
         }
 
         function toggleMic() {
             micEnabled = !micEnabled;
             if(myStream) myStream.getAudioTracks()[0].enabled = micEnabled;
             document.getElementById('mic-info').innerText = "МИКРОФОН: " + (micEnabled ? "ВКЛЮЧЕН" : "ВЫКЛЮЧЕН");
-            document.getElementById('m-btn').innerText = micEnabled ? "ВЫКЛ МИК" : "ВКЛ МИК";
+            const btn = document.getElementById('m-btn');
+            if(btn) btn.innerText = micEnabled ? "ВЫКЛ МИК" : "ВКЛ МИК";
         }
 
-        async function acceptCall() {
-            await db.ref(`calls/${myData.nick}`).update({ status: 'active' });
-            initMedia();
-        }
-
-        async function endPersonalCall() {
-            if(myStream) { myStream.getTracks().forEach(t => t.stop()); myStream = null; }
-            // Удаляем свою входящую запись
-            await db.ref(`calls/${myData.nick}`).remove();
-            // Ищем и удаляем если мы звонили
-            db.ref('calls').once('value', s => {
-                s.forEach(snap => { if(snap.val().from === myData.nick) db.ref('calls/'+snap.key).remove(); });
-            });
-            hideModal('call-modal');
-        }
-
-        async function leaveVoiceChannel() {
-            await db.ref(`voice_rooms/${curChat}/${myData.nick}`).remove();
-        }
-
-        // --- БЛОК ГРУПП И АДМИНКИ ---
+        // --- ГРУППЫ И ПРОЧЕЕ ---
         async function openChatInfo() {
             const list = document.getElementById('mem-list');
             list.innerHTML = 'Загрузка...';
             showModal('members-modal');
-
             if(curChat === 'global') {
                 document.getElementById('mem-h').innerText = "ГЛОБАЛЬНЫЙ СПИСОК";
                 db.ref('presence').once('value', s => {
@@ -593,9 +626,6 @@
             }
         }
 
-        async function addToG(gid, n) { await db.ref(`groups/${gid}/members/${n}`).set(true); await db.ref(`users/${n}/friends/${gid}`).set('group'); openChatInfo(); }
-        async function kick(gid, n) { await db.ref(`groups/${gid}/members/${n}`).remove(); await db.ref(`users/${n}/friends/${gid}`).remove(); openChatInfo(); }
-
         async function createGroup() {
             const name = document.getElementById('g-name').value.trim();
             if(!name) return;
@@ -622,7 +652,6 @@
             hideModal('settings-modal');
         }
 
-        // --- ВСПОМОГАТЕЛЬНЫЕ ---
         function openContextMenu(e, mid, m) {
             selId = mid; selData = m;
             const menu = document.getElementById('ctx-menu');
@@ -634,9 +663,8 @@
         function editMessage() { isEditing = true; document.getElementById('msg-in').value = selData.txt; showAction(selData.txt, "Редактирование"); }
         function deleteMessage() { if(confirm("Удалить?")) db.ref(`messages/${curChat}/${selId}`).remove(); }
         function wipeAll() { if(confirm("ОЧИСТИТЬ ЧАТ ПОЛНОСТЬЮ?")) db.ref('messages/'+curChat).remove(); }
-        
         function showAction(t, type) { 
-            document.getElementById('action-bar').classList.remove('hidden'); 
+            document.getElementById('action-bar').classList.remove('hidden');
             document.getElementById('action-type').innerText = type;
             document.getElementById('action-text').innerText = t; 
         }
@@ -647,6 +675,7 @@
         function addEmoji(e) { document.getElementById('msg-in').value += e; }
         function preview(i, t) { const r = new FileReader(); r.onload = e => document.getElementById(t).src = e.target.result; r.readAsDataURL(i.files[0]); }
         async function removeContact(id) { if(confirm("Удалить контакт?")) await db.ref(`users/${myData.nick}/friends/${id}`).remove(); }
+        
         function openSearch() {
             db.ref('users').once('value', s => {
                 const list = document.getElementById('mem-list'); list.innerHTML = '';
@@ -658,6 +687,7 @@
                 showModal('members-modal');
             });
         }
+
         function uploadImage(input) {
             const f = input.files[0]; if(!f) return;
             const r = new FileReader();
