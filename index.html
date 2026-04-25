@@ -468,7 +468,6 @@
         let myData = null, curChat = 'global', curPeer = '', selId = null, selData = null;
         let isEditing = false, replyData = null, lastSendTime = 0;
         let myStream = null, audioCtx = null, analyser = null, micMuted = false, inVoice = false;
-        let peerConnections = {}; // Для хранения аудио-каналов
 
         /* --- АВТОРИЗАЦИЯ --- */
         async function auth() {
@@ -645,11 +644,16 @@
             if(isEditing) {
                 db.ref(`messages/${curChat}/${selId}`).update({ txt: val });
             } else {
+                let replyPreview = null;
+                if(replyData && replyData.txt) {
+                    replyPreview = replyData.txt.substring(0, 30) + '...';
+                }
+
                 db.ref('messages/'+curChat).push({
                     sn: myData.nick,
                     txt: val,
                     type: 'text',
-                    rp: replyData ? (replyData.txt.substring(0, 30) + '...') : null,
+                    rp: replyPreview,
                     ts: Date.now()
                 });
                 lastSendTime = now;
@@ -709,7 +713,6 @@
                 const opt = m.options[key];
                 const votes = Object.keys(opt.votes || {}).length;
                 const pct = total === 0 ? 0 : Math.round((votes/total)*100);
-                const hasVoted = m.sn === myData.nick; // Автор не голосует (как просили)
                 
                 const item = document.createElement('div');
                 item.className = 'poll-opt';
@@ -730,17 +733,15 @@
             const m = snap.val();
             if(m.sn === myData.nick) return alert("Вы создатель опроса!");
             
-            // Удаляем старый голос если был
             for(let k in m.options) {
                 if(m.options[k].votes && m.options[k].votes[myData.nick]) {
                     await db.ref(`messages/${curChat}/${mid}/options/${k}/votes/${myData.nick}`).remove();
                 }
             }
-            // Ставим новый
             await db.ref(`messages/${curChat}/${mid}/options/${optKey}/votes/${myData.nick}`).set(true);
         }
 
-        /* --- ГОЛОСОВЫЕ КАНАЛЫ (С ВЫВОДОМ ЗВУКА) --- */
+        /* --- ГОЛОСОВЫЕ КАНАЛЫ --- */
         async function toggleVoiceJoin() {
             if(!inVoice) {
                 try {
@@ -783,12 +784,6 @@
                 requestAnimationFrame(updateLoop);
             }
             updateLoop();
-
-            // Эмуляция P2P аудио (в реальном приложении нужен WebRTC, здесь имитируем "прослушивание" через потоки)
-            // Примечание: В чистом Firebase RTDB нельзя передать аудио-поток напрямую. 
-            // Однако, для имитации того что вы "слышите" других в рамках учебного проекта,
-            // мы предполагаем наличие внешнего медиа-сервера. 
-            // Для работы ВНУТРИ браузера добавим просто тег аудио:
             console.log("Audio pipeline initialized");
         }
 
@@ -878,7 +873,7 @@
             hideModal('call-modal');
         }
 
-        /* --- УПРАВЛЕНИЕ ГРУППАМИ И КОНТАКТАМИ --- */
+        /* --- УПРАВЛЕНИЕ ГРУППАМИ --- */
         async function openChatInfo() {
             const list = document.getElementById('mem-list');
             list.innerHTML = 'Загрузка...';
@@ -898,7 +893,6 @@
                 document.getElementById('mem-h').innerText = g.name.toUpperCase();
                 list.innerHTML = '';
                 
-                // Кнопка добавления (если админ)
                 if(g.owner === myData.nick) {
                     const addBtn = document.createElement('button');
                     addBtn.className = "btn";
@@ -924,20 +918,23 @@
             const fSnap = await db.ref(`users/${myData.nick}/friends`).get();
             const friends = fSnap.val() || {};
             
+            let hasAnyone = false;
             for(let fid in friends) {
                 if(friends[fid] === 'user' && !currentMembers[fid]) {
+                    hasAnyone = true;
                     const item = document.createElement('div');
-                    item.style = "padding:15px; border-bottom:1px solid #333; cursor:pointer; display:flex; justify-content:space-between;";
+                    item.style = "padding:15px; border-bottom:1px solid #333; cursor:pointer; display:flex; justify-content:space-between; align-items:center;";
                     item.innerHTML = `<span>👤 ${fid}</span> <button class="btn" style="padding:5px 10px; font-size:10px; background:var(--accent); color:#000;">ДОБАВИТЬ</button>`;
                     item.onclick = async () => {
                         await db.ref(`groups/${gid}/members/${fid}`).set(true);
                         await db.ref(`users/${fid}/friends/${gid}`).set('group');
-                        alert(fid + " добавлен!");
+                        alert(fid + " добавлен в группу!");
                         openChatInfo();
                     };
                     list.appendChild(item);
                 }
             }
+            if(!hasAnyone) list.innerHTML += '<p style="opacity:0.5; text-align:center;">У вас нет контактов для добавления</p>';
         }
 
         async function kickFromGroup(nick) {
