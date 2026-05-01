@@ -2,1019 +2,593 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="data:,"> <title>DanChat Ultimate v6.3 Mega-Extreme Edition</title>
-    
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Тест: Легенда канала Dan Games</title>
     <style>
-        /* Глобальные переменные темы */
-        :root { 
-            --bg: #0b0d0f;
-            --panel: #16191d; 
-            --accent: #00ff88; 
-            --text: #ffffff; 
-            --side-w: 320px; 
-            --error: #ff4444; 
-            --blue: #0078ff; 
-            --warn: #ffcc00;
-            --glass: rgba(255, 255, 255, 0.05);
-        }
-
-        * { box-sizing: border-box; outline: none; }
-
-        body { 
+        * {
             margin: 0;
-            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; 
-            background: var(--bg); 
-            color: var(--text); 
-            height: 100vh; 
-            display: flex; 
-            overflow: hidden;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none; /* небольшая аккуратность для кнопок, но текст можно копировать */
         }
 
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #444; }
-
-        #sidebar { 
-            width: var(--side-w);
-            background: var(--panel); 
-            border-right: 1px solid #2d3239; 
-            display: flex; 
-            flex-direction: column; 
-            z-index: 100;
-        }
-
-        .top-nav { 
-            padding: 20px;
-            display: flex; 
-            gap: 18px; 
-            border-bottom: 1px solid #2d3239; 
-            align-items: center; 
-            background: rgba(0,0,0,0.2);
-        }
-
-        .nav-icon { 
-            font-size: 20px;
-            cursor: pointer; 
-            opacity: 0.7; 
-            transition: all 0.3s ease; 
-        }
-
-        .nav-icon:hover { 
-            opacity: 1;
-            transform: scale(1.2) rotate(15deg); 
-            color: var(--accent);
-        }
-
-        #contact-list { flex: 1; overflow-y: auto; }
-
-        .contact-item { 
-            padding: 15px 20px;
-            border-bottom: 1px solid #1f2329; 
-            cursor: pointer; 
-            display: flex; 
-            align-items: center; 
-            gap: 15px; 
-            transition: 0.2s;
-        }
-
-        .contact-item:hover { background: #1c2127; border-left: 3px solid var(--accent); }
-
-        .contact-item img { 
-            width: 46px;
-            height: 46px; 
-            border-radius: 50%; 
-            object-fit: cover; 
-            border: 2px solid #2d3239; 
-            background: #000;
-        }
-
-        .contact-info { flex: 1; min-width: 0; }
-        .contact-info b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; }
-
-        .status-dot { 
-            font-size: 10px;
-            font-weight: bold; 
-            margin-top: 4px; 
-            display: flex; 
-            align-items: center; 
-            gap: 5px;
-        }
-        .status-dot::before { content: '●'; }
-        .on { color: var(--accent); text-shadow: 0 0 5px var(--accent); } 
-        .off { color: #555; }
-
-        #main-content { 
-            flex: 1;
-            display: flex; 
-            flex-direction: column; 
-            background: #0f1216; 
-            position: relative; 
-        }
-
-        header { 
-            background: var(--panel);
-            padding: 15px 30px; 
-            border-bottom: 1px solid #2d3239; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            cursor: pointer;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
-            z-index: 50;
-        }
-
-        #chat-window { 
-            flex: 1;
-            overflow-y: auto; 
-            padding: 25px; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 20px; 
-            scroll-behavior: smooth;
-        }
-
-        .msg-row { display: flex; gap: 12px; max-width: 80%; animation: msgSlide 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
-        .msg-row.me { flex-direction: row-reverse; align-self: flex-end; }
-        
-        .msg-av { 
-            width: 40px;
-            height: 40px; 
-            border-radius: 12px; 
-            cursor: pointer; 
-            object-fit: cover; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-
-        .msg-content { 
-            padding: 12px 18px;
-            border-radius: 18px; 
-            background: #23282e; 
-            position: relative; 
-            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-            font-size: 14.5px;
-            line-height: 1.5;
-        }
-
-        .me .msg-content { background: var(--blue); color: #fff; border-bottom-right-radius: 2px; }
-        .msg-row:not(.me) .msg-content { border-bottom-left-radius: 2px; }
-
-        .admin-msg { border: 2px solid var(--error) !important; animation: borderPulse 2s infinite; }
-        .admin-tag { background: var(--error); color: #fff; font-size: 9px; padding: 2px 6px; border-radius: 4px; margin-left: 8px; vertical-align: middle; }
-
-        /* Опросы */
-        .poll-box { background: #1c2127; border: 1px solid var(--accent); border-radius: 15px; padding: 15px; min-width: 250px; }
-        .poll-opt { background: #2d3239; padding: 10px; border-radius: 8px; margin-top: 8px; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; }
-        .poll-opt:hover { background: #3d4249; }
-        .poll-bar { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(0, 255, 136, 0.2); transition: 0.5s; z-index: 0; }
-        .poll-txt { position: relative; z-index: 1; display: flex; justify-content: space-between; font-size: 13px; }
-
-        #voice-grid { 
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); 
-            gap: 20px; 
-            padding: 20px; 
-            background: #12161b; 
-            border-bottom: 2px solid var(--accent);
-            max-height: 280px; 
-            overflow-y: auto;
-            box-shadow: inset 0 -10px 20px rgba(0,0,0,0.3);
-        }
-
-        .voice-card { 
+        body {
+            background: linear-gradient(145deg, #10141c 0%, #1a1f2c 100%);
+            font-family: 'Segoe UI', 'Poppins', 'Roboto', 'Montserrat', system-ui, -apple-system, 'Inter', sans-serif;
+            min-height: 100vh;
             display: flex;
-            flex-direction: column; 
-            align-items: center; 
-            gap: 10px; 
-            position: relative; 
-            padding: 15px;
-            background: rgba(255,255,255,0.03);
-            border-radius: 15px;
-            transition: all 0.3s ease;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem 1.5rem;
         }
 
-        .voice-av { 
-            width: 80px;
-            height: 80px; 
-            border-radius: 50%; 
-            object-fit: cover; 
-            border: 4px solid #2d3239; 
-            transition: 0.3s;
-            background: #000;
+        /* основной контейнер-карточка */
+        .quiz-container {
+            max-width: 880px;
+            width: 100%;
+            background: rgba(22, 26, 38, 0.85);
+            backdrop-filter: blur(2px);
+            border-radius: 3rem;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+            transition: all 0.2s ease;
         }
 
-        .speaking .voice-av { 
-            border-color: var(--accent);
-            box-shadow: 0 0 20px var(--accent); 
-            transform: scale(1.1); 
+        /* шапка с динамикой */
+        .quiz-header {
+            background: #2a1e3c;
+            background: linear-gradient(135deg, #2a1e3c 0%, #1e2a3a 100%);
+            padding: 1.8rem 2rem;
+            text-align: center;
+            border-bottom: 2px solid #ffd966;
         }
 
-        .mic-status-icon { 
-            position: absolute;
-            top: 10px; 
-            right: 15px; 
-            background: var(--error); 
-            border-radius: 50%; 
-            width: 24px;
-            height: 24px;
+        .quiz-header h1 {
+            font-size: 1.9rem;
+            letter-spacing: -0.5px;
+            background: linear-gradient(120deg, #FFE6B0, #FFB347);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 3px rgba(0,0,0,0.2);
+            margin-bottom: 0.35rem;
+        }
+
+        .quiz-header p {
+            color: #cdd9ff;
+            font-weight: 500;
+            margin-top: 8px;
+            font-size: 1rem;
+            background: rgba(0,0,0,0.3);
+            display: inline-block;
+            padding: 0.2rem 1rem;
+            border-radius: 60px;
+            backdrop-filter: blur(2px);
+        }
+
+        /* карточка вопросов */
+        .questions-area {
+            padding: 2rem 2rem 1.5rem 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2.2rem;
+        }
+
+        /* каждый отдельный вопрос */
+        .question-card {
+            background: rgba(18, 22, 32, 0.8);
+            border-radius: 2rem;
+            padding: 1.5rem 1.8rem;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,215,100,0.25);
+            transition: all 0.2s;
+            box-shadow: 0 10px 20px -5px rgba(0,0,0,0.3);
+        }
+
+        .question-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #FFEEBB;
+            margin-bottom: 1.4rem;
+            border-left: 6px solid #ffb347;
+            padding-left: 1rem;
+            line-height: 1.3;
+        }
+
+        /* варианты ответов (список) */
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+            list-style: none;
+        }
+
+        .option-item {
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            border: 2px solid var(--panel);
+            background: #131a24;
+            border-radius: 2.5rem;
+            border: 1px solid #2c3545;
+            transition: all 0.2s;
+            cursor: pointer;
+            padding: 0.7rem 1.2rem;
         }
 
-        .voice-nick { font-size: 13px; font-weight: bold; color: #ccc; text-align: center; width: 100%; overflow: hidden; text-overflow: ellipsis; }
-
-        .custom-modal { 
-            position: fixed;
-            inset: 0; 
-            background: rgba(0,0,0,0.95); 
-            z-index: 5000; 
-            display: none; 
-            align-items: center; 
-            justify-content: center; 
-            backdrop-filter: blur(10px);
+        .option-item:hover {
+            background: #1e2a36;
+            border-color: #f5b042;
+            transform: translateX(5px);
         }
 
-        .win-frame { 
-            background: var(--panel);
-            padding: 40px; 
-            border-radius: 30px; 
-            border: 1px solid var(--accent); 
-            text-align: center; 
-            width: 420px; 
-            box-shadow: 0 0 60px rgba(0,255,136,0.1);
+        /* кастомный радио-инпут, скрываем стандартный */
+        .option-item input[type="radio"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 1.3rem;
+            height: 1.3rem;
+            border: 2px solid #9aaec0;
+            border-radius: 50%;
+            margin-right: 1rem;
+            position: relative;
+            background: #0f111a;
+            transition: 0.1s;
+            cursor: pointer;
         }
 
-        #input-area { 
-            padding: 20px;
-            background: var(--panel); 
-            display: flex; 
-            align-items: center; 
-            gap: 15px; 
-            border-top: 1px solid #2d3239;
+        .option-item input[type="radio"]:checked {
+            border-color: #ffb347;
+            background-color: #ffb347;
+            box-shadow: 0 0 0 3px rgba(255,180,71,0.3);
         }
 
-        .inp { 
+        .option-item input[type="radio"]:checked::after {
+            content: "";
+            position: absolute;
+            width: 0.6rem;
+            height: 0.6rem;
+            background: #1a1a2a;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .option-label {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #eef4ff;
+            cursor: pointer;
             flex: 1;
-            padding: 14px 20px; 
-            background: #0b0d0f; 
-            border: 1px solid #333; 
-            color: #fff; 
-            border-radius: 12px; 
-            font-size: 15px;
-            transition: 0.3s;
+            letter-spacing: 0.2px;
         }
 
-        .inp:focus { border-color: var(--accent); box-shadow: 0 0 10px rgba(0,255,136,0.1); }
+        /* блок с кнопкой */
+        .action-section {
+            padding: 0.2rem 2rem 2rem 2rem;
+            display: flex;
+            justify-content: center;
+        }
 
-        .btn { 
-            padding: 12px 25px;
-            border-radius: 10px; 
-            border: none; 
-            cursor: pointer; 
-            font-weight: 800; 
-            text-transform: uppercase;
+        .check-btn {
+            background: linear-gradient(95deg, #FF9F3D, #FF7A2F);
+            border: none;
+            font-size: 1.35rem;
+            font-weight: bold;
+            padding: 0.9rem 2.2rem;
+            border-radius: 4rem;
+            color: #1e1a2f;
+            cursor: pointer;
+            font-family: inherit;
+            transition: 0.2s;
+            box-shadow: 0 6px 0 #9b4a1a;
+            transform: translateY(-2px);
+            width: 100%;
+            max-width: 320px;
             letter-spacing: 1px;
+        }
+
+        .check-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #9b4a1a;
+        }
+
+        /* результаты */
+        .result-area {
+            margin: 0 2rem 2rem 2rem;
+            background: #0b0f17cc;
+            border-radius: 1.5rem;
+            padding: 1rem 1.5rem;
+            backdrop-filter: blur(8px);
+            border: 1px solid #ffd27a55;
             transition: 0.2s;
         }
 
-        .btn:active { transform: scale(0.95); }
-
-        #ctx-menu { 
-            position: fixed;
-            background: #1c2127; 
-            border: 1px solid #444; 
-            border-radius: 12px; 
-            z-index: 10000; 
-            display: none; 
-            min-width: 200px; 
-            box-shadow: 0 15px 50px rgba(0,0,0,0.7);
-            overflow: hidden;
+        .result-text {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #FDE5B4;
+            text-align: center;
+            line-height: 1.4;
         }
 
-        .ctx-item { padding: 14px 20px; cursor: pointer; transition: 0.2s; border-bottom: 1px solid #2d3239; }
-        .ctx-item:hover { background: var(--accent); color: #000; font-weight: bold; }
+        .result-detail {
+            font-size: 0.95rem;
+            color: #bbccff;
+            margin-top: 8px;
+            text-align: center;
+        }
 
-        @keyframes msgSlide { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
-        @keyframes borderPulse { 0% { border-color: var(--error); } 50% { border-color: #500; } 100% { border-color: var(--error); } }
-        
-        .hidden { display: none !important; }
+        /* правильные / неправильные подстветки */
+        .option-item.correct-highlight {
+            background: #1d5730a0;
+            border-color: #6fdf6f;
+            box-shadow: 0 0 0 1px #7aff7a;
+        }
+        .option-item.wrong-highlight {
+            background: #641e2aa0;
+            border-color: #ff7361;
+        }
+
+        .option-item.disabled-opt {
+            opacity: 0.9;
+            cursor: default;
+        }
+        .option-item.disabled-opt:hover {
+            transform: none;
+        }
+
+        footer {
+            font-size: 0.7rem;
+            text-align: center;
+            padding: 1rem;
+            color: #6f7d9e;
+            border-top: 1px solid #2c3348;
+            margin-top: 0.5rem;
+        }
+
+        @media (max-width: 600px) {
+            .quiz-container {
+                border-radius: 1.8rem;
+            }
+            .question-text {
+                font-size: 1.25rem;
+            }
+            .option-label {
+                font-size: 0.95rem;
+            }
+            .questions-area {
+                padding: 1.2rem;
+            }
+            .question-card {
+                padding: 1rem 1.2rem;
+            }
+        }
     </style>
 </head>
-<body onclick="closeCtx()" oncontextmenu="return false;">
+<body>
 
-    <div id="auth-screen" style="position:fixed; inset:0; background:var(--bg); z-index:20000; display:flex; align-items:center; justify-content:center;">
-        <div class="win-frame">
-            <h1 style="color:var(--accent); letter-spacing:5px; margin-bottom:5px;">DANCHAT</h1>
-            <p style="opacity:0.5; margin-bottom:30px;">ULTIMATE v6.3 EXTREME</p>
-            <input type="text" id="auth-n" class="inp" placeholder="ЛОГИН" style="margin-bottom:15px; width:100%">
-            <input type="password" id="auth-p" class="inp" placeholder="ПАРОЛЬ" style="width:100%; margin-bottom:25px;">
-            <button class="btn" style="background:var(--accent); color:#000; width:100%" onclick="auth()">ВХОД В СИСТЕМУ</button>
-        </div>
+<div class="quiz-container">
+    <div class="quiz-header">
+        <h1>📺 ТЕСТ: ЛЕГЕНДА DAN GAMES</h1>
+        <p>Проверь, насколько хорошо ты знаешь историю канала</p>
     </div>
 
-    <div id="settings-modal" class="custom-modal">
-        <div class="win-frame">
-            <h3 style="margin-top:0">НАСТРОЙКИ ПРОФИЛЯ</h3>
-            <img id="set-pre" style="width:100px; height:100px; border-radius:50%; border:3px solid var(--accent); object-fit:cover; margin: 15px auto;">
-            <input type="file" id="f-set" class="hidden" onchange="preview(this, 'set-pre')">
-            <button class="btn" style="background:#333; color:#fff; font-size:11px; margin-bottom:20px;" onclick="document.getElementById('f-set').click()">ОБНОВИТЬ ФОТО</button>
-            
-            <div style="text-align:left; margin-bottom:20px;">
-                <label style="font-size:12px; color:var(--accent)">ЦВЕТ НИКНЕЙМА:</label>
-                <input type="color" id="set-color" style="width:100%; height:40px; border:none; background:none; cursor:pointer; margin-top:5px;">
-            </div>
-            
-            <div style="text-align:left; margin-bottom:25px;">
-                <label style="font-size:12px; color:var(--accent)">КЛЮЧ АДМИНИСТРАТОРА:</label>
-                <input type="password" id="admin-key" class="inp" placeholder="Admin Key" style="width:100%; margin-top:5px;">
-            </div>
-            
-            <button class="btn" style="background:var(--accent); color:#000; width:100%" onclick="saveSettings()">СОХРАНИТЬ И ВЫЙТИ</button>
-            <button class="btn" style="background:transparent; color:#555; width:100%; margin-top:10px;" onclick="hideModal('settings-modal')">ЗАКРЫТЬ</button>
-        </div>
+    <div class="questions-area" id="questionsArea">
+        <!-- динамически вопросы будут отрисованы через JS, но можно и статически, 
+             но чтобы легко править ответы, сделаем через рендер JS. Но напишем встроенный скрипт -->
     </div>
 
-    <div id="call-modal" class="custom-modal">
-        <div class="win-frame" id="p-call-frame">
-            <div style="position:relative; width:140px; height:140px; margin: 0 auto 20px;">
-                <img id="call-av" class="voice-av" style="width:100%; height:100%;">
-            </div>
-            <h2 id="call-nick" style="margin: 0 0 10px 0">Пользователь</h2>
-            <div id="call-status" style="color:var(--accent); font-weight:bold; letter-spacing:1px;">ИНИЦИАЛИЗАЦИЯ...</div>
-            <div id="p-call-actions" style="display:flex; gap:15px; justify-content:center; margin-top:30px;"></div>
-        </div>
+    <div class="action-section">
+        <button class="check-btn" id="submitQuiz">✨ ПРОВЕРИТЬ ОТВЕТЫ ✨</button>
     </div>
 
-    <div id="group-modal" class="custom-modal">
-        <div class="win-frame">
-            <h3>СОЗДАНИЕ ГРУППЫ</h3>
-            <input type="text" id="g-name" class="inp" placeholder="Название беседы" style="width:100%; margin-bottom:20px;">
-            <button class="btn" style="background:var(--accent); color:#000; width:100%" onclick="createGroup()">СОЗДАТЬ</button>
-            <button class="btn" style="margin-top:10px; width:100%; background:transparent; color:#555" onclick="hideModal('group-modal')">ОТМЕНА</button>
-        </div>
+    <div class="result-area" id="resultArea" style="display: none;">
+        <div class="result-text" id="resultMessage"></div>
+        <div class="result-detail" id="resultDetail"></div>
     </div>
+    <footer>
+        ⚡ Только один правильный ответ на вопрос. Удачи!
+    </footer>
+</div>
 
-    <div id="members-modal" class="custom-modal">
-        <div class="win-frame" style="width:450px;">
-            <h3 id="mem-h" style="border-bottom:1px solid #333; padding-bottom:15px;">УЧАСТНИКИ</h3>
-            <div id="mem-list" style="max-height:380px; overflow-y:auto; text-align:left; padding:10px 0;"></div>
-            <button class="btn" style="margin-top:20px; width:100%; background:var(--error); color:#fff" onclick="hideModal('members-modal')">ЗАКРЫТЬ</button>
-        </div>
-    </div>
-
-    <div id="poll-modal" class="custom-modal">
-        <div class="win-frame">
-            <h3>НОВЫЙ ОПРОС</h3>
-            <input type="text" id="poll-q" class="inp" placeholder="Вопрос опроса" style="width:100%; margin-bottom:15px;">
-            <div id="poll-opts-container">
-                <input type="text" class="inp poll-opt-in" placeholder="Вариант 1" style="width:100%; margin-bottom:10px;">
-                <input type="text" class="inp poll-opt-in" placeholder="Вариант 2" style="width:100%; margin-bottom:10px;">
-            </div>
-            <button class="btn" style="background:#333; color:#fff; width:100%; font-size:10px; margin-bottom:15px;" onclick="addPollOption()">+ ДОБАВИТЬ ВАРИАНТ</button>
-            <button class="btn" style="background:var(--accent); color:#000; width:100%" onclick="publishPoll()">ОПУБЛИКОВАТЬ</button>
-            <button class="btn" style="margin-top:10px; width:100%; background:transparent; color:#555" onclick="hideModal('poll-modal')">ОТМЕНА</button>
-        </div>
-    </div>
-
-    <div id="sidebar" class="hidden">
-        <div class="top-nav">
-            <span class="nav-icon" title="Настройки" onclick="showModal('settings-modal')">⚙️</span>
-            <span class="nav-icon" title="Поиск людей" onclick="openSearch()">👤</span>
-            <span class="nav-icon" title="Новая группа" onclick="showModal('group-modal')">➕</span>
-            <div id="my-name-display" style="margin-left:auto; font-weight:bold; letter-spacing:0.5px;"></div>
-        </div>
-        <div id="contact-list"></div>
-    </div>
-
-    <div id="main-content" class="hidden">
-        <header onclick="openChatInfo()">
-            <div id="header-info">
-                <b id="chat-title" style="font-size:18px;">ЗАГРУЗКА...</b><br>
-                <small id="chat-stat" style="opacity:0.6"></small>
-            </div>
-            <div style="display:flex; gap:15px; align-items:center;">
-                <span id="admin-indicator" class="hidden" style="color:var(--error); font-weight:900; font-size:11px;">[SERVER ADMIN]</span>
-                <button id="v-join-btn" onclick="event.stopPropagation(); toggleVoiceJoin()" style="background:var(--blue); border:none; padding:10px 20px; border-radius:10px; color:#fff; font-weight:bold; cursor:pointer; transition:0.3s;">ВОЙТИ В ГОЛОС</button>
-                <button id="call-btn" class="hidden" onclick="event.stopPropagation(); makePrivateCall()" style="background:var(--accent); border:none; padding:10px 20px; border-radius:10px; font-weight:900; cursor:pointer; color:#000;">ЗВОНОК</button>
-            </div>
-        </header>
-
-        <div id="voice-grid" class="hidden"></div>
-        <div id="chat-window"></div>
-
-        <div id="action-bar" class="hidden" style="background:#1c2127; padding:12px 25px; border-top:3px solid var(--accent); display:flex; justify-content:space-between; align-items:center;">
-            <div style="display:flex; flex-direction:column; min-width:0;">
-                <b id="action-type" style="font-size:10px; color:var(--accent); text-transform:uppercase;">Действие</b>
-                <span id="action-text" style="font-size:13px; opacity:0.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></span>
-            </div>
-            <span onclick="cancelAction()" style="cursor:pointer; color:var(--error); font-weight:bold; font-size:22px; padding:0 10px;">✕</span>
-        </div>
-
-        <div id="input-area">
-            <span class="tool-btn" style="font-size:24px; cursor:pointer;" onclick="showModal('emoji-picker')">😊</span>
-            <input type="file" id="msg-img" class="hidden" onchange="uploadImage(this)">
-            <span class="tool-btn" style="font-size:24px; cursor:pointer;" onclick="document.getElementById('msg-img').click()">📷</span>
-            <span class="tool-btn" style="font-size:24px; cursor:pointer; font-weight:bold; color:var(--accent);" onclick="showModal('poll-modal')">＋</span>
-            <input type="text" id="msg-in" class="inp" placeholder="Написать сообщение..." onkeydown="if(event.key==='Enter') send()">
-            <button id="send-btn" class="btn" style="background:var(--accent); color:#000" onclick="send()">ОТПРАВИТЬ</button>
-        </div>
-    </div>
-
-    <div id="emoji-picker" class="custom-modal" onclick="this.style.display='none'">
-        <div class="win-frame" onclick="event.stopPropagation()" style="width:340px; display:grid; grid-template-columns:repeat(4,1fr); gap:15px; padding:25px;">
-            <span style="font-size:30px; cursor:pointer;" onclick="addEmoji('😊')">😊</span>
-            <span style="font-size:30px; cursor:pointer;" onclick="addEmoji('😂')">😂</span>
-            <span style="font-size:30px; cursor:pointer;" onclick="addEmoji('💀')">💀</span>
-            <span style="font-size:30px; cursor:pointer;" onclick="addEmoji('🔥')">🔥</span>
-            <span style="font-size:30px; cursor:pointer;" onclick="addEmoji('🤡')">🤡</span>
-            <span style="font-size:30px; cursor:pointer;" onclick="addEmoji('❤')">❤</span>
-            <span style="font-size:30px; cursor:pointer;" onclick="addEmoji('👍')">👍</span>
-            <span style="font-size:30px; cursor:pointer;" onclick="addEmoji('🤔')">🤔</span>
-            <span style="font-size:30px; cursor:pointer;" onclick="addEmoji('😈')">😈</span>
-            <span style="font-size:30px; cursor:pointer;" onclick="addEmoji('🍦')">🍦</span>
-            <span style="font-size:30px; cursor:pointer;" onclick="addEmoji('🌈')">🌈</span>
-            <span style="font-size:30px; cursor:pointer;" onclick="addEmoji('✅')">✅</span>
-        </div>
-    </div>
-
-    <div id="ctx-menu">
-        <div class="ctx-item" onclick="replyMessage()">Ответить</div>
-        <div id="owner-tools" class="hidden">
-            <div class="ctx-item" onclick="editMessage()">Изменить</div>
-            <div class="ctx-item" style="color:var(--error)" onclick="deleteMessage()">Удалить</div>
-        </div>
-    </div>
-
-    <script>
-        /* --- КОНФИГУРАЦИЯ БАЗЫ ДАННЫХ --- */
-        const firebaseConfig = { 
-            apiKey: "AIzaSyAocmcoBH2Q8_QENuE9AuaGwtDOSSg-WpE", 
-            authDomain: "danblox-e209f.firebaseapp.com", 
-            databaseURL: "https://danblox-e209f-default-rtdb.firebaseio.com", 
-            projectId: "danblox-e209f" 
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const defAv = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-
-        /* --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ --- */
-        let myData = null, curChat = 'global', curPeer = '', selId = null, selData = null;
-        let isEditing = false, replyData = null, lastSendTime = 0;
-        let myStream = null, audioCtx = null, analyser = null, micMuted = false, inVoice = false;
-
-        /* --- АВТОРИЗАЦИЯ --- */
-        async function auth() {
-            const n = document.getElementById('auth-n').value.trim();
-            const p = document.getElementById('auth-p').value.trim();
-            if(!n || !p) return;
-            const snap = await db.ref('users/'+n).get();
-            if(!snap.exists()) {
-                myData = { nick: n, pass: p, av: defAv, color: '#ffffff', admin: false };
-                await db.ref('users/'+n).set(myData);
-            } else {
-                if(snap.val().pass !== p) return alert("ОШИБКА: НЕВЕРНЫЙ ПАРОЛЬ");
-                myData = snap.val();
-            }
-            startApplication();
+<script>
+    // --- БАЗА ВОПРОСОВ И ПРАВИЛЬНЫХ ОТВЕТОВ (как в легенде) ---
+    const quizData = [
+        {
+            id: 1,
+            question: "С какой игры в роблоксе Dan Games начал свою карьеру?",
+            options: ["Doors", "Paradox", "Steal A Brainrot", "Toilet Tower Defense"],
+            correct: "Toilet Tower Defense"
+        },
+        {
+            id: 2,
+            question: "Какой был канал у Dan кроме Dan Games и NoobikCraft?",
+            options: ["NoobikDan", "МегаДэн", "Мега Нубик", "DanTop"],
+            correct: "Мега Нубик"      // согласно условию: "Мега нубик" с учётом регистра? Правильный текст "Мега Нубик" (из условия: Мега нубик)
+            // В варианте пользователь написал "Мега Нубик" с большой Н? В условии: "Мега нубик" но в вариантах пишу "Мега Нубик" для единообразия.
+            // Пользователь указал: варианты: NoobikDan, МегаДэн, Мега Нубик, DanTop. Правильный ответ: Мега нубик.
+            // Сделаем проверку по строке "Мега Нубик" - нормализуем сравнение в нижний регистр чтобы учесть возможные опечатки? но варианты точные. 
+            // Для надёжности сравниваем .trim().toLowerCase()
         }
+    ];
 
-        function startApplication() {
-            document.getElementById('auth-screen').classList.add('hidden');
-            document.getElementById('sidebar').classList.remove('hidden');
-            document.getElementById('main-content').classList.remove('hidden');
-            refreshProfileUI();
-            db.ref('presence/'+myData.nick).set(true);
-            db.ref('presence/'+myData.nick).onDisconnect().remove();
-            initContactListener();
-            initPrivateCallListener();
-            switchChat('global', 'Глобальный чат');
-        }
+    // для хранения выбранных ответов (ключ: id вопроса, value: текст ответа)
+    let userAnswers = {
+        1: null,
+        2: null
+    };
 
-        function refreshProfileUI() {
-            const display = document.getElementById('my-name-display');
-            display.innerText = myData.nick; 
-            display.style.color = myData.color;
-            document.getElementById('admin-indicator').classList.toggle('hidden', !myData.admin);
-        }
+    // флаг, был ли уже сабмит (чтобы подсветить правильно/неправильно)
+    let submitted = false;
 
-        /* --- КОНТАКТЫ И ГРУППЫ --- */
-        function initContactListener() {
-            db.ref(`users/${myData.nick}/friends`).on('value', async snap => {
-                const list = document.getElementById('contact-list');
-                list.innerHTML = `<div class="contact-item" onclick="switchChat('global','Глобальный чат')">
-                    <div style="font-size:24px; width:46px; text-align:center;">🌍</div>
-                    <div class="contact-info"><b>Глобальный чат</b></div>
-                </div>`;
-                const friends = snap.val() || {};
-                for(let fid in friends) {
-                    const isGroup = friends[fid] === 'group';
-                    const infoSnap = await db.ref(isGroup ? 'groups/'+fid : 'users/'+fid).get();
-                    if(!infoSnap.exists()) continue;
-                    const info = infoSnap.val();
-                    const item = document.createElement('div');
-                    item.className = 'contact-item';
-                    item.onclick = () => isGroup ? switchChat(fid, info.name) : startPrivateChat(fid);
-                    item.innerHTML = `
-                        <img src="${isGroup ? (info.av || defAv) : (info.av || defAv)}">
-                        <div class="contact-info">
-                            <b style="color:${isGroup ? '#fff' : (info.color || '#fff')}">${isGroup ? info.name : info.nick}</b>
-                            <div class="status-dot" id="dot-${fid}">${isGroup ? 'GROUP' : '...'}</div>
-                        </div>
-                        <span onclick="event.stopPropagation(); removeFriend('${fid}')" style="color:var(--error); font-weight:bold; padding:10px;">🗑️</span>
-                    `;
-                    list.appendChild(item);
-                    if(!isGroup) {
-                        db.ref('presence/'+fid).on('value', p => {
-                            const d = document.getElementById('dot-'+fid);
-                            if(d) {
-                                d.innerText = p.exists() ? 'В СЕТИ' : 'ОФФЛАЙН';
-                                d.className = 'status-dot ' + (p.exists() ? 'on' : 'off');
-                            }
-                        });
+    // Ссылки на DOM
+    const questionsContainer = document.getElementById('questionsArea');
+    const submitBtn = document.getElementById('submitQuiz');
+    const resultArea = document.getElementById('resultArea');
+    const resultMessageSpan = document.getElementById('resultMessage');
+    const resultDetailSpan = document.getElementById('resultDetail');
+
+    // Функция для рендера всех вопросов
+    function renderQuestions() {
+        questionsContainer.innerHTML = '';
+        quizData.forEach((item, idx) => {
+            const qCard = document.createElement('div');
+            qCard.className = 'question-card';
+            qCard.setAttribute('data-qid', item.id);
+
+            const questionTitle = document.createElement('div');
+            questionTitle.className = 'question-text';
+            questionTitle.innerText = `${item.id}. ${item.question}`;
+            qCard.appendChild(questionTitle);
+
+            const optionsList = document.createElement('ul');
+            optionsList.className = 'options-list';
+
+            // проходим по вариантам ответов
+            item.options.forEach(opt => {
+                const li = document.createElement('li');
+                li.className = 'option-item';
+                // добавим атрибуты
+                li.setAttribute('data-qid', item.id);
+                li.setAttribute('data-opt-value', opt);
+
+                const radio = document.createElement('input');
+                radio.type = 'radio';
+                radio.name = `q${item.id}`;
+                radio.value = opt;
+                radio.id = `q${item.id}_${opt.replace(/\s/g, '_')}`;
+
+                // если уже был выбран ответ ранее (при повторном рендере или после сброса подсветки)
+                if (userAnswers[item.id] === opt) {
+                    radio.checked = true;
+                }
+
+                const label = document.createElement('label');
+                label.htmlFor = radio.id;
+                label.className = 'option-label';
+                label.innerText = opt;
+
+                li.appendChild(radio);
+                li.appendChild(label);
+
+                // событие при клике на сам li тоже выбирает радио (удобно)
+                li.addEventListener('click', (e) => {
+                    // если уже был произведён сабмит, то блокируем изменение ответов после проверки? 
+                    // но по условию тест интерактивный: после проверки можно изменить ответы и снова проверить.
+                    // Лучше разрешить изменять в любой момент, а при новом клике снимаем "режим проверки"
+                    if (submitted) {
+                        // если была проверка, после выбора нового ответа сбрасываем подсветку и убираем флаг,
+                        // чтобы тест снова был "чистым"
+                        resetToActiveMode();
                     }
-                }
-            });
-        }
-
-        async function removeFriend(id) {
-            if(confirm("Удалить из списка?")) {
-                await db.ref(`users/${myData.nick}/friends/${id}`).remove();
-                if(curChat === id || (curPeer === id)) switchChat('global', 'Глобальный чат');
-            }
-        }
-
-        async function startPrivateChat(targetNick) {
-            if(targetNick === myData.nick) return;
-            await db.ref(`users/${myData.nick}/friends/${targetNick}`).set('user');
-            await db.ref(`users/${targetNick}/friends/${myData.nick}`).set('user');
-            const chatID = myData.nick < targetNick ? myData.nick+'_'+targetNick : targetNick+'_'+myData.nick;
-            switchChat(chatID, targetNick);
-        }
-
-        /* --- СИСТЕМА ЧАТА --- */
-        function switchChat(id, title) {
-            if(inVoice) leaveVoiceChannel();
-            curChat = id;
-            const isBroad = id === 'global' || id.startsWith('group');
-            curPeer = isBroad ? '' : title;
-            document.getElementById('chat-title').innerText = title;
-            document.getElementById('chat-window').innerHTML = '';
-            document.getElementById('call-btn').classList.toggle('hidden', isBroad);
-            db.ref('messages/'+id).off();
-            db.ref('messages/'+id).on('child_added', s => renderMessage(s.key, s.val()));
-            db.ref('messages/'+id).on('child_changed', s => {
-                const el = document.getElementById('m-'+s.key);
-                if(el && s.val().type === 'text') el.querySelector('.txt-node-body').innerText = s.val().txt;
-                if(el && s.val().type === 'poll') updatePollUI(s.key, s.val());
-            });
-            db.ref('messages/'+id).on('child_removed', s => {
-                const el = document.getElementById('m-'+s.key);
-                if(el) el.remove();
-            });
-            db.ref(`voice_rooms/${curChat}`).on('value', updateVoiceGrid);
-            updateHeaderStatus();
-        }
-
-        function updateHeaderStatus() {
-            const stat = document.getElementById('chat-stat');
-            db.ref('presence').off();
-            if(curPeer) {
-                db.ref('presence/'+curPeer).on('value', p => {
-                    stat.innerText = p.exists() ? "В СЕТИ" : "ОФФЛАЙН";
-                    stat.style.color = p.exists() ? "var(--accent)" : "#555";
-                });
-            } else {
-                db.ref('presence').on('value', s => {
-                    let count = 0; s.forEach(() => count++);
-                    stat.innerText = "УЧАСТНИКОВ ОНЛАЙН: " + count;
-                    stat.style.color = "var(--accent)";
-                });
-            }
-        }
-
-        async function renderMessage(mid, m) {
-            const win = document.getElementById('chat-window');
-            const row = document.createElement('div');
-            row.id = 'm-'+mid;
-            row.className = `msg-row ${m.sn === myData.nick ? 'me' : ''}`;
-            const uSnap = await db.ref('users/'+m.sn).get();
-            const u = uSnap.val() || { av: defAv, color: '#fff' };
-            row.oncontextmenu = (e) => {
-                e.preventDefault(); e.stopPropagation();
-                showContextMenu(e, mid, m);
-            };
-
-            let contentHTML = '';
-            if(m.type === 'img') {
-                contentHTML = `<img src="${m.txt}" style="max-width:300px; border-radius:10px; cursor:zoom-in;" onclick="window.open(this.src)">`;
-            } else if(m.type === 'poll') {
-                contentHTML = `<div class="poll-box" id="poll-box-${mid}"></div>`;
-            } else {
-                contentHTML = `<div class="txt-node-body">${m.txt}</div>`;
-            }
-
-            row.innerHTML = `
-                <img src="${u.av || defAv}" class="msg-av" onclick="startPrivateChat('${m.sn}')">
-                <div class="msg-content ${u.admin ? 'admin-msg' : ''}">
-                    <b style="color:${u.color}; font-size:12px;">${m.sn} ${u.admin ? '<span class="admin-tag">ADMIN</span>' : ''}</b>
-                    ${m.rp ? `<div style="font-size:11px; opacity:0.6; border-left:2px solid var(--accent); padding-left:8px; margin: 4px 0;">↪ ${m.rp}</div>` : ''}
-                    <div style="margin-top:4px;">${contentHTML}</div>
-                </div>
-            `;
-            win.appendChild(row);
-            if(m.type === 'poll') updatePollUI(mid, m);
-            win.scrollTop = win.scrollHeight;
-        }
-
-        function send() {
-            const now = Date.now();
-            if(now - lastSendTime < 3000) return alert("ПОДОЖДИТЕ 3 СЕКУНДЫ ПЕРЕД ОТПРАВКОЙ!");
-            
-            const input = document.getElementById('msg-in');
-            const val = input.value.trim();
-            if(!val && !isEditing) return;
-
-            if(isEditing) {
-                db.ref(`messages/${curChat}/${selId}`).update({ txt: val });
-            } else {
-                let replyPreview = null;
-                if(replyData && replyData.txt) {
-                    replyPreview = replyData.txt.substring(0, 30) + '...';
-                }
-
-                db.ref('messages/'+curChat).push({
-                    sn: myData.nick,
-                    txt: val,
-                    type: 'text',
-                    rp: replyPreview,
-                    ts: Date.now()
-                });
-                lastSendTime = now;
-            }
-            input.value = '';
-            cancelAction();
-        }
-
-        /* --- ОПРОСЫ (Polls) --- */
-        function addPollOption() {
-            const container = document.getElementById('poll-opts-container');
-            const count = container.querySelectorAll('input').length + 1;
-            const inp = document.createElement('input');
-            inp.type = "text";
-            inp.className = "inp poll-opt-in";
-            inp.placeholder = "Вариант " + count;
-            inp.style.width = "100%";
-            inp.style.marginBottom = "10px";
-            container.appendChild(inp);
-        }
-
-        function publishPoll() {
-            const q = document.getElementById('poll-q').value.trim();
-            const optInps = document.querySelectorAll('.poll-opt-in');
-            let options = {};
-            optInps.forEach((inp, i) => {
-                if(inp.value.trim()) options['opt' + i] = { text: inp.value.trim(), votes: {} };
-            });
-            if(!q || Object.keys(options).length < 2) return alert("Введите вопрос и минимум 2 варианта!");
-            
-            db.ref('messages/'+curChat).push({
-                sn: myData.nick,
-                question: q,
-                options: options,
-                type: 'poll',
-                ts: Date.now()
-            });
-            hideModal('poll-modal');
-            document.getElementById('poll-q').value = '';
-            document.getElementById('poll-opts-container').innerHTML = `
-                <input type="text" class="inp poll-opt-in" placeholder="Вариант 1" style="width:100%; margin-bottom:10px;">
-                <input type="text" class="inp poll-opt-in" placeholder="Вариант 2" style="width:100%; margin-bottom:10px;">
-            `;
-        }
-
-        function updatePollUI(mid, m) {
-            const box = document.getElementById('poll-box-'+mid);
-            if(!box) return;
-            box.innerHTML = `<b style="display:block; margin-bottom:10px;">📊 ${m.question}</b>`;
-            
-            let total = 0;
-            for(let key in m.options) {
-                total += Object.keys(m.options[key].votes || {}).length;
-            }
-
-            for(let key in m.options) {
-                const opt = m.options[key];
-                const votes = Object.keys(opt.votes || {}).length;
-                const pct = total === 0 ? 0 : Math.round((votes/total)*100);
-                
-                const item = document.createElement('div');
-                item.className = 'poll-opt';
-                if(myData.nick !== m.sn) item.onclick = () => votePoll(mid, key);
-                item.innerHTML = `
-                    <div class="poll-bar" style="width:${pct}%"></div>
-                    <div class="poll-txt">
-                        <span>${opt.text}</span>
-                        <b>${pct}% (${votes})</b>
-                    </div>
-                `;
-                box.appendChild(item);
-            }
-        }
-
-        async function votePoll(mid, optKey) {
-            const snap = await db.ref(`messages/${curChat}/${mid}`).get();
-            const m = snap.val();
-            if(m.sn === myData.nick) return alert("Вы создатель опроса!");
-            
-            for(let k in m.options) {
-                if(m.options[k].votes && m.options[k].votes[myData.nick]) {
-                    await db.ref(`messages/${curChat}/${mid}/options/${k}/votes/${myData.nick}`).remove();
-                }
-            }
-            await db.ref(`messages/${curChat}/${mid}/options/${optKey}/votes/${myData.nick}`).set(true);
-        }
-
-        /* --- ГОЛОСОВЫЕ КАНАЛЫ --- */
-        async function toggleVoiceJoin() {
-            if(!inVoice) {
-                try {
-                    myStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    inVoice = true;
-                    const btn = document.getElementById('v-join-btn');
-                    btn.innerText = "ВЫЙТИ";
-                    btn.style.background = "var(--error)";
-                    document.getElementById('voice-grid').classList.remove('hidden');
-                    
-                    const vRef = db.ref(`voice_rooms/${curChat}/${myData.nick}`);
-                    vRef.set({ av: myData.av || defAv, muted: micMuted, speaking: false, streamId: myStream.id });
-                    vRef.onDisconnect().remove();
-
-                    startVoiceProcessing();
-                } catch(e) { alert("Ошибка доступа к микрофону"); }
-            } else { leaveVoiceChannel(); }
-        }
-
-        function startVoiceProcessing() {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const source = audioCtx.createMediaStreamSource(myStream);
-            analyser = audioCtx.createAnalyser();
-            analyser.fftSize = 256;
-            source.connect(analyser);
-
-            const bufferLength = analyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
-            let lastSpeakingState = false;
-
-            function updateLoop() {
-                if(!inVoice) return;
-                analyser.getByteFrequencyData(dataArray);
-                let sum = 0; for(let i=0; i<bufferLength; i++) sum += dataArray[i];
-                let isSpeaking = (sum/bufferLength > 15) && !micMuted;
-                if(isSpeaking !== lastSpeakingState) {
-                    lastSpeakingState = isSpeaking;
-                    db.ref(`voice_rooms/${curChat}/${myData.nick}/speaking`).set(isSpeaking);
-                }
-                requestAnimationFrame(updateLoop);
-            }
-            updateLoop();
-            console.log("Audio pipeline initialized");
-        }
-
-        function leaveVoiceChannel() {
-            inVoice = false;
-            if(myStream) myStream.getTracks().forEach(t => t.stop());
-            db.ref(`voice_rooms/${curChat}/${myData.nick}`).remove();
-            document.getElementById('v-join-btn').innerText = "ВОЙТИ В ГОЛОС";
-            document.getElementById('v-join-btn').style.background = "var(--blue)";
-            document.getElementById('voice-grid').classList.add('hidden');
-            if(audioCtx) audioCtx.close();
-            audioCtx = null;
-        }
-
-        function updateVoiceGrid(snap) {
-            const grid = document.getElementById('voice-grid');
-            if(!snap.exists() || !inVoice) { grid.innerHTML = ''; return; }
-            grid.innerHTML = '';
-            snap.forEach(child => {
-                const name = child.key;
-                const data = child.val();
-                const card = document.createElement('div');
-                card.className = `voice-card ${data.speaking ? 'speaking' : ''}`;
-                card.innerHTML = `
-                    ${data.muted ? '<div class="mic-status-icon">🎙️❌</div>' : ''}
-                    <img src="${data.av || defAv}" class="voice-av">
-                    <div class="voice-nick">${name === myData.nick ? 'Я ('+name+')' : name}</div>
-                    ${name === myData.nick ? `<button onclick="toggleMicMute()" style="font-size:10px; background:var(--panel); border:1px solid #444; color:#fff; border-radius:5px; cursor:pointer; padding:2px 8px;">${micMuted ? 'ВКЛ' : 'ВЫКЛ'}</button>` : ''}
-                `;
-                grid.appendChild(card);
-            });
-        }
-
-        function toggleMicMute() {
-            micMuted = !micMuted;
-            if(myStream) myStream.getAudioTracks()[0].enabled = !micMuted;
-            db.ref(`voice_rooms/${curChat}/${myData.nick}/muted`).set(micMuted);
-        }
-
-        /* --- ЛИЧНЫЕ ЗВОНКИ --- */
-        async function makePrivateCall() {
-            const target = curPeer;
-            const tSnap = await db.ref('users/'+target).get();
-            const tData = tSnap.val();
-            document.getElementById('call-av').src = tData.av || defAv;
-            document.getElementById('call-nick').innerText = target;
-            document.getElementById('call-status').innerText = "ВЫЗОВ...";
-            showModal('call-modal');
-            const callRef = db.ref(`calls/${target}`);
-            callRef.set({ from: myData.nick, status: 'calling', ts: Date.now() });
-            callRef.onDisconnect().remove();
-            document.getElementById('p-call-actions').innerHTML = `<button class="btn" style="background:var(--error); color:#fff;" onclick="terminateCall('${target}')">ОТМЕНА</button>`;
-        }
-
-        function initPrivateCallListener() {
-            db.ref(`calls/${myData.nick}`).on('value', async snap => {
-                const c = snap.val();
-                if(!c) { hideModal('call-modal'); return; }
-                const other = c.from;
-                const uSnap = await db.ref('users/'+other).get();
-                const u = uSnap.val();
-                document.getElementById('call-av').src = u.av || defAv;
-                document.getElementById('call-nick').innerText = other;
-                showModal('call-modal');
-                const actions = document.getElementById('p-call-actions');
-                if(c.status === 'calling') {
-                    document.getElementById('call-status').innerText = "ВХОДЯЩИЙ ВЫЗОВ";
-                    actions.innerHTML = `
-                        <button class="btn" style="background:var(--accent); color:#000;" onclick="acceptCall('${other}')">ОТВЕТИТЬ</button>
-                        <button class="btn" style="background:var(--error); color:#fff;" onclick="terminateCall('${other}')">СБРОС</button>
-                    `;
-                } else if(c.status === 'active') {
-                    document.getElementById('call-status').innerText = "ИДЕТ РАЗГОВОР";
-                    actions.innerHTML = `<button class="btn" style="background:var(--error); color:#fff;" onclick="terminateCall('${other}')">ЗАВЕРШИТЬ</button>`;
-                }
-            });
-        }
-
-        async function acceptCall(from) {
-            await db.ref(`calls/${myData.nick}`).update({ status: 'active' });
-            await db.ref(`calls/${from}`).set({ from: myData.nick, status: 'active' });
-        }
-
-        function terminateCall(target) {
-            db.ref(`calls/${myData.nick}`).remove();
-            db.ref(`calls/${target}`).remove();
-            hideModal('call-modal');
-        }
-
-        /* --- УПРАВЛЕНИЕ ГРУППАМИ --- */
-        async function openChatInfo() {
-            const list = document.getElementById('mem-list');
-            list.innerHTML = 'Загрузка...';
-            showModal('members-modal');
-            
-            if(curChat === 'global') {
-                document.getElementById('mem-h').innerText = "В СЕТИ СЕЙЧАС";
-                db.ref('presence').once('value', s => {
-                    list.innerHTML = '';
-                    s.forEach(u => {
-                        list.innerHTML += `<div style="padding:12px; border-bottom:1px solid #222;">👤 ${u.key} <span style="float:right; color:var(--accent)">ONLINE</span></div>`;
+                    // отмечаем радио
+                    radio.checked = true;
+                    // сохраняем выбранный ответ в userAnswers
+                    userAnswers[item.id] = opt;
+                    // убираем подсветку у всех option-item этого вопроса (если есть классы подсветки)
+                    const allOptsInQuestion = document.querySelectorAll(`.option-item[data-qid='${item.id}']`);
+                    allOptsInQuestion.forEach(optEl => {
+                        optEl.classList.remove('correct-highlight', 'wrong-highlight');
+                        optEl.classList.remove('disabled-opt');
                     });
+                    // скрыть результат при изменении ответов, чтобы не было конфликта
+                    if (submitted === true) {
+                        submitted = false;
+                        resultArea.style.display = 'none';
+                    }
                 });
-            } else if(curChat.startsWith('group')) {
-                const gSnap = await db.ref('groups/'+curChat).get();
-                const g = gSnap.val();
-                document.getElementById('mem-h').innerText = g.name.toUpperCase();
-                list.innerHTML = '';
-                
-                if(g.owner === myData.nick) {
-                    const addBtn = document.createElement('button');
-                    addBtn.className = "btn";
-                    addBtn.style = "background:var(--blue); color:#fff; width:100%; margin-bottom:15px;";
-                    addBtn.innerText = "+ ПРИГЛАСИТЬ ДРУЗЕЙ";
-                    addBtn.onclick = () => showInviteList(curChat, g.members);
-                    list.appendChild(addBtn);
-                }
 
-                for(let mName in g.members) {
-                    list.innerHTML += `
-                        <div style="display:flex; justify-content:space-between; padding:12px; border-bottom:1px solid #222;">
-                            <span>👤 ${mName} ${mName === g.owner ? '<b style="color:var(--accent)">(Admin)</b>' : ''}</span>
-                            ${g.owner === myData.nick && mName !== myData.nick ? `<button onclick="kickFromGroup('${mName}')" style="color:red; background:none; border:none; cursor:pointer;">Кик</button>` : ''}
-                        </div>`;
-                }
-            }
-        }
-
-        async function showInviteList(gid, currentMembers) {
-            const list = document.getElementById('mem-list');
-            list.innerHTML = '<h4>Выберите друга:</h4>';
-            const fSnap = await db.ref(`users/${myData.nick}/friends`).get();
-            const friends = fSnap.val() || {};
-            
-            let hasAnyone = false;
-            for(let fid in friends) {
-                if(friends[fid] === 'user' && !currentMembers[fid]) {
-                    hasAnyone = true;
-                    const item = document.createElement('div');
-                    item.style = "padding:15px; border-bottom:1px solid #333; cursor:pointer; display:flex; justify-content:space-between; align-items:center;";
-                    item.innerHTML = `<span>👤 ${fid}</span> <button class="btn" style="padding:5px 10px; font-size:10px; background:var(--accent); color:#000;">ДОБАВИТЬ</button>`;
-                    item.onclick = async () => {
-                        await db.ref(`groups/${gid}/members/${fid}`).set(true);
-                        await db.ref(`users/${fid}/friends/${gid}`).set('group');
-                        alert(fid + " добавлен в группу!");
-                        openChatInfo();
-                    };
-                    list.appendChild(item);
-                }
-            }
-            if(!hasAnyone) list.innerHTML += '<p style="opacity:0.5; text-align:center;">У вас нет контактов для добавления</p>';
-        }
-
-        async function kickFromGroup(nick) {
-            if(confirm(`Исключить ${nick}?`)) {
-                await db.ref(`groups/${curChat}/members/${nick}`).remove();
-                await db.ref(`users/${nick}/friends/${curChat}`).remove();
-                openChatInfo();
-            }
-        }
-
-        async function createGroup() {
-            const name = document.getElementById('g-name').value.trim();
-            if(!name) return;
-            const gid = 'group_' + Date.now();
-            await db.ref('groups/'+gid).set({ name: name, owner: myData.nick, av: defAv, members: { [myData.nick]: true } });
-            await db.ref(`users/${myData.nick}/friends/${gid}`).set('group');
-            hideModal('group-modal');
-        }
-
-        /* --- ОБЩИЕ ФУНКЦИИ UI --- */
-        function showContextMenu(e, mid, m) {
-            selId = mid; selData = m;
-            const menu = document.getElementById('ctx-menu');
-            document.getElementById('owner-tools').classList.toggle('hidden', !(m.sn === myData.nick || myData.admin));
-            menu.style.display = 'block';
-            menu.style.left = e.pageX + 'px'; 
-            menu.style.top = e.pageY + 'px';
-        }
-
-        function replyMessage() { replyData = selData; showActionPanel("ОТВЕТИТЬ: " + selData.sn, "Ответ"); }
-        function editMessage() { isEditing = true; document.getElementById('msg-in').value = selData.txt; showActionPanel(selData.txt, "Редактирование"); }
-        function deleteMessage() { if(confirm("Удалить?")) db.ref(`messages/${curChat}/${selId}`).remove(); }
-        function showActionPanel(txt, type) { document.getElementById('action-bar').classList.remove('hidden'); document.getElementById('action-type').innerText = type; document.getElementById('action-text').innerText = txt; }
-        function cancelAction() { isEditing = false; replyData = null; document.getElementById('action-bar').classList.add('hidden'); document.getElementById('msg-in').value = ''; }
-        function showModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function hideModal(id) { document.getElementById(id).style.display = 'none'; }
-        function closeCtx() { document.getElementById('ctx-menu').style.display = 'none'; }
-        function addEmoji(e) { document.getElementById('msg-in').value += e; }
-
-        async function saveSettings() {
-            const key = document.getElementById('admin-key').value;
-            const isAdmin = (key === "DanAdminPanel");
-            const updates = { av: document.getElementById('set-pre').src, color: document.getElementById('set-color').value, admin: isAdmin };
-            await db.ref('users/'+myData.nick).update(updates);
-            myData = (await db.ref('users/'+myData.nick).get()).val();
-            refreshProfileUI();
-            hideModal('settings-modal');
-        }
-
-        function preview(input, targetID) {
-            const reader = new FileReader();
-            reader.onload = e => document.getElementById(targetID).src = e.target.result;
-            reader.readAsDataURL(input.files[0]);
-        }
-
-        function uploadImage(input) {
-            const file = input.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = e => {
-                db.ref('messages/'+curChat).push({ sn: myData.nick, txt: e.target.result, type: 'img', ts: Date.now() });
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function openSearch() {
-            db.ref('users').once('value', s => {
-                const list = document.getElementById('mem-list');
-                list.innerHTML = '';
-                document.getElementById('mem-h').innerText = "ПОИСК ПОЛЬЗОВАТЕЛЕЙ";
-                s.forEach(u => {
-                    if(u.key === myData.nick) return;
-                    list.innerHTML += `<div onclick="startPrivateChat('${u.key}'); hideModal('members-modal')" style="padding:15px; border-bottom:1px solid #333; cursor:pointer; display:flex; align-items:center; gap:10px;">
-                        <img src="${u.val().av || defAv}" style="width:30px; height:30px; border-radius:50%;">
-                        <span>${u.key}</span>
-                    </div>`;
+                // для радио дополнительно обработчик на изменение (если кликнуть именно по радио)
+                radio.addEventListener('change', (e) => {
+                    if (submitted) {
+                        resetToActiveMode();
+                    }
+                    userAnswers[item.id] = opt;
+                    // убираем подсветку у вариантов этого вопроса
+                    const siblings = document.querySelectorAll(`.option-item[data-qid='${item.id}']`);
+                    siblings.forEach(optEl => {
+                        optEl.classList.remove('correct-highlight', 'wrong-highlight');
+                        optEl.classList.remove('disabled-opt');
+                    });
+                    if (submitted === true) {
+                        submitted = false;
+                        resultArea.style.display = 'none';
+                    }
                 });
-                showModal('members-modal');
+
+                optionsList.appendChild(li);
+            });
+
+            qCard.appendChild(optionsList);
+            questionsContainer.appendChild(qCard);
+        });
+    }
+
+    // Сброс в активный режим (убираем подсветки, скрываем результаты)
+    function resetToActiveMode() {
+        submitted = false;
+        resultArea.style.display = 'none';
+        // очищаем все подсветки у всех option-элементов
+        const allOptions = document.querySelectorAll('.option-item');
+        allOptions.forEach(opt => {
+            opt.classList.remove('correct-highlight', 'wrong-highlight');
+            opt.classList.remove('disabled-opt');
+        });
+        // также можно снять блокировку (просто удаляем классы)
+        // но также не забываем, что если пользователь заново выбирает - всё работает
+    }
+
+    // Функция проверки ответов, подсветка и вывод результата
+    function checkAnswers() {
+        // собираем актуальные ответы из DOM (на случай если радиокнопки изменились без триггера, но мы сохраняем при каждом клике)
+        // дополнительная синхронизация: проходим по всем radio и записываем выбранные
+        for (let i = 0; i < quizData.length; i++) {
+            const qid = quizData[i].id;
+            const selectedRadio = document.querySelector(`input[name='q${qid}']:checked`);
+            if (selectedRadio) {
+                userAnswers[qid] = selectedRadio.value;
+            } else {
+                userAnswers[qid] = null;
+            }
+        }
+
+        // проверяем, все ли вопросы отвечены
+        let allAnswered = true;
+        for (let q of quizData) {
+            if (!userAnswers[q.id]) {
+                allAnswered = false;
+                break;
+            }
+        }
+
+        if (!allAnswered) {
+            // показываем сообщение, но без сброса подсветки, просто предупреждение
+            resultArea.style.display = 'block';
+            resultMessageSpan.innerHTML = "⚠️ Не все вопросы отмечены! ⚠️";
+            resultDetailSpan.innerHTML = "Пожалуйста, выбери вариант ответа на каждый вопрос, чтобы проверить знания.";
+            // добавляем легкую анимацию, но не считаем ошибкой
+            return;
+        }
+
+        // производим подсчёт правильных ответов
+        let correctCount = 0;
+        const total = quizData.length;
+        const feedbackPerQuestion = [];
+
+        // сначала снимаем старые подсветки, если были
+        const allOptItems = document.querySelectorAll('.option-item');
+        allOptItems.forEach(opt => {
+            opt.classList.remove('correct-highlight', 'wrong-highlight');
+            opt.classList.remove('disabled-opt');
+        });
+
+        // для каждого вопроса подсвечиваем правильные и неправильные ответы (пользовательские)
+        for (let q of quizData) {
+            const userAns = userAnswers[q.id];
+            const isCorrect = (userAns && userAns.trim().toLowerCase() === q.correct.trim().toLowerCase());
+            if (isCorrect) correctCount++;
+
+            // находим все варианты ответов этого вопроса
+            const optionItems = document.querySelectorAll(`.option-item[data-qid='${q.id}']`);
+            optionItems.forEach(optEl => {
+                const optValue = optEl.getAttribute('data-opt-value');
+                // правильный ли это вариант по базе
+                const isThisCorrect = (optValue.trim().toLowerCase() === q.correct.trim().toLowerCase());
+                // выбран ли пользователем этот вариант
+                const isSelectedByUser = (userAns === optValue);
+
+                if (isThisCorrect) {
+                    // правильный вариант всегда подсвечиваем зелёным (более прозрачно)
+                    optEl.classList.add('correct-highlight');
+                }
+                if (isSelectedByUser && !isThisCorrect) {
+                    // если пользователь выбрал неправильный вариант - красная подсветка
+                    optEl.classList.add('wrong-highlight');
+                }
+                // Добавляем визуальную блокировку? не обязательно, но оставляем кликабельность, чтобы можно было исправить.
+                // не добавляем disabled, ибо тест можно пересдать
             });
         }
-    </script>
+
+        // формируем сообщение о результате
+        let resultMsg = '';
+        let detailMsg = '';
+        if (correctCount === total) {
+            resultMsg = '🎉 ИДЕАЛЬНО! ТЫ ЗНАЕШЬ ЛЕГЕНДУ! 🎉';
+            detailMsg = `Правильных ответов: ${correctCount} из ${total}. Ты настоящий фанат Dan Games!`;
+        } else if (correctCount >= 1) {
+            resultMsg = `✅ ${correctCount} из ${total} правильных. Неплохо!`;
+            detailMsg = `Ты ответил(а) верно на ${correctCount} вопрос${correctCount === 1 ? '' : 'а'}. Пересмотри легендарные стримы!`;
+        } else {
+            resultMsg = '❌ Увы, пока 0 правильных... ❌';
+            detailMsg = 'Попробуй ещё раз, изучи историю канала Dan Games и возвращайся!';
+        }
+
+        // показать панель результатов
+        resultArea.style.display = 'block';
+        resultMessageSpan.innerHTML = resultMsg;
+        resultDetailSpan.innerHTML = detailMsg;
+
+        submitted = true;
+    }
+
+    // функция для полной перезагрузки подсветок при повторной проверке - reset лишь снимает флаги, но при вызове check всё обновляется
+    // Добавим событие на кнопку проверки
+    submitBtn.addEventListener('click', () => {
+        // перед проверкой синхронизируем userAnswers с текущим состоянием radio
+        for (let q of quizData) {
+            const selected = document.querySelector(`input[name='q${q.id}']:checked`);
+            if (selected) {
+                userAnswers[q.id] = selected.value;
+            } else {
+                userAnswers[q.id] = null;
+            }
+        }
+        checkAnswers();
+    });
+
+    // инициализация
+    renderQuestions();
+
+    // по умолчанию после рендера userAnswers синхронизируются, если ничего не выбрано - всё null
+    // добавим небольшую инициализацию: прослушивание изменений радиокнопок, чтобы при ручном клике обновить сохранение
+    function bindLiveRadioEvents() {
+        // но радиокнопки динамические, используем делегирование через родителя
+        questionsContainer.addEventListener('change', (e) => {
+            if (e.target && e.target.type === 'radio') {
+                const radio = e.target;
+                const nameAttr = radio.name; // q1, q2
+                const qid = parseInt(nameAttr.substring(1));
+                if (!isNaN(qid)) {
+                    const selectedValue = radio.value;
+                    userAnswers[qid] = selectedValue;
+                    // если был режим проверки, то сбросить флаг и убрать окно результата
+                    if (submitted) {
+                        resetToActiveMode();
+                    }
+                    // также убираем подсветки у всех вариантов этого вопроса
+                    const allOptsInQuestion = document.querySelectorAll(`.option-item[data-qid='${qid}']`);
+                    allOptsInQuestion.forEach(optEl => {
+                        optEl.classList.remove('correct-highlight', 'wrong-highlight');
+                    });
+                }
+            }
+        });
+    }
+    bindLiveRadioEvents();
+
+    // На случай ручного клика по .option-item, который не вызывает change у radio иногда? 
+    // но обработчик на li уже вызывает radio.checked и сам триггерит change, так что ок.
+    // а также если нажали на label, сработает клик по радио и change.
+    // дополнительно добавим сброс подсветки при клике на любой вариант, если тест был завершён
+    // делаем через делегирование на questionsContainer на класс option-item
+    questionsContainer.addEventListener('click', (e) => {
+        // поиск ближайшего option-item
+        const optionItem = e.target.closest('.option-item');
+        if (optionItem && submitted) {
+            resetToActiveMode();
+        }
+    });
+</script>
 </body>
 </html>
