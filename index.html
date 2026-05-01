@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Тест: Легенда канала Dan Games</title>
+    <title>Тест: Легенда канала Dan Games | Супертест</title>
     <style>
         * {
             margin: 0;
@@ -12,7 +12,7 @@
         }
 
         body {
-            background: linear-gradient(145deg, #0b0e16 0%, #161c2a 100%);
+            background: linear-gradient(145deg, #0a0e17 0%, #141b2a 100%);
             font-family: 'Segoe UI', 'Poppins', 'Roboto', 'Inter', system-ui, -apple-system, sans-serif;
             min-height: 100vh;
             display: flex;
@@ -22,27 +22,27 @@
         }
 
         .quiz-container {
-            max-width: 920px;
+            max-width: 980px;
             width: 100%;
-            background: rgba(18, 22, 35, 0.9);
+            background: rgba(15, 19, 30, 0.92);
             backdrop-filter: blur(3px);
             border-radius: 2.5rem;
-            box-shadow: 0 30px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 215, 120, 0.2);
+            box-shadow: 0 30px 55px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 210, 90, 0.25);
             overflow: hidden;
             transition: all 0.2s;
         }
 
         .quiz-header {
-            background: linear-gradient(135deg, #241c32 0%, #1a2538 100%);
+            background: linear-gradient(135deg, #281f3c 0%, #1a263b 100%);
             padding: 1.6rem 2rem;
             text-align: center;
-            border-bottom: 3px solid #ffbc6e;
+            border-bottom: 3px solid #ffb347;
         }
 
         .quiz-header h1 {
             font-size: 2rem;
             letter-spacing: -0.5px;
-            background: linear-gradient(135deg, #FFE5B4, #FFA54D);
+            background: linear-gradient(135deg, #FFE5B4, #FFA042);
             background-clip: text;
             -webkit-background-clip: text;
             color: transparent;
@@ -50,26 +50,25 @@
             text-shadow: 0 2px 3px rgba(0,0,0,0.2);
         }
 
-        /* ссылка на YouTube */
         .youtube-link {
             display: inline-block;
             margin-top: 8px;
             font-size: 1rem;
             font-weight: 600;
-            background: rgba(0, 0, 0, 0.4);
-            padding: 6px 18px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 6px 20px;
             border-radius: 60px;
             text-decoration: none;
             color: #FFD966;
             transition: 0.2s;
             backdrop-filter: blur(4px);
-            border: 1px solid #ffbc6e55;
+            border: 1px solid #ffbc6eaa;
         }
 
         .youtube-link:hover {
-            background: #ff5722cc;
+            background: #ff5722dd;
             color: white;
-            border-color: #ffcc88;
+            border-color: #ffdd99;
             transform: scale(1.02);
         }
 
@@ -81,10 +80,10 @@
         }
 
         .question-card {
-            background: rgba(12, 16, 26, 0.7);
+            background: rgba(10, 14, 23, 0.7);
             border-radius: 1.8rem;
             padding: 1.3rem 1.6rem;
-            border: 1px solid rgba(255, 190, 80, 0.3);
+            border: 1px solid rgba(255, 180, 70, 0.35);
             transition: 0.2s;
             box-shadow: 0 8px 18px rgba(0,0,0,0.3);
         }
@@ -92,7 +91,7 @@
         .question-text {
             font-size: 1.4rem;
             font-weight: 700;
-            color: #faebc8;
+            color: #fae9c2;
             margin-bottom: 1.2rem;
             border-left: 5px solid #ffaa44;
             padding-left: 1rem;
@@ -109,16 +108,16 @@
         .option-item {
             display: flex;
             align-items: center;
-            background: #10161f;
+            background: #0f151f;
             border-radius: 3rem;
-            border: 1px solid #2a3448;
+            border: 1px solid #2c354d;
             transition: all 0.2s;
             cursor: pointer;
             padding: 0.7rem 1.2rem;
         }
 
         .option-item:hover {
-            background: #1c2638;
+            background: #192237;
             border-color: #f5a742;
             transform: translateX(4px);
         }
@@ -147,7 +146,7 @@
             display: block;
             width: 0.55rem;
             height: 0.55rem;
-            background: #161c2a;
+            background: #141b2a;
             border-radius: 50%;
             margin: 0.27rem auto;
         }
@@ -201,27 +200,16 @@
         }
 
         .result-text {
-            font-size: 1.4rem;
+            font-size: 1.5rem;
             font-weight: 800;
             color: #FFE2A4;
             line-height: 1.4;
         }
 
         .result-detail {
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             color: #c7d2ff;
             margin-top: 8px;
-        }
-
-        /* подсветка после проверки */
-        .option-item.correct-highlight {
-            background: #1f5437cc;
-            border-color: #7be07b;
-            box-shadow: 0 0 0 1px #aaffaa;
-        }
-        .option-item.wrong-highlight {
-            background: #752a3bcc;
-            border-color: #ff8877;
         }
 
         footer {
@@ -233,7 +221,7 @@
             margin-top: 0.3rem;
         }
 
-        @media (max-width: 620px) {
+        @media (max-width: 650px) {
             .quiz-container {
                 border-radius: 1.8rem;
             }
@@ -245,6 +233,9 @@
             }
             .questions-area {
                 padding: 1.2rem;
+            }
+            .result-text {
+                font-size: 1.2rem;
             }
         }
     </style>
@@ -266,15 +257,15 @@
 
     <div class="result-area" id="resultArea" style="display: none;">
         <div class="result-text" id="resultMessage"></div>
-        <div class="result-detail" id="resultDetail">⭐ Ты можешь пройти тест заново и побить рекорд ⭐</div>
+        <div class="result-detail" id="resultDetail">⭐ Ты можешь пройти тест заново и улучшить результат ⭐</div>
     </div>
     <footer>
-        💡 Каждый вопрос — только один верный вариант. Жми на ответ и проверь себя!
+        💡 7 вопросов о легенде Dan Games. Только один вариант верный. Удачи!
     </footer>
 </div>
 
 <script>
-    // ---------- РАСШИРЕННАЯ БАЗА ВОПРОСОВ (5 вопросов) ----------
+    // ---------- ПОЛНАЯ БАЗА: 7 ВОПРОСОВ (с двумя новыми) ----------
     const quizData = [
         {
             id: 1,
@@ -309,28 +300,34 @@
                 "почти вообще не нравился dan games старался не играть особо в эту игру"
             ],
             correct: "почти вообще не нравился dan games старался не играть особо в эту игру"
+        },
+        {
+            id: 6,
+            question: "Какой скин был у Dan Games когда он играл в ttd?",
+            options: ["такой же как сейчас", "бекон", "ниндзя", "Элитный КлокМен"],
+            correct: "Элитный КлокМен"
+        },
+        {
+            id: 7,
+            question: "Какой ник у моего второго аккаунта в roblox?",
+            options: ["DanVR2013_2", "DanVR_2", "DanVR2013_Dev", "DanVRGames2"],
+            correct: "DanVR2013_Dev"
         }
     ];
 
-    // Хранилище выбранных ответов (id вопроса → текст ответа)
+    // Хранилище выбранных ответов
     let userAnswers = {
-        1: null,
-        2: null,
-        3: null,
-        4: null,
-        5: null
+        1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null
     };
 
-    let submitted = false;      // флаг, показывающий что результаты показаны и есть подсветка
-    let currentCorrectCount = 0;
-
+    let submitted = false;
     const questionsContainer = document.getElementById('questionsArea');
     const submitBtn = document.getElementById('submitQuiz');
     const resultArea = document.getElementById('resultArea');
     const resultMessageSpan = document.getElementById('resultMessage');
     const resultDetailSpan = document.getElementById('resultDetail');
 
-    // ---------- Отрисовка всех вопросов ----------
+    // Отрисовка всех вопросов
     function renderQuestions() {
         questionsContainer.innerHTML = '';
         quizData.forEach(item => {
@@ -356,9 +353,10 @@
                 radio.type = 'radio';
                 radio.name = `q${item.id}`;
                 radio.value = opt;
-                radio.id = `q${item.id}_${opt.replace(/\s/g, '_').replace(/[^a-zA-Zа-яА-Я0-9_]/g, '')}`;
+                // чуть уникальный id, убираем спецсимволы
+                const safeOpt = opt.replace(/[^a-zA-Zа-яА-Я0-9]/g, '_');
+                radio.id = `q${item.id}_${safeOpt.substring(0, 30)}`;
 
-                // Если уже был сохранён ответ (для обновлений)
                 if (userAnswers[item.id] === opt) {
                     radio.checked = true;
                 }
@@ -371,14 +369,13 @@
                 li.appendChild(radio);
                 li.appendChild(label);
 
-                // обработчик клика на весь li — выбирает радио и убирает подсветку если был сабмит
+                // клик по li выбирает радио и сбрасывает подсветку/режим
                 li.addEventListener('click', (e) => {
                     if (submitted) {
                         resetToActiveMode();
                     }
                     radio.checked = true;
                     userAnswers[item.id] = opt;
-                    // убираем подсветку у этого вопроса
                     clearHighlightForQuestion(item.id);
                     if (submitted === true) {
                         submitted = false;
@@ -400,13 +397,12 @@
 
                 optionsList.appendChild(li);
             });
-
             qCard.appendChild(optionsList);
             questionsContainer.appendChild(qCard);
         });
     }
 
-    // Сброс активного режима: убираем панель результатов, снимаем подсветки
+    // Сбросить режим проверки (скрыть результат, убрать все визуальные классы)
     function resetToActiveMode() {
         submitted = false;
         resultArea.style.display = 'none';
@@ -416,7 +412,6 @@
         });
     }
 
-    // снять подсветку с конкретного вопроса
     function clearHighlightForQuestion(qid) {
         const optsForQuestion = document.querySelectorAll(`.option-item[data-qid='${qid}']`);
         optsForQuestion.forEach(opt => {
@@ -424,21 +419,9 @@
         });
     }
 
-    // Функция подсчёта правильных ответов (без показа каких именно верных/неверных, только кол-во)
-    // дополнительно подсвечивает правильные варианты (чтобы в конце игрок увидел где правда, но условие не запрещает подстветку? 
-    // В ТЗ: "после прохождения теста не показывай правильные ответы пусть это будет загадка" — то есть НЕ ПИСАТЬ текстом "правильный ответ: ..." 
-    // Но подсветка зелёным/красным — это визуальный фидбек. Обычно в тестах так делают. Но если нужно строго "не показывать правильные ответы" — 
-    // можно убрать подсветку. Однако в предыдущей версии была подсветка, пользователь не просил убрать, но фраза "не показывай правильные ответы" 
-    // означает, что не надо выводить текстовую расшифровку. А визуально (зелёным) — обычно подсказка, но оставлю умеренно: 
-    // Я сделаю так: показываем только общий результат и фразы по сценарию, но корректные варианты подсвечивать не буду, 
-    // чтобы сохранить элемент загадки — пользователь не узнает конкретно какой вариант верный, если ошибся. 
-    // Однако по запросу предыдущего задания была подсветка, но в новом условии "не показывай правильные ответы" — возможно лучше убрать.
-    // Решаю: полное соответствие — убираем любую подсветку правильных вариантов, только выводим итоговую фразу по количеству верных.
-    // Но чтобы тест был дружелюбным, просто показываем результат и мотивацию. Без зелёных/красных пометок. Так интереснее.
-    // Реализую проверку без подсветки вопросов. (Полностью скрываем правильные ответы)
-    
+    // Главная проверка: только подсчёт баллов и вывод фразы (без раскрытия правильных ответов)
     function checkAnswersAndShowMessage() {
-        // синхронизация userAnswers по текущим выбранным радио
+        // синхронизируем ответы с радиокнопками
         for (let q of quizData) {
             const selectedRadio = document.querySelector(`input[name='q${q.id}']:checked`);
             if (selectedRadio) {
@@ -448,7 +431,7 @@
             }
         }
 
-        // проверка полноты ответов
+        // проверяем, что все вопросы отвечены
         let allAnswered = true;
         for (let q of quizData) {
             if (!userAnswers[q.id]) {
@@ -460,11 +443,11 @@
         if (!allAnswered) {
             resultArea.style.display = 'block';
             resultMessageSpan.innerHTML = "❓ НЕ ВСЕ ВОПРОСЫ ОТМЕЧЕНЫ ❓";
-            resultDetailSpan.innerHTML = "Пожалуйста, выбери вариант на каждый вопрос, чтобы узнать результат!";
+            resultDetailSpan.innerHTML = "Пожалуйста, выбери вариант на каждый из 7 вопросов, чтобы узнать результат!";
             return;
         }
 
-        // считаем правильные
+        // считаем количество правильных
         let correctCount = 0;
         for (let q of quizData) {
             const userAnsNorm = userAnswers[q.id]?.trim().toLowerCase();
@@ -474,52 +457,58 @@
             }
         }
 
-        currentCorrectCount = correctCount;
-        const total = quizData.length;
+        const total = quizData.length; // total = 7
 
-        // Убираем любую подсветку, чтобы не показывать правильные варианты
+        // Убираем любую подсветку (полное соответствие условию "не показывай правильные ответы")
         const allOptionsElements = document.querySelectorAll('.option-item');
         allOptionsElements.forEach(opt => {
             opt.classList.remove('correct-highlight', 'wrong-highlight');
         });
 
-        // Генерируем сообщение в зависимости от количества правильных ответов (как в ТЗ)
+        // Генерация финального сообщения в зависимости от количества правильных ответов (адаптируем под 7 вопросов)
         let message = "";
         let subMessage = "";
 
         if (correctCount === 0) {
             message = "😭 ты вообще не знаешь блогера Dan Games! 😭";
-            subMessage = "Попробуй пересмотреть видосы и вернись снова! 💪";
-        } 
+            subMessage = "Пересмотри побольше роликов и возвращайся! 💪";
+        }
         else if (correctCount === 2) {
             message = "📺 Не очень, ты не легенда но частично знаешь Dan Games! 📺";
-            subMessage = `У тебя ${correctCount} из ${total} правильных ответов. Есть куда расти!`;
+            subMessage = `У тебя ${correctCount} из ${total} правильных. Нужно подтянуть историю канала!`;
         }
         else if (correctCount === 3) {
             message = "⚡ Йоу! ты почти легенда но немного не хватает! ⚡";
-            subMessage = `${correctCount}/${total} верных. Ещё чуть-чуть и ты в эпицентре славы!`;
+            subMessage = `${correctCount}/${total} верных. Ещё немного — и ты станешь настоящим знатоком!`;
         }
         else if (correctCount === 4) {
             message = "🎈 Красава! ты частично легенда! хорошие результаты! 🎈";
-            subMessage = `Поздравляю! ${correctCount} правильных из ${total}. Ты близок к абсолюту!`;
+            subMessage = `Поздравляю! ${correctCount} из ${total}. Ты хорошо знаешь Dan Games!`;
+        }
+        else if (correctCount === 5) {
+            message = "🎉 Отлично! Ты серьёзно шаришь за Dan Games, почти легенда! 🎉";
+            subMessage = `${correctCount}/${total} правильных. Осталось всего немного до идеала!`;
+        }
+        else if (correctCount === 6) {
+            message = "🏆 Вау! Ты настоящий фанат! Один шаг до абсолютной легенды! 🏆";
+            subMessage = `У тебя ${correctCount} верных ответов из ${total}. Ты невероятно близок!`;
         }
         else if (correctCount === total) {
             message = "🔥🔥🔥 ЙОООУ! КРАСАВА! ТЫ НАСТОЯЩИЙ ЛЕГЕНДА КАНАЛА! 🔥🔥🔥";
-            subMessage = "Идеальный результат! Твоё уважение к Dan Games безгранично!";
+            subMessage = "Идеальный результат! Твоё уважение к Dan Games безгранично! Ты — легенда!";
         }
         else {
-            // остальные случаи: 1 правильный или 5 (но 5 уже covered) 
+            // для 1 правильного:
             if (correctCount === 1) {
                 message = "😕 Пока слабовато, ты только начинаешь путь легенды!";
-                subMessage = `Всего ${correctCount} верный ответ. Посмотри побольше контента Dan Games!`;
+                subMessage = `Всего ${correctCount} верный ответ. Посмотри больше контента Dan Games!`;
             } else {
-                // fallback
-                message = `🤔 Результат: ${correctCount} из ${total}. Учи историю канала!`;
-                subMessage = "Пересдавай тест и становись настоящим легендой!";
+                message = `🤔 Результат: ${correctCount} из ${total}. Углубляй знания о Dan Games!`;
+                subMessage = "Пройди тест ещё раз, чтобы стать легендой!";
             }
         }
 
-        // Отображаем результат
+        // отображаем панель результата
         resultArea.style.display = 'block';
         resultMessageSpan.innerHTML = message;
         resultDetailSpan.innerHTML = subMessage;
@@ -527,14 +516,13 @@
         submitted = true;
     }
 
-    // Обработчик кнопки проверки
+    // обработчик на кнопку проверки
     submitBtn.addEventListener('click', () => {
-        // перед проверкой сбросим флаг подсветки (но у нас подсветки вообще не будет, но чистим)
+        // если был режим проверки - сбрасываем подсветку, но перед новой проверкой обновим
         if (submitted) {
-            // Можно сбросить режим перед повторной проверкой (но по логике пользователь может пересдать)
             resetToActiveMode();
         }
-        // Синхронизируем userAnswers ещё раз перед подсчетом
+        // пересинхронизируем ответы
         for (let q of quizData) {
             const selectedRadio = document.querySelector(`input[name='q${q.id}']:checked`);
             if (selectedRadio) {
@@ -546,8 +534,7 @@
         checkAnswersAndShowMessage();
     });
 
-    // Сброс при изменении ответов после проверки — resetToActiveMode внутри обработчиков уже есть
-    // Также дополнительно повесим глобальный сброс при клике на любой option-item, если тест завершён
+    // сброс режима при любом новом выборе после проверки
     function bindResetEvents() {
         questionsContainer.addEventListener('click', (e) => {
             const targetItem = e.target.closest('.option-item');
@@ -555,7 +542,6 @@
                 resetToActiveMode();
             }
         });
-        // также если меняется радио после проверки
         questionsContainer.addEventListener('change', (e) => {
             if (e.target && e.target.type === 'radio' && submitted) {
                 resetToActiveMode();
@@ -566,9 +552,6 @@
     // инициализация
     renderQuestions();
     bindResetEvents();
-    
-    // если нужно сохранить анонимность правильных ответов — отлично, подсветка отсутствует
-    // дополнительно никакие тексты не раскрывают какой именно вариант верный.
 </script>
 </body>
 </html>
