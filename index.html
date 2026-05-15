@@ -2,556 +2,980 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Тест: Легенда канала Dan Games | Супертест</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Фонк Студия — 10 пресетов + цифры</title>
     <style>
         * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+            user-select: none;
         }
-
         body {
-            background: linear-gradient(145deg, #0a0e17 0%, #141b2a 100%);
-            font-family: 'Segoe UI', 'Poppins', 'Roboto', 'Inter', system-ui, -apple-system, sans-serif;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 2rem 1.5rem;
-        }
-
-        .quiz-container {
-            max-width: 980px;
-            width: 100%;
-            background: rgba(15, 19, 30, 0.92);
-            backdrop-filter: blur(3px);
-            border-radius: 2.5rem;
-            box-shadow: 0 30px 55px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 210, 90, 0.25);
-            overflow: hidden;
-            transition: all 0.2s;
-        }
-
-        .quiz-header {
-            background: linear-gradient(135deg, #281f3c 0%, #1a263b 100%);
-            padding: 1.6rem 2rem;
+            background: #0a0a0a;
+            font-family: monospace;
+            color: #ff69b4;
             text-align: center;
-            border-bottom: 3px solid #ffb347;
+            padding: 20px;
+            margin: 0;
         }
-
-        .quiz-header h1 {
-            font-size: 2rem;
-            letter-spacing: -0.5px;
-            background: linear-gradient(135deg, #FFE5B4, #FFA042);
-            background-clip: text;
-            -webkit-background-clip: text;
-            color: transparent;
-            margin-bottom: 0.5rem;
-            text-shadow: 0 2px 3px rgba(0,0,0,0.2);
+        h1 {
+            text-shadow: 0 0 5px #ff69b4;
+            font-size: 1.5em;
         }
-
-        .youtube-link {
-            display: inline-block;
-            margin-top: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 6px 20px;
-            border-radius: 60px;
-            text-decoration: none;
-            color: #FFD966;
-            transition: 0.2s;
-            backdrop-filter: blur(4px);
-            border: 1px solid #ffbc6eaa;
-        }
-
-        .youtube-link:hover {
-            background: #ff5722dd;
-            color: white;
-            border-color: #ffdd99;
-            transform: scale(1.02);
-        }
-
-        .questions-area {
-            padding: 2rem 2rem 1rem 2rem;
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-        }
-
-        .question-card {
-            background: rgba(10, 14, 23, 0.7);
-            border-radius: 1.8rem;
-            padding: 1.3rem 1.6rem;
-            border: 1px solid rgba(255, 180, 70, 0.35);
-            transition: 0.2s;
-            box-shadow: 0 8px 18px rgba(0,0,0,0.3);
-        }
-
-        .question-text {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: #fae9c2;
-            margin-bottom: 1.2rem;
-            border-left: 5px solid #ffaa44;
-            padding-left: 1rem;
-            line-height: 1.3;
-        }
-
-        .options-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-            list-style: none;
-        }
-
-        .option-item {
-            display: flex;
-            align-items: center;
-            background: #0f151f;
-            border-radius: 3rem;
-            border: 1px solid #2c354d;
-            transition: all 0.2s;
-            cursor: pointer;
-            padding: 0.7rem 1.2rem;
-        }
-
-        .option-item:hover {
-            background: #192237;
-            border-color: #f5a742;
-            transform: translateX(4px);
-        }
-
-        .option-item input[type="radio"] {
-            appearance: none;
-            -webkit-appearance: none;
-            width: 1.25rem;
-            height: 1.25rem;
-            border: 2px solid #8f9bb3;
-            border-radius: 50%;
-            margin-right: 1rem;
-            background: #0b0f18;
-            transition: 0.1s;
-            cursor: pointer;
-        }
-
-        .option-item input[type="radio"]:checked {
-            border-color: #ffaa44;
-            background-color: #ffaa44;
-            box-shadow: 0 0 0 3px rgba(255, 170, 68, 0.3);
-        }
-
-        .option-item input[type="radio"]:checked::after {
-            content: "";
-            display: block;
-            width: 0.55rem;
-            height: 0.55rem;
-            background: #141b2a;
-            border-radius: 50%;
-            margin: 0.27rem auto;
-        }
-
-        .option-label {
-            font-size: 1.05rem;
-            font-weight: 500;
-            color: #eef3ff;
-            cursor: pointer;
-            flex: 1;
-        }
-
-        .action-section {
-            padding: 0.5rem 2rem 1.8rem;
-            display: flex;
+        .pad-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 90px);
+            gap: 10px;
             justify-content: center;
+            margin: 20px auto;
         }
-
-        .check-btn {
-            background: linear-gradient(95deg, #FF9F3D, #FF6F2A);
-            border: none;
-            font-size: 1.3rem;
+        .pad {
+            background: #1f1f2f;
+            border: 2px solid #ff69b4;
+            border-radius: 12px;
+            padding: 12px 0;
+            font-size: 13px;
             font-weight: bold;
-            padding: 0.8rem 2rem;
-            border-radius: 3rem;
-            color: #181c2c;
             cursor: pointer;
-            font-family: inherit;
-            transition: 0.2s;
-            box-shadow: 0 5px 0 #923e0c;
-            transform: translateY(-2px);
-            width: 100%;
-            max-width: 300px;
-            letter-spacing: 1px;
+            transition: 0.05s linear;
+            color: white;
+            box-shadow: 0 0 5px rgba(255,105,180,0.3);
         }
-
-        .check-btn:active {
-            transform: translateY(3px);
-            box-shadow: 0 1px 0 #923e0c;
+        .pad:active {
+            transform: scale(0.95);
+            background: #ff69b4;
+            color: black;
         }
-
-        .result-area {
-            margin: 0 2rem 2rem 2rem;
-            background: #03050ccc;
-            border-radius: 1.8rem;
-            padding: 1rem 1.8rem;
-            backdrop-filter: blur(6px);
-            border: 1px solid #ffcb7e;
-            transition: 0.2s;
+        .custom-pad {
+            background: #2a2a4a;
+            border: 2px solid #44ff44;
+        }
+        .delete-btn {
+            background: red;
+            border: none;
+            color: white;
+            padding: 2px 6px;
+            font-size: 9px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 4px;
+        }
+        .bpm-control {
+            margin: 20px;
+        }
+        input {
+            background: #1f1f2f;
+            border: 1px solid #ff69b4;
+            color: white;
+            padding: 5px;
             text-align: center;
         }
-
-        .result-text {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: #FFE2A4;
-            line-height: 1.4;
+        button {
+            background: #ff69b4;
+            border: none;
+            color: black;
+            padding: 6px 15px;
+            margin: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 20px;
         }
-
-        .result-detail {
-            font-size: 0.95rem;
-            color: #c7d2ff;
-            margin-top: 8px;
+        .step {
+            width: 26px;
+            height: 26px;
+            background: #2a2a3a;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid #ff69b4;
+            margin: 2px;
+            position: relative;
         }
-
+        .step.active {
+            background: #ff69b4;
+            box-shadow: 0 0 6px #ff69b4;
+        }
+        .step.current {
+            background: #ffff00;
+            border: 2px solid white;
+            box-shadow: 0 0 8px yellow;
+        }
+        /* Цифры над квадратами */
+        .step-number {
+            position: absolute;
+            top: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 9px;
+            color: #888;
+            font-weight: bold;
+            background: #111;
+            padding: 0 3px;
+            border-radius: 4px;
+            pointer-events: none;
+        }
+        .track-label {
+            display: inline-block;
+            width: 70px;
+            text-align: right;
+            margin-right: 8px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .track-row {
+            margin: 20px 0 15px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            position: relative;
+        }
+        .steps-container {
+            display: flex;
+            flex-wrap: wrap;
+            max-width: 940px;
+            position: relative;
+        }
         footer {
-            font-size: 0.7rem;
-            text-align: center;
-            padding: 0.9rem;
-            color: #6a7a9e;
-            border-top: 1px solid #2a3148;
-            margin-top: 0.3rem;
+            margin-top: 30px;
+            font-size: 10px;
+            opacity: 0.7;
         }
-
-        @media (max-width: 650px) {
-            .quiz-container {
-                border-radius: 1.8rem;
-            }
-            .question-text {
-                font-size: 1.2rem;
-            }
-            .option-label {
-                font-size: 0.9rem;
-            }
-            .questions-area {
-                padding: 1.2rem;
-            }
-            .result-text {
-                font-size: 1.2rem;
-            }
+        .upload-area {
+            margin: 15px auto;
+            padding: 15px;
+            background: #1f1f2f;
+            border: 2px dashed #ff69b4;
+            border-radius: 20px;
+            width: 80%;
+            max-width: 500px;
+        }
+        .custom-sounds {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin: 15px;
+        }
+        .file-info {
+            font-size: 9px;
+            color: #aaa;
+        }
+        .preset-btn {
+            background: #aa44ff;
+            color: white;
+        }
+        @media (max-width: 700px) {
+            .step { width: 20px; height: 20px; }
+            .track-label { width: 55px; font-size: 9px; }
+            .pad-grid { grid-template-columns: repeat(4, 80px); }
+            .step-number { font-size: 7px; top: -14px; }
         }
     </style>
 </head>
 <body>
-<div class="quiz-container">
-    <div class="quiz-header">
-        <h1>🎮 ТЕСТ: ЛЕГЕНДА DAN GAMES 🎮</h1>
-        <a href="https://www.youtube.com/@superdan8459/featured" target="_blank" class="youtube-link" rel="noopener noreferrer">
-            📺 проверь, насколько ты хорошо знаешь историю канала 📺
-        </a>
-    </div>
-
-    <div class="questions-area" id="questionsArea"></div>
-
-    <div class="action-section">
-        <button class="check-btn" id="submitQuiz">🔥 ПРОВЕРИТЬ ЗНАНИЯ 🔥</button>
-    </div>
-
-    <div class="result-area" id="resultArea" style="display: none;">
-        <div class="result-text" id="resultMessage"></div>
-        <div class="result-detail" id="resultDetail">⭐ Ты можешь пройти тест заново и улучшить результат ⭐</div>
-    </div>
-    <footer>
-        💡 7 вопросов о легенде Dan Games. Только один вариант верный. Удачи!
-    </footer>
+<h1>🔥 PHONK STUDIO — 10 ПРЕСЕТОВ 🔥</h1>
+<div style="background: #ff69b420; padding: 8px; border-radius: 20px; margin: 10px auto; width: 90%; max-width: 500px; font-size: 12px;">
+    ⚡ КЛИКНИ ЛЮБУЮ КНОПКУ — РАЗБЛОКИРОВКА ЗВУКА ⚡<br>
+    🎲 КНОПКА "10 ПРЕСЕТОВ" — ГЕНЕРИРУЕТ ГОТОВЫЙ ФОНК БИТ
 </div>
 
+<div class="pad-grid" id="standardPads">
+    <div class="pad" data-sound="kick">🥁 KICK</div>
+    <div class="pad" data-sound="snare">💥 SNARE</div>
+    <div class="pad" data-sound="hat">🔘 HAT</div>
+    <div class="pad" data-sound="clap">👏 CLAP</div>
+    <div class="pad" data-sound="rim">🎯 RIM</div>
+    <div class="pad" data-sound="openhat">🎵 OPEN</div>
+    <div class="pad" data-sound="cowbell">🐮 COWBELL</div>
+    <div class="pad" data-sound="bass">🎛 808</div>
+    <div class="pad" data-sound="crash">💥 CRASH</div>
+    <div class="pad" data-sound="tom">🥁 TOM</div>
+    <div class="pad" data-sound="scratch">🎧 SCRATCH</div>
+    <div class="pad" data-sound="vocal">🗣 VOCAL</div>
+    <div class="pad" data-sound="fx">📀 FX</div>
+</div>
+
+<div class="upload-area">
+    <h3>📁 ЗАГРУЗИ АУДИО ИЛИ ВИДЕО</h3>
+    <input type="file" id="soundUpload" accept="audio/*,video/mp4,video/quicktime,video/x-msvideo,video/webm">
+    <p style="font-size:11px">MP3, WAV, OGG, MP4, MOV, AVI, WEBM — из видео берётся звук</p>
+</div>
+
+<div id="customSoundsContainer" class="custom-sounds"></div>
+
+<div class="bpm-control">
+    <label>BPM: </label>
+    <input type="number" id="bpm" value="145" step="2">
+    <button id="playBtn">▶ PLAY</button>
+    <button id="stopBtn">⏹ STOP</button>
+    <button id="clearPatternsBtn">🗑 ОЧИСТИТЬ ВСЕ</button>
+    <button id="presetBtn" class="preset-btn">🎲 10 ПРЕСЕТОВ ФОНКА</button>
+</div>
+
+<h2>⚡ Секвенсор 32 шага (цифры 0-31) ⚡</h2>
+<div id="sequencer-container"></div>
+
+<footer>
+    ★ 10 готовых фонк-пресетов ★ Цифры над квадратами для удобства ★<br>
+    ★ Нажми "10 ПРЕСЕТОВ ФОНКА" — каждый раз случайный классический бит ★
+</footer>
+
 <script>
-    // ---------- ПОЛНАЯ БАЗА: 7 ВОПРОСОВ (с двумя новыми) ----------
-    const quizData = [
-        {
-            id: 1,
-            question: "С какой игры в роблоксе Dan Games начал свою карьеру?",
-            options: ["Doors", "Paradox", "Steal A Brainrot", "Toilet Tower Defense"],
-            correct: "Toilet Tower Defense"
-        },
-        {
-            id: 2,
-            question: "Какой был канал у Dan кроме Dan Games и NoobikCraft?",
-            options: ["NoobikDan", "МегаДэн", "Мега Нубик", "DanTop"],
-            correct: "Мега Нубик"
-        },
-        {
-            id: 3,
-            question: "Кто самый первый подписчик на канале?",
-            options: ["Марк", "Оливер", "Игран", "Ртролик"],
-            correct: "Игран"
-        },
-        {
-            id: 4,
-            question: "Как зовут Dan Games в реальной жизни?",
-            options: ["Денис", "Дима", "Даня", "Давид"],
-            correct: "Даня"
-        },
-        {
-            id: 5,
-            question: "Нравился ли мне Grow A Garden (оригинальная версия) когда он только появился?",
-            options: [
-                "Да очень нравился он прикольный!",
-                "Не совсем но ближе всего к нравился",
-                "почти вообще не нравился dan games старался не играть особо в эту игру"
-            ],
-            correct: "почти вообще не нравился dan games старался не играть особо в эту игру"
-        },
-        {
-            id: 6,
-            question: "Какой скин был у Dan Games когда он играл в ttd?",
-            options: ["такой же как сейчас", "бекон", "ниндзя", "Элитный КлокМен"],
-            correct: "Элитный КлокМен"
-        },
-        {
-            id: 7,
-            question: "Какой ник был у моего второго аккаунта в roblox когда я играл в ttd?",
-            options: ["DanVR2013_2", "xxx_secretagent", "DanVR2013_Dev", "DanVRGames2"],
-            correct: "xxx_secretagent"
-        }
-    ];
-
-    // Хранилище выбранных ответов
-    let userAnswers = {
-        1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null
-    };
-
-    let submitted = false;
-    const questionsContainer = document.getElementById('questionsArea');
-    const submitBtn = document.getElementById('submitQuiz');
-    const resultArea = document.getElementById('resultArea');
-    const resultMessageSpan = document.getElementById('resultMessage');
-    const resultDetailSpan = document.getElementById('resultDetail');
-
-    // Отрисовка всех вопросов
-    function renderQuestions() {
-        questionsContainer.innerHTML = '';
-        quizData.forEach(item => {
-            const qCard = document.createElement('div');
-            qCard.className = 'question-card';
-            qCard.setAttribute('data-qid', item.id);
-
-            const questionTitle = document.createElement('div');
-            questionTitle.className = 'question-text';
-            questionTitle.innerText = `${item.id}. ${item.question}`;
-            qCard.appendChild(questionTitle);
-
-            const optionsList = document.createElement('ul');
-            optionsList.className = 'options-list';
-
-            item.options.forEach(opt => {
-                const li = document.createElement('li');
-                li.className = 'option-item';
-                li.setAttribute('data-qid', item.id);
-                li.setAttribute('data-opt-value', opt);
-
-                const radio = document.createElement('input');
-                radio.type = 'radio';
-                radio.name = `q${item.id}`;
-                radio.value = opt;
-                // чуть уникальный id, убираем спецсимволы
-                const safeOpt = opt.replace(/[^a-zA-Zа-яА-Я0-9]/g, '_');
-                radio.id = `q${item.id}_${safeOpt.substring(0, 30)}`;
-
-                if (userAnswers[item.id] === opt) {
-                    radio.checked = true;
-                }
-
-                const label = document.createElement('label');
-                label.htmlFor = radio.id;
-                label.className = 'option-label';
-                label.innerText = opt;
-
-                li.appendChild(radio);
-                li.appendChild(label);
-
-                // клик по li выбирает радио и сбрасывает подсветку/режим
-                li.addEventListener('click', (e) => {
-                    if (submitted) {
-                        resetToActiveMode();
-                    }
-                    radio.checked = true;
-                    userAnswers[item.id] = opt;
-                    clearHighlightForQuestion(item.id);
-                    if (submitted === true) {
-                        submitted = false;
-                        resultArea.style.display = 'none';
-                    }
-                });
-
-                radio.addEventListener('change', () => {
-                    if (submitted) {
-                        resetToActiveMode();
-                    }
-                    userAnswers[item.id] = opt;
-                    clearHighlightForQuestion(item.id);
-                    if (submitted) {
-                        submitted = false;
-                        resultArea.style.display = 'none';
-                    }
-                });
-
-                optionsList.appendChild(li);
-            });
-            qCard.appendChild(optionsList);
-            questionsContainer.appendChild(qCard);
-        });
+    // ======================= АУДИОКОНТЕКСТ =======================
+    let audioCtx = null;
+    let isUnlocked = false;
+    
+    function initAudio() {
+        if (audioCtx) return audioCtx;
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        return audioCtx;
     }
-
-    // Сбросить режим проверки (скрыть результат, убрать все визуальные классы)
-    function resetToActiveMode() {
-        submitted = false;
-        resultArea.style.display = 'none';
-        const allOptions = document.querySelectorAll('.option-item');
-        allOptions.forEach(opt => {
-            opt.classList.remove('correct-highlight', 'wrong-highlight');
-        });
-    }
-
-    function clearHighlightForQuestion(qid) {
-        const optsForQuestion = document.querySelectorAll(`.option-item[data-qid='${qid}']`);
-        optsForQuestion.forEach(opt => {
-            opt.classList.remove('correct-highlight', 'wrong-highlight');
-        });
-    }
-
-    // Главная проверка: только подсчёт баллов и вывод фразы (без раскрытия правильных ответов)
-    function checkAnswersAndShowMessage() {
-        // синхронизируем ответы с радиокнопками
-        for (let q of quizData) {
-            const selectedRadio = document.querySelector(`input[name='q${q.id}']:checked`);
-            if (selectedRadio) {
-                userAnswers[q.id] = selectedRadio.value;
-            } else {
-                userAnswers[q.id] = null;
-            }
+    
+    function unlockAudio() {
+        if (isUnlocked) return true;
+        const ctx = initAudio();
+        if (ctx && ctx.state === 'suspended') {
+            ctx.resume().then(() => {
+                isUnlocked = true;
+                console.log('🔊 Аудио разблокировано');
+            }).catch(e => console.log(e));
+        } else if (ctx) {
+            isUnlocked = true;
         }
-
-        // проверяем, что все вопросы отвечены
-        let allAnswered = true;
-        for (let q of quizData) {
-            if (!userAnswers[q.id]) {
-                allAnswered = false;
-                break;
-            }
+        return isUnlocked;
+    }
+    
+    const STEPS_COUNT = 32;
+    
+    function getStepDurationMs() {
+        const bpm = parseInt(document.getElementById('bpm').value, 10);
+        return (60 / bpm) * 1000 / 4;
+    }
+    
+    // ======================= УПРАВЛЕНИЕ ЗВУКАМИ =======================
+    let activeSources = new Map();
+    let currentPlayingTrackStep = new Map();
+    
+    function stopTrackSound(trackId) {
+        if (activeSources.has(trackId)) {
+            const sourceData = activeSources.get(trackId);
+            try {
+                if (sourceData.source) sourceData.source.stop();
+                if (sourceData.gain) sourceData.gain.disconnect();
+            } catch(e) {}
+            activeSources.delete(trackId);
         }
-
-        if (!allAnswered) {
-            resultArea.style.display = 'block';
-            resultMessageSpan.innerHTML = "❓ НЕ ВСЕ ВОПРОСЫ ОТМЕЧЕНЫ ❓";
-            resultDetailSpan.innerHTML = "Пожалуйста, выбери вариант на каждый из 7 вопросов, чтобы узнать результат!";
+    }
+    
+    function playCustomSoundContinuous(trackId, audioBuffer, stepIndex, isNextStepAlsoActive) {
+        if (!unlockAudio()) return;
+        
+        const ctx = initAudio();
+        
+        if (currentPlayingTrackStep.get(trackId) === stepIndex && activeSources.has(trackId)) {
             return;
         }
-
-        // считаем количество правильных
-        let correctCount = 0;
-        for (let q of quizData) {
-            const userAnsNorm = userAnswers[q.id]?.trim().toLowerCase();
-            const correctNorm = q.correct.trim().toLowerCase();
-            if (userAnsNorm === correctNorm) {
-                correctCount++;
-            }
+        
+        const startPosition = (stepIndex / STEPS_COUNT) * audioBuffer.duration;
+        
+        if (activeSources.has(trackId) && isNextStepAlsoActive) {
+            const oldSource = activeSources.get(trackId);
+            try { if (oldSource.source) oldSource.source.stop(); } catch(e) {}
+            activeSources.delete(trackId);
+        } else if (activeSources.has(trackId) && !isNextStepAlsoActive) {
+            return;
         }
-
-        const total = quizData.length; // total = 7
-
-        // Убираем любую подсветку (полное соответствие условию "не показывай правильные ответы")
-        const allOptionsElements = document.querySelectorAll('.option-item');
-        allOptionsElements.forEach(opt => {
-            opt.classList.remove('correct-highlight', 'wrong-highlight');
-        });
-
-        // Генерация финального сообщения в зависимости от количества правильных ответов (адаптируем под 7 вопросов)
-        let message = "";
-        let subMessage = "";
-
-        if (correctCount === 0) {
-            message = "😭 ты вообще не знаешь блогера Dan Games! 😭";
-            subMessage = "Пересмотри побольше роликов и возвращайся! 💪";
+        
+        const source = ctx.createBufferSource();
+        source.buffer = audioBuffer;
+        const gain = ctx.createGain();
+        gain.gain.value = 0.7;
+        source.connect(gain);
+        gain.connect(ctx.destination);
+        source.start(0, startPosition);
+        
+        activeSources.set(trackId, { source: source, gain: gain, stepIndex: stepIndex });
+        currentPlayingTrackStep.set(trackId, stepIndex);
+        
+        if (!isNextStepAlsoActive) {
+            setTimeout(() => {
+                if (activeSources.get(trackId)?.source === source) {
+                    try { source.stop(); } catch(e) {}
+                    activeSources.delete(trackId);
+                    currentPlayingTrackStep.delete(trackId);
+                }
+            }, getStepDurationMs());
         }
-        else if (correctCount === 2) {
-            message = "📺 Не очень, ты не легенда но частично знаешь Dan Games! 📺";
-            subMessage = `У тебя ${correctCount} из ${total} правильных. Нужно подтянуть историю канала!`;
-        }
-        else if (correctCount === 3) {
-            message = "⚡ Йоу! ты почти легенда но немного не хватает! ⚡";
-            subMessage = `${correctCount}/${total} верных. Ещё немного — и ты станешь настоящим знатоком!`;
-        }
-        else if (correctCount === 4) {
-            message = "🎈 Красава! ты частично легенда! хорошие результаты! 🎈";
-            subMessage = `Поздравляю! ${correctCount} из ${total}. Ты хорошо знаешь Dan Games!`;
-        }
-        else if (correctCount === 5) {
-            message = "🎉 Отлично! Ты серьёзно шаришь за Dan Games, почти легенда! 🎉";
-            subMessage = `${correctCount}/${total} правильных. Осталось всего немного до идеала!`;
-        }
-        else if (correctCount === 6) {
-            message = "🏆 Вау! Ты настоящий фанат! Один шаг до абсолютной легенды! 🏆";
-            subMessage = `У тебя ${correctCount} верных ответов из ${total}. Ты невероятно близок!`;
-        }
-        else if (correctCount === total) {
-            message = "🔥🔥🔥 ЙОООУ! КРАСАВА! ТЫ НАСТОЯЩИЙ ЛЕГЕНДА КАНАЛА! 🔥🔥🔥";
-            subMessage = "Идеальный результат! Твоё уважение к Dan Games безгранично! Ты — легенда!";
-        }
-        else {
-            // для 1 правильного:
-            if (correctCount === 1) {
-                message = "😕 Пока слабовато, ты только начинаешь путь легенды!";
-                subMessage = `Всего ${correctCount} верный ответ. Посмотри больше контента Dan Games!`;
-            } else {
-                message = `🤔 Результат: ${correctCount} из ${total}. Углубляй знания о Dan Games!`;
-                subMessage = "Пройди тест ещё раз, чтобы стать легендой!";
-            }
-        }
-
-        // отображаем панель результата
-        resultArea.style.display = 'block';
-        resultMessageSpan.innerHTML = message;
-        resultDetailSpan.innerHTML = subMessage;
-
-        submitted = true;
     }
-
-    // обработчик на кнопку проверки
-    submitBtn.addEventListener('click', () => {
-        // если был режим проверки - сбрасываем подсветку, но перед новой проверкой обновим
-        if (submitted) {
-            resetToActiveMode();
+    
+    function playSynthShort(soundFunc, trackId) {
+        if (!unlockAudio()) return;
+        soundFunc();
+    }
+    
+    // ======================= ЗВУКИ =======================
+    function playKick() {
+        const ctx = initAudio();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = 55;
+        osc.frequency.setTargetAtTime(38, now, 0.08);
+        gain.gain.value = 0.8;
+        gain.gain.setTargetAtTime(0, now, 0.15);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(now + 0.2);
+    }
+    
+    function playSnare() {
+        const ctx = initAudio();
+        const now = ctx.currentTime;
+        const bufferSize = 4096;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        const gainNoise = ctx.createGain();
+        gainNoise.gain.value = 0.5;
+        gainNoise.gain.setTargetAtTime(0, now, 0.1);
+        noise.connect(gainNoise);
+        gainNoise.connect(ctx.destination);
+        noise.start();
+        noise.stop(now + 0.15);
+        
+        const osc = ctx.createOscillator();
+        osc.type = 'triangle';
+        osc.frequency.value = 180;
+        osc.frequency.setTargetAtTime(100, now, 0.08);
+        const gainOsc = ctx.createGain();
+        gainOsc.gain.value = 0.25;
+        gainOsc.gain.setTargetAtTime(0, now, 0.12);
+        osc.connect(gainOsc);
+        gainOsc.connect(ctx.destination);
+        osc.start();
+        osc.stop(now + 0.18);
+    }
+    
+    function playHat() {
+        const ctx = initAudio();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        osc.type = 'square';
+        osc.frequency.value = 8000;
+        const gain = ctx.createGain();
+        gain.gain.value = 0.25;
+        gain.gain.setTargetAtTime(0, now, 0.02);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(now + 0.05);
+    }
+    
+    function playClap() {
+        const ctx = initAudio();
+        const now = ctx.currentTime;
+        const bufferSize = 2048;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        const gain = ctx.createGain();
+        gain.gain.value = 0.5;
+        gain.gain.setTargetAtTime(0, now, 0.08);
+        noise.connect(gain);
+        gain.connect(ctx.destination);
+        noise.start();
+        noise.stop(now + 0.1);
+        
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = 1200;
+        const gain2 = ctx.createGain();
+        gain2.gain.value = 0.2;
+        gain2.gain.setTargetAtTime(0, now, 0.08);
+        osc.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc.start();
+        osc.stop(now + 0.08);
+    }
+    
+    function playRim() {
+        const ctx = initAudio();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = 1800;
+        const gain = ctx.createGain();
+        gain.gain.value = 0.45;
+        gain.gain.setTargetAtTime(0, now, 0.05);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(now + 0.08);
+    }
+    
+    function playOpenHat() {
+        const ctx = initAudio();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        osc.type = 'triangle';
+        osc.frequency.value = 1100;
+        const gain = ctx.createGain();
+        gain.gain.value = 0.35;
+        gain.gain.setTargetAtTime(0, now, 0.1);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(now + 0.15);
+    }
+    
+    function playCowbell() {
+        const ctx = initAudio();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        osc.type = 'triangle';
+        osc.frequency.value = 880;
+        const gain = ctx.createGain();
+        gain.gain.value = 0.6;
+        gain.gain.setTargetAtTime(0, now, 0.12);
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = 1500;
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(now + 0.2);
+    }
+    
+    function playBass() {
+        const ctx = initAudio();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        osc.type = 'sawtooth';
+        osc.frequency.value = 50;
+        osc.frequency.setTargetAtTime(40, now, 0.2);
+        const gain = ctx.createGain();
+        gain.gain.value = 0.7;
+        gain.gain.setTargetAtTime(0, now, 0.3);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(now + 0.3);
+    }
+    
+    function playCrash() {
+        const ctx = initAudio();
+        const now = ctx.currentTime;
+        const bufferSize = 8192;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        const gain = ctx.createGain();
+        gain.gain.value = 0.4;
+        gain.gain.setTargetAtTime(0, now, 0.3);
+        noise.connect(gain);
+        gain.connect(ctx.destination);
+        noise.start();
+        noise.stop(now + 0.4);
+    }
+    
+    function playTom() {
+        const ctx = initAudio();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = 130;
+        osc.frequency.setTargetAtTime(90, now, 0.12);
+        const gain = ctx.createGain();
+        gain.gain.value = 0.55;
+        gain.gain.setTargetAtTime(0, now, 0.2);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(now + 0.2);
+    }
+    
+    function playScratch() {
+        const ctx = initAudio();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        osc.type = 'sawtooth';
+        osc.frequency.value = 400;
+        osc.frequency.setTargetAtTime(1000, now, 0.04);
+        osc.frequency.setTargetAtTime(300, now, 0.1);
+        const gain = ctx.createGain();
+        gain.gain.value = 0.35;
+        gain.gain.setTargetAtTime(0, now, 0.15);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(now + 0.2);
+    }
+    
+    function playVocal() {
+        const ctx = initAudio();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = 440;
+        const gain = ctx.createGain();
+        gain.gain.value = 0.4;
+        gain.gain.setTargetAtTime(0, now, 0.25);
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 1000;
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(now + 0.35);
+        
+        const osc2 = ctx.createOscillator();
+        osc2.type = 'triangle';
+        osc2.frequency.value = 880;
+        osc2.frequency.setTargetAtTime(660, now, 0.2);
+        const gain2 = ctx.createGain();
+        gain2.gain.value = 0.2;
+        gain2.gain.setTargetAtTime(0, now, 0.3);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start();
+        osc2.stop(now + 0.35);
+    }
+    
+    function playFX() {
+        const ctx = initAudio();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        osc.type = 'square';
+        osc.frequency.value = 200;
+        osc.frequency.setTargetAtTime(800, now, 0.05);
+        osc.frequency.setTargetAtTime(200, now, 0.12);
+        const gain = ctx.createGain();
+        gain.gain.value = 0.3;
+        gain.gain.setTargetAtTime(0, now, 0.2);
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 1500;
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(now + 0.25);
+    }
+    
+    const baseSoundMap = {
+        kick: playKick, snare: playSnare, hat: playHat, clap: playClap, rim: playRim,
+        openhat: playOpenHat, cowbell: playCowbell, bass: playBass, crash: playCrash,
+        tom: playTom, scratch: playScratch, vocal: playVocal, fx: playFX
+    };
+    
+    // ======================= ЗАГРУЗКА ФАЙЛОВ =======================
+    let customSoundsList = [];
+    
+    async function loadCustomFile(file) {
+        const url = URL.createObjectURL(file);
+        
+        try {
+            const response = await fetch(url);
+            const arrayBuffer = await response.arrayBuffer();
+            const ctx = initAudio();
+            const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+            
+            const soundName = file.name.replace(/\.[^/.]+$/, "").substring(0, 14);
+            const uniqueId = 'custom_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+            
+            customSoundsList.push({
+                id: uniqueId,
+                name: soundName,
+                buffer: audioBuffer,
+                duration: audioBuffer.duration,
+                url: url
+            });
+            
+            addCustomPad(uniqueId, soundName, audioBuffer.duration);
+            addCustomTrack(uniqueId, soundName, audioBuffer);
+            
+        } catch(e) {
+            console.error('Ошибка загрузки:', e);
+            alert('Не удалось загрузить файл. Возможно, видео без звуковой дорожки или файл повреждён.');
         }
-        // пересинхронизируем ответы
-        for (let q of quizData) {
-            const selectedRadio = document.querySelector(`input[name='q${q.id}']:checked`);
-            if (selectedRadio) {
-                userAnswers[q.id] = selectedRadio.value;
-            } else {
-                userAnswers[q.id] = null;
+    }
+    
+    function addCustomPad(id, name, duration) {
+        const container = document.getElementById('customSoundsContainer');
+        const pad = document.createElement('div');
+        pad.className = 'pad custom-pad';
+        pad.innerHTML = `🎵 ${name}<br><span class="file-info">${duration.toFixed(1)}c</span><br><button class="delete-btn" data-id="${id}">✖</button>`;
+        
+        pad.addEventListener('click', (e) => {
+            if (e.target.classList.contains('delete-btn')) return;
+            const sound = customSoundsList.find(s => s.id === id);
+            if (sound && sound.buffer) {
+                const ctx = initAudio();
+                const source = ctx.createBufferSource();
+                source.buffer = sound.buffer;
+                const gain = ctx.createGain();
+                gain.gain.value = 0.7;
+                source.connect(gain);
+                gain.connect(ctx.destination);
+                source.start();
+                setTimeout(() => source.stop(), 200);
             }
+        });
+        
+        const delBtn = pad.querySelector('.delete-btn');
+        delBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            deleteCustomSound(id);
+        });
+        
+        container.appendChild(pad);
+    }
+    
+    function addCustomTrack(id, name, audioBuffer) {
+        tracks.push({
+            id: id,
+            name: name,
+            steps: Array(STEPS_COUNT).fill(0),
+            sound: (stepIndex, isNextActive) => {
+                playCustomSoundContinuous(id, audioBuffer, stepIndex, isNextActive);
+            },
+            isCustom: true,
+            buffer: audioBuffer
+        });
+        renderSequencer();
+    }
+    
+    function deleteCustomSound(id) {
+        stopTrackSound(id);
+        const index = customSoundsList.findIndex(s => s.id === id);
+        if (index !== -1) {
+            URL.revokeObjectURL(customSoundsList[index].url);
+            customSoundsList.splice(index, 1);
         }
-        checkAnswersAndShowMessage();
+        const trackIndex = tracks.findIndex(t => t.id === id);
+        if (trackIndex !== -1) tracks.splice(trackIndex, 1);
+        renderSequencer();
+        refreshCustomPads();
+    }
+    
+    function refreshCustomPads() {
+        const container = document.getElementById('customSoundsContainer');
+        container.innerHTML = '';
+        customSoundsList.forEach(sound => {
+            addCustomPad(sound.id, sound.name, sound.duration);
+        });
+    }
+    
+    document.getElementById('soundUpload').addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            loadCustomFile(e.target.files[0]);
+        }
+        e.target.value = '';
     });
-
-    // сброс режима при любом новом выборе после проверки
-    function bindResetEvents() {
-        questionsContainer.addEventListener('click', (e) => {
-            const targetItem = e.target.closest('.option-item');
-            if (targetItem && submitted) {
-                resetToActiveMode();
+    
+    // ======================= 10 ФОНК ПРЕСЕТОВ =======================
+    const phonkPresets = [
+        { // 0: CLASSIC DRIFT
+            name: "CLASSIC DRIFT",
+            steps: {
+                kick: [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0],
+                snare: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+                hat: Array(32).fill(1),
+                cowbell: [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0],
+                bass: [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0]
+            }
+        },
+        { // 1: MEMPHIS UNDERGROUND
+            name: "MEMPHIS UNDERGROUND",
+            steps: {
+                kick: [1,0,0,1,0,0,0,1,1,0,0,0,0,0,1,0,1,0,0,1,0,0,0,1,1,0,0,0,0,0,1,0],
+                snare: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+                hat: Array(32).fill(1),
+                rim: [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0],
+                cowbell: [1,0,0,1,0,0,0,1,1,0,0,0,0,0,1,0,1,0,0,1,0,0,0,1,1,0,0,0,0,0,1,0]
+            }
+        },
+        { // 2: AGGRESSIVE DRIFT
+            name: "AGGRESSIVE DRIFT",
+            steps: {
+                kick: [1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0],
+                snare: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+                hat: Array(32).fill(1),
+                openhat: [0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0],
+                cowbell: [1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0],
+                bass: [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0]
+            }
+        },
+        { // 3: DARK PHONK
+            name: "DARK PHONK",
+            steps: {
+                kick: [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+                snare: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+                hat: [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+                cowbell: [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+                bass: [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0]
+            }
+        },
+        { // 4: COWBELL HEAVY
+            name: "COWBELL HEAVY",
+            steps: {
+                kick: [1,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0],
+                snare: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+                hat: Array(32).fill(1),
+                cowbell: [1,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0],
+                rim: [0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0]
+            }
+        },
+        { // 5: BRAZILIAN PHONK
+            name: "BRAZILIAN PHONK",
+            steps: {
+                kick: [1,0,0,0,1,0,0,1,1,0,0,0,1,0,0,1,1,0,0,0,1,0,0,1,1,0,0,0,1,0,0,1],
+                snare: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+                hat: Array(32).fill(1),
+                clap: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+                bass: [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0]
+            }
+        },
+        { // 6: SLOW MOB
+            name: "SLOW MOB",
+            steps: {
+                kick: [1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+                snare: [0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],
+                hat: [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+                cowbell: [1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+                scratch: [0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0]
+            }
+        },
+        { // 7: PHONK HOUSE
+            name: "PHONK HOUSE",
+            steps: {
+                kick: [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0],
+                snare: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+                hat: Array(32).fill(1),
+                clap: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+                vocal: [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+            }
+        },
+        { // 8: TRAP PHONK
+            name: "TRAP PHONK",
+            steps: {
+                kick: [1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0],
+                snare: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+                hat: [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                bass: [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+                rim: [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0]
+            }
+        },
+        { // 9: EXPERIMENTAL PHONK
+            name: "EXPERIMENTAL PHONK",
+            steps: {
+                kick: [1,0,1,0,0,0,1,0,1,0,0,0,0,0,1,0,1,0,1,0,0,0,1,0,1,0,0,0,0,0,1,0],
+                snare: [0,0,0,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,1,0,0,0],
+                hat: [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+                cowbell: [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0],
+                fx: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+                openhat: [0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0]
+            }
+        }
+    ];
+    
+    function applyRandomPreset() {
+        const randomIndex = Math.floor(Math.random() * phonkPresets.length);
+        const preset = phonkPresets[randomIndex];
+        
+        // Применяем паттерны к трекам
+        tracks.forEach(track => {
+            if (preset.steps[track.id]) {
+                track.steps = [...preset.steps[track.id]];
+            } else if (track.isCustom) {
+                // Пользовательские треки очищаем
+                track.steps = Array(STEPS_COUNT).fill(0);
+            } else {
+                // Для треков без пресета (clap, rim, crash, tom, scratch, vocal, fx, openhat) — очищаем
+                track.steps = Array(STEPS_COUNT).fill(0);
             }
         });
-        questionsContainer.addEventListener('change', (e) => {
-            if (e.target && e.target.type === 'radio' && submitted) {
-                resetToActiveMode();
+        
+        // Дополнительно проставляем нули для всех, кто не в пресете
+        const presetTrackIds = Object.keys(preset.steps);
+        tracks.forEach(track => {
+            if (!presetTrackIds.includes(track.id) && !track.isCustom) {
+                track.steps = Array(STEPS_COUNT).fill(0);
             }
+        });
+        
+        renderSequencer();
+        
+        // Показываем название пресета в консоли
+        console.log(`🎲 Применён пресет: ${preset.name} (${randomIndex + 1}/10)`);
+        
+        // Визуальное оповещение
+        const presetBtn = document.getElementById('presetBtn');
+        const originalText = presetBtn.innerText;
+        presetBtn.innerText = `✅ ${preset.name}`;
+        presetBtn.style.background = '#44ff44';
+        presetBtn.style.color = 'black';
+        setTimeout(() => {
+            presetBtn.innerText = originalText;
+            presetBtn.style.background = '#aa44ff';
+            presetBtn.style.color = 'white';
+        }, 1500);
+    }
+    
+    // ======================= ТРЕКИ СЕКВЕНСОРА =======================
+    let tracks = [
+        { id: 'kick', name: 'KICK', steps: Array(STEPS_COUNT).fill(0).map((_,i) => i % 4 === 0 ? 1 : 0), sound: (step, next) => playSynthShort(playKick, 'kick') },
+        { id: 'snare', name: 'SNARE', steps: Array(STEPS_COUNT).fill(0).map((_,i) => i % 4 === 2 ? 1 : 0), sound: (step, next) => playSynthShort(playSnare, 'snare') },
+        { id: 'hat', name: 'HAT', steps: Array(STEPS_COUNT).fill(1), sound: (step, next) => playSynthShort(playHat, 'hat') },
+        { id: 'clap', name: 'CLAP', steps: Array(STEPS_COUNT).fill(0), sound: (step, next) => playSynthShort(playClap, 'clap') },
+        { id: 'rim', name: 'RIM', steps: Array(STEPS_COUNT).fill(0), sound: (step, next) => playSynthShort(playRim, 'rim') },
+        { id: 'openhat', name: 'OPEN', steps: Array(STEPS_COUNT).fill(0), sound: (step, next) => playSynthShort(playOpenHat, 'openhat') },
+        { id: 'cowbell', name: 'COWBELL', steps: Array(STEPS_COUNT).fill(0).map((_,i) => i % 2 === 0 ? 1 : 0), sound: (step, next) => playSynthShort(playCowbell, 'cowbell') },
+        { id: 'bass', name: '808', steps: Array(STEPS_COUNT).fill(0).map((_,i) => i === 0 || i === 16 ? 1 : 0), sound: (step, next) => playSynthShort(playBass, 'bass') },
+        { id: 'crash', name: 'CRASH', steps: Array(STEPS_COUNT).fill(0), sound: (step, next) => playSynthShort(playCrash, 'crash') },
+        { id: 'tom', name: 'TOM', steps: Array(STEPS_COUNT).fill(0), sound: (step, next) => playSynthShort(playTom, 'tom') },
+        { id: 'scratch', name: 'SCRATCH', steps: Array(STEPS_COUNT).fill(0), sound: (step, next) => playSynthShort(playScratch, 'scratch') },
+        { id: 'vocal', name: 'VOCAL', steps: Array(STEPS_COUNT).fill(0), sound: (step, next) => playSynthShort(playVocal, 'vocal') },
+        { id: 'fx', name: 'FX', steps: Array(STEPS_COUNT).fill(0), sound: (step, next) => playSynthShort(playFX, 'fx') }
+    ];
+    
+    let currentStep = 0;
+    let intervalId = null;
+    let isPlaying = false;
+    
+    function getNextActiveStep(track, startStep) {
+        for (let i = startStep + 1; i < STEPS_COUNT; i++) {
+            if (track.steps[i] === 1) return i;
+        }
+        return -1;
+    }
+    
+    function renderSequencer() {
+        const container = document.getElementById('sequencer-container');
+        if (!container) return;
+        container.innerHTML = '';
+        
+        tracks.forEach((track, tIdx) => {
+            const row = document.createElement('div');
+            row.className = 'track-row';
+            const label = document.createElement('span');
+            label.className = 'track-label';
+            label.innerText = track.name;
+            label.title = 'Кликни чтобы очистить';
+            label.addEventListener('click', () => {
+                track.steps = Array(STEPS_COUNT).fill(0);
+                renderSequencer();
+            });
+            row.appendChild(label);
+            const stepsDiv = document.createElement('div');
+            stepsDiv.className = 'steps-container';
+            
+            for (let i = 0; i < STEPS_COUNT; i++) {
+                const stepDiv = document.createElement('div');
+                stepDiv.className = 'step';
+                if (track.steps[i] === 1) stepDiv.classList.add('active');
+                stepDiv.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    track.steps[i] = track.steps[i] === 1 ? 0 : 1;
+                    renderSequencer();
+                });
+                
+                // Добавляем цифру над каждым 4-м шагом (0,4,8,12,16,20,24,28)
+                if (i % 4 === 0) {
+                    const numberSpan = document.createElement('span');
+                    numberSpan.className = 'step-number';
+                    numberSpan.innerText = i;
+                    stepDiv.appendChild(numberSpan);
+                }
+                
+                stepsDiv.appendChild(stepDiv);
+            }
+            row.appendChild(stepsDiv);
+            container.appendChild(row);
         });
     }
-
-    // инициализация
-    renderQuestions();
-    bindResetEvents();
+    
+    function playStep() {
+        if (!isPlaying) return;
+        
+        tracks.forEach(track => {
+            const nextActive = getNextActiveStep(track, currentStep);
+            if (nextActive === -1 || nextActive !== currentStep + 1) {
+                if (track.isCustom) {
+                    if (activeSources.has(track.id) && currentPlayingTrackStep.get(track.id) !== currentStep) {
+                        stopTrackSound(track.id);
+                    }
+                }
+            }
+        });
+        
+        const rows = document.querySelectorAll('.track-row');
+        rows.forEach((row, rIdx) => {
+            const steps = row.querySelectorAll('.step');
+            steps.forEach((step, sIdx) => { step.classList.remove('current'); });
+            if (steps[currentStep]) steps[currentStep].classList.add('current');
+        });
+        
+        tracks.forEach(track => {
+            if (track.steps[currentStep] === 1 && track.sound) {
+                const nextActive = getNextActiveStep(track, currentStep);
+                const isNextImmediately = (nextActive === currentStep + 1);
+                track.sound(currentStep, isNextImmediately);
+            }
+        });
+        
+        currentStep = (currentStep + 1) % STEPS_COUNT;
+    }
+    
+    function startSequencer() {
+        if (isPlaying) stopSequencer();
+        unlockAudio();
+        const bpm = parseInt(document.getElementById('bpm').value, 10);
+        const intervalMs = (60 / bpm) * 1000 / 4;
+        intervalId = setInterval(playStep, intervalMs);
+        isPlaying = true;
+    }
+    
+    function stopSequencer() {
+        if (intervalId) { clearInterval(intervalId); intervalId = null; }
+        isPlaying = false;
+        currentStep = 0;
+        document.querySelectorAll('.step').forEach(s => s.classList.remove('current'));
+        tracks.forEach(track => { stopTrackSound(track.id); currentPlayingTrackStep.delete(track.id); });
+    }
+    
+    function clearAllPatterns() {
+        tracks.forEach(track => { track.steps = Array(STEPS_COUNT).fill(0); });
+        renderSequencer();
+    }
+    
+    document.getElementById('playBtn').addEventListener('click', startSequencer);
+    document.getElementById('stopBtn').addEventListener('click', stopSequencer);
+    document.getElementById('clearPatternsBtn').addEventListener('click', clearAllPatterns);
+    document.getElementById('presetBtn').addEventListener('click', applyRandomPreset);
+    document.getElementById('bpm').addEventListener('change', () => {
+        if (isPlaying) { stopSequencer(); startSequencer(); }
+    });
+    
+    document.querySelectorAll('#standardPads .pad').forEach(pad => {
+        pad.addEventListener('click', () => {
+            const sound = pad.getAttribute('data-sound');
+            if (baseSoundMap[sound]) baseSoundMap[sound]();
+        });
+    });
+    
+    document.body.addEventListener('click', () => unlockAudio());
+    renderSequencer();
+    console.log('Готово! 10 пресетов, цифры над квадратами!');
 </script>
 </body>
 </html>
