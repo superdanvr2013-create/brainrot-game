@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="data:,">
-    <title>DanChat Ultimate v7.4 - Admin Controls & Fixed TTS</title>
+    <title>DanChat Ultimate v7.5 - Fixed Voice Loop</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -19,7 +19,6 @@
             --error: #ff4444; 
             --blue: #0078ff; 
             --warn: #ffcc00;
-            --glass: rgba(255, 255, 255, 0.05);
         }
 
         * { box-sizing: border-box; outline: none; }
@@ -37,7 +36,6 @@
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #444; }
 
         #sidebar { 
             width: var(--side-w);
@@ -409,7 +407,7 @@
     <div id="auth-screen" style="position:fixed; inset:0; background:var(--bg); z-index:20000; display:flex; align-items:center; justify-content:center;">
         <div class="win-frame">
             <h1 style="color:var(--accent); letter-spacing:5px; margin-bottom:5px;">DANCHAT</h1>
-            <p style="opacity:0.5; margin-bottom:30px;">ULTIMATE v7.4 - ADMIN CONTROLS</p>
+            <p style="opacity:0.5; margin-bottom:30px;">ULTIMATE v7.5 - FIXED VOICE</p>
             <input type="text" id="auth-n" class="inp" placeholder="ЛОГИН" style="margin-bottom:15px; width:100%">
             <input type="password" id="auth-p" class="inp" placeholder="ПАРОЛЬ" style="width:100%; margin-bottom:25px;">
             <button class="btn" style="background:var(--accent); color:#000; width:100%" onclick="auth()">ВХОД В СИСТЕМУ</button>
@@ -560,7 +558,6 @@
     <div id="subtitles" class="subtitles-area"></div>
 
     <script>
-        /* --- КОНФИГУРАЦИЯ БАЗЫ ДАННЫХ --- */
         const firebaseConfig = { 
             apiKey: "AIzaSyAocmcoBH2Q8_QENuE9AuaGwtDOSSg-WpE", 
             authDomain: "danblox-e209f.firebaseapp.com", 
@@ -571,7 +568,6 @@
         const db = firebase.database();
         const defAv = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
-        /* --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ --- */
         let myData = null, curChat = 'global', curPeer = '', selId = null, selData = null;
         let isEditing = false, replyData = null, lastSendTime = 0;
         let myStream = null, audioCtx = null, analyser = null, micMuted = false, inVoice = false;
@@ -579,9 +575,10 @@
         let recognition = null;
         let subtitlesTimeout = null;
         let groupAvatarBase64 = null;
-        let isRecognizing = false;
+        let lastProcessedText = "";
+        let lastProcessedTime = 0;
+        let lastSubtitleFromFirebase = "";
 
-        /* --- АВТОРИЗАЦИЯ --- */
         async function auth() {
             const n = document.getElementById('auth-n').value.trim();
             const p = document.getElementById('auth-p').value.trim();
@@ -607,6 +604,7 @@
             initContactListener();
             initPrivateCallListener();
             switchChat('global', 'Глобальный чат');
+            listenForReload();
         }
 
         function refreshProfileUI() {
@@ -632,25 +630,29 @@
 
         function speakText(text, nick) {
             if(!ttsEnabled || !text || !window.speechSynthesis) return;
+            if(text.length > 150) text = text.substring(0, 150);
             try {
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(`${nick} говорит: ${text}`);
                 utterance.lang = 'ru-RU';
-                utterance.rate = 0.9;
+                utterance.rate = 0.85;
                 utterance.pitch = 1;
                 window.speechSynthesis.speak(utterance);
             } catch(e) { console.log("TTS error:", e); }
         }
 
-        function showSubtitles(text, nick) {
+        function showSubtitles(text, nick, fromSelf = false) {
             const subDiv = document.getElementById('subtitles');
             subDiv.innerHTML = `🎤 ${escapeHtml(nick)}: ${escapeHtml(text)}`;
             subDiv.style.display = 'block';
             if(subtitlesTimeout) clearTimeout(subtitlesTimeout);
             subtitlesTimeout = setTimeout(() => {
                 subDiv.style.display = 'none';
-            }, 4000);
-            speakText(text, nick);
+            }, 3500);
+            
+            if(!fromSelf) {
+                speakText(text, nick);
+            }
         }
 
         function escapeHtml(str) {
@@ -663,7 +665,6 @@
             });
         }
 
-        /* --- АДМИН-ФУНКЦИИ --- */
         async function clearChatHistory() {
             if(!myData.admin) return;
             if(confirm("ВНИМАНИЕ! Вы уверены, что хотите очистить всю историю чата \"" + document.getElementById('chat-title').innerText + "\"? Это действие необратимо!")) {
@@ -676,12 +677,6 @@
                     });
                     await messagesRef.update(updates);
                     document.getElementById('chat-window').innerHTML = '';
-                    db.ref('system_messages/' + curChat).push({
-                        type: 'admin_clear',
-                        admin: myData.nick,
-                        time: Date.now(),
-                        text: `История чата очищена администратором ${myData.nick}`
-                    });
                     alert("История чата успешно очищена!");
                 } catch(e) {
                     alert("Ошибка при очистке: " + e.message);
@@ -720,7 +715,6 @@
             });
         }
 
-        /* --- КОНТАКТЫ И ГРУППЫ --- */
         function initContactListener() {
             db.ref(`users/${myData.nick}/friends`).on('value', async snap => {
                 const list = document.getElementById('contact-list');
@@ -774,7 +768,6 @@
             switchChat(chatID, targetNick);
         }
 
-        /* --- СИСТЕМА ЧАТА --- */
         function switchChat(id, title) {
             if(inVoice) leaveVoiceChannel();
             curChat = id;
@@ -798,12 +791,19 @@
                 if(el) el.remove();
             });
             db.ref(`voice_rooms/${curChat}`).on('value', updateVoiceGrid);
+            
+            db.ref(`voice_subtitles/${curChat}`).off();
             db.ref(`voice_subtitles/${curChat}`).on('value', (snap) => {
                 const sub = snap.val();
                 if(sub && sub.nick !== myData.nick && inVoice) {
-                    showSubtitles(sub.text, sub.nick);
+                    const now = Date.now();
+                    if(sub.text !== lastSubtitleFromFirebase && (now - sub.time) < 5000) {
+                        lastSubtitleFromFirebase = sub.text;
+                        showSubtitles(sub.text, sub.nick, false);
+                    }
                 }
             });
+            
             updateHeaderStatus();
         }
 
@@ -887,7 +887,6 @@
             cancelAction();
         }
 
-        /* --- ОПРОСЫ (Polls) --- */
         function addPollOption() {
             const container = document.getElementById('poll-opts-container');
             const count = container.querySelectorAll('input').length + 1;
@@ -966,7 +965,6 @@
             await db.ref(`messages/${curChat}/${mid}/options/${optKey}/votes/${myData.nick}`).set(true);
         }
 
-        /* --- ГОЛОСОВЫЕ КАНАЛЫ --- */
         async function toggleVoiceJoin() {
             if(!inVoice) {
                 try {
@@ -1003,52 +1001,45 @@
                 } catch(e) {}
             }
             
-            isRecognizing = false;
             recognition = new webkitSpeechRecognition();
             recognition.continuous = true;
-            recognition.interimResults = true;
+            recognition.interimResults = false;
             recognition.lang = 'ru-RU';
             
             recognition.onstart = () => {
-                isRecognizing = true;
                 console.log("Speech recognition started");
             };
             
             recognition.onresult = (event) => {
                 if(!inVoice) return;
-                let finalText = '';
+                
                 for(let i = event.resultIndex; i < event.results.length; i++) {
                     if(event.results[i].isFinal) {
-                        finalText += event.results[i][0].transcript;
+                        let text = event.results[i][0].transcript.trim();
+                        if(text && text.length > 0) {
+                            const now = Date.now();
+                            if(text !== lastProcessedText || (now - lastProcessedTime) > 3000) {
+                                lastProcessedText = text;
+                                lastProcessedTime = now;
+                                
+                                showSubtitles(text, myData.nick, true);
+                                
+                                db.ref(`voice_subtitles/${curChat}`).set({
+                                    nick: myData.nick,
+                                    text: text,
+                                    time: now
+                                });
+                            }
+                        }
                     }
-                }
-                if(finalText.trim()) {
-                    showSubtitles(finalText, myData.nick);
-                    db.ref(`voice_subtitles/${curChat}`).set({
-                        nick: myData.nick,
-                        text: finalText,
-                        time: Date.now()
-                    });
                 }
             };
             
             recognition.onerror = (event) => {
                 console.log("Speech recognition error:", event.error);
-                if(event.error === 'no-speech') {
-                    if(inVoice && recognition && !isRecognizing) {
-                        setTimeout(() => {
-                            if(inVoice && recognition) {
-                                try {
-                                    recognition.start();
-                                } catch(e) {}
-                            }
-                        }, 500);
-                    }
-                }
             };
             
             recognition.onend = () => {
-                isRecognizing = false;
                 if(inVoice && recognition) {
                     setTimeout(() => {
                         if(inVoice && recognition) {
@@ -1056,7 +1047,7 @@
                                 recognition.start();
                             } catch(e) {}
                         }
-                    }, 300);
+                    }, 100);
                 }
             };
             
@@ -1103,7 +1094,6 @@
                 } catch(e) {}
                 recognition = null;
             }
-            isRecognizing = false;
             
             if(myStream) {
                 myStream.getTracks().forEach(t => t.stop());
@@ -1117,6 +1107,7 @@
             }
             
             db.ref(`voice_rooms/${curChat}/${myData.nick}`).remove();
+            lastProcessedText = "";
             
             const btn = document.getElementById('v-join-btn');
             if(btn) {
@@ -1160,7 +1151,6 @@
             db.ref(`voice_rooms/${curChat}/${myData.nick}/muted`).set(micMuted);
         }
 
-        /* --- ЛИЧНЫЕ ЗВОНКИ --- */
         async function makePrivateCall() {
             const target = curPeer;
             const tSnap = await db.ref('users/'+target).get();
@@ -1210,7 +1200,6 @@
             hideModal('call-modal');
         }
 
-        /* --- УПРАВЛЕНИЕ ГРУППАМИ --- */
         async function openChatInfo() {
             const list = document.getElementById('mem-list');
             list.innerHTML = 'Загрузка...';
@@ -1321,7 +1310,6 @@
             alert("Группа создана!");
         }
 
-        /* --- ОБЩИЕ ФУНКЦИИ UI --- */
         function showContextMenu(e, mid, m) {
             selId = mid; selData = m;
             const menu = document.getElementById('ctx-menu');
@@ -1400,9 +1388,6 @@
                 showModal('members-modal');
             });
         }
-
-        // Запуск прослушивания перезагрузки
-        listenForReload();
     </script>
 </body>
 </html>
