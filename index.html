@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="data:,">
-    <title>DanChat Ultimate v7.8 - No Voice Limits</title>
+    <title>DanChat Ultimate v7.5 - Fixed Voice Loop</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -19,7 +19,6 @@
             --error: #ff4444; 
             --blue: #0078ff; 
             --warn: #ffcc00;
-            --glass: rgba(255, 255, 255, 0.05);
         }
 
         * { box-sizing: border-box; outline: none; }
@@ -37,7 +36,6 @@
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #444; }
 
         #sidebar { 
             width: var(--side-w);
@@ -409,7 +407,7 @@
     <div id="auth-screen" style="position:fixed; inset:0; background:var(--bg); z-index:20000; display:flex; align-items:center; justify-content:center;">
         <div class="win-frame">
             <h1 style="color:var(--accent); letter-spacing:5px; margin-bottom:5px;">DANCHAT</h1>
-            <p style="opacity:0.5; margin-bottom:30px;">ULTIMATE v7.8 - NO LIMITS</p>
+            <p style="opacity:0.5; margin-bottom:30px;">ULTIMATE v7.5 - FIXED VOICE</p>
             <input type="text" id="auth-n" class="inp" placeholder="ЛОГИН" style="margin-bottom:15px; width:100%">
             <input type="password" id="auth-p" class="inp" placeholder="ПАРОЛЬ" style="width:100%; margin-bottom:25px;">
             <button class="btn" style="background:var(--accent); color:#000; width:100%" onclick="auth()">ВХОД В СИСТЕМУ</button>
@@ -500,7 +498,7 @@
                 <small id="chat-stat" style="opacity:0.6"></small>
             </div>
             <div style="display:flex; gap:15px; align-items:center;">
-                <button id="tts-toggle-btn" class="tts-toggle active" onclick="event.stopPropagation(); toggleTTS()">🔊 ОЗВУЧКА ВКЛ</button>
+                <button id="tts-toggle-btn" class="tts-toggle active" onclick="event.stopPropagation(); toggleTTS()">🔊 ОЗВУЧКА СУБТИТРОВ ВКЛ</button>
                 <span id="admin-indicator" class="hidden" style="color:var(--error); font-weight:900; font-size:11px;">[SERVER ADMIN]</span>
                 <div id="admin-buttons" class="admin-panel hidden">
                     <button class="admin-btn" onclick="event.stopPropagation(); clearChatHistory()">🗑️ ОЧИСТИТЬ ИСТОРИЮ</button>
@@ -560,7 +558,6 @@
     <div id="subtitles" class="subtitles-area"></div>
 
     <script>
-        /* --- КОНФИГУРАЦИЯ БАЗЫ ДАННЫХ --- */
         const firebaseConfig = { 
             apiKey: "AIzaSyAocmcoBH2Q8_QENuE9AuaGwtDOSSg-WpE", 
             authDomain: "danblox-e209f.firebaseapp.com", 
@@ -571,7 +568,6 @@
         const db = firebase.database();
         const defAv = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
-        /* --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ --- */
         let myData = null, curChat = 'global', curPeer = '', selId = null, selData = null;
         let isEditing = false, replyData = null, lastSendTime = 0;
         let myStream = null, audioCtx = null, analyser = null, micMuted = false, inVoice = false;
@@ -579,8 +575,10 @@
         let recognition = null;
         let subtitlesTimeout = null;
         let groupAvatarBase64 = null;
+        let lastProcessedText = "";
+        let lastProcessedTime = 0;
+        let lastSubtitleFromFirebase = "";
 
-        /* --- АВТОРИЗАЦИЯ --- */
         async function auth() {
             const n = document.getElementById('auth-n').value.trim();
             const p = document.getElementById('auth-p').value.trim();
@@ -622,46 +620,23 @@
             ttsEnabled = !ttsEnabled;
             const btn = document.getElementById('tts-toggle-btn');
             if(ttsEnabled) {
-                btn.innerText = "🔊 ОЗВУЧКА ВКЛ";
+                btn.innerText = "🔊 ОЗВУЧКА СУБТИТРОВ ВКЛ";
                 btn.classList.add('active');
             } else {
-                btn.innerText = "🔇 ОЗВУЧКА ВЫКЛ";
+                btn.innerText = "🔇 ОЗВУЧКА СУБТИТРОВ ВЫКЛ";
                 btn.classList.remove('active');
-                if(window.speechSynthesis) {
-                    window.speechSynthesis.cancel();
-                }
             }
         }
 
         function speakText(text, nick) {
             if(!ttsEnabled || !text || !window.speechSynthesis) return;
-            
-            // Очищаем текст от служебных фраз
-            let cleanText = text;
-            const patterns = [
-                new RegExp(`^${nick} говорит:?\\s*`, 'i'),
-                new RegExp(`^${nick} сказал:?\\s*`, 'i'),
-                /^\S+ говорит:\s*/i,
-                /^\S+ сказал:\s*/i
-            ];
-            for(let pattern of patterns) {
-                cleanText = cleanText.replace(pattern, '');
-            }
-            cleanText = cleanText.trim();
-            if(cleanText.length < 2) return;
-            
+            if(text.length > 150) text = text.substring(0, 150);
             try {
                 window.speechSynthesis.cancel();
-                
-                const utterance = new SpeechSynthesisUtterance(cleanText);
+                const utterance = new SpeechSynthesisUtterance(`${nick} говорит: ${text}`);
                 utterance.lang = 'ru-RU';
-                utterance.rate = 0.9;
+                utterance.rate = 0.85;
                 utterance.pitch = 1;
-                
-                utterance.onerror = (e) => {
-                    console.log("TTS error:", e);
-                };
-                
                 window.speechSynthesis.speak(utterance);
             } catch(e) { console.log("TTS error:", e); }
         }
@@ -673,9 +648,8 @@
             if(subtitlesTimeout) clearTimeout(subtitlesTimeout);
             subtitlesTimeout = setTimeout(() => {
                 subDiv.style.display = 'none';
-            }, 4000);
+            }, 3500);
             
-            // Озвучиваем только чужие субтитры (не свои)
             if(!fromSelf) {
                 speakText(text, nick);
             }
@@ -691,7 +665,6 @@
             });
         }
 
-        /* --- АДМИН-ФУНКЦИИ --- */
         async function clearChatHistory() {
             if(!myData.admin) return;
             if(confirm("ВНИМАНИЕ! Вы уверены, что хотите очистить всю историю чата \"" + document.getElementById('chat-title').innerText + "\"? Это действие необратимо!")) {
@@ -713,24 +686,17 @@
 
         async function reloadForAll() {
             if(!myData.admin) return;
-            if(confirm("ВНИМАНИЕ! Перезагрузить сайт для всех пользователей (включая вас)? Это может вызвать временные неудобства.")) {
+            if(confirm("ВНИМАНИЕ! Перезагрузить сайт для всех пользователей? Это может вызвать временные неудобства.")) {
                 try {
-                    const reloadId = Date.now();
                     await db.ref('global_reload').set({
                         by: myData.nick,
-                        time: reloadId,
-                        action: 'reload'
+                        time: Date.now(),
+                        chat: curChat
                     });
-                    
-                    alert("Команда на перезагрузку отправлена всем! Страница перезагрузится...");
-                    
-                    setTimeout(() => {
-                        location.reload();
-                    }, 1000);
-                    
                     setTimeout(() => {
                         db.ref('global_reload').remove();
-                    }, 10000);
+                    }, 5000);
+                    alert("Команда на перезагрузку отправлена всем пользователям!");
                 } catch(e) {
                     alert("Ошибка: " + e.message);
                 }
@@ -740,8 +706,8 @@
         function listenForReload() {
             db.ref('global_reload').on('value', (snap) => {
                 const data = snap.val();
-                if(data && data.by !== myData.nick && data.action === 'reload') {
-                    const confirmReload = confirm(`⚠️ АДМИНИСТРАТОР ${data.by} ИНИЦИИРОВАЛ ПЕРЕЗАГРУЗКУ ВСЕХ ПОЛЬЗОВАТЕЛЕЙ!\n\nОбновить страницу сейчас?`);
+                if(data && data.by !== myData.nick) {
+                    const confirmReload = confirm(`Администратор ${data.by} инициировал перезагрузку. Обновить страницу?`);
                     if(confirmReload) {
                         location.reload();
                     }
@@ -749,7 +715,6 @@
             });
         }
 
-        /* --- КОНТАКТЫ И ГРУППЫ --- */
         function initContactListener() {
             db.ref(`users/${myData.nick}/friends`).on('value', async snap => {
                 const list = document.getElementById('contact-list');
@@ -803,7 +768,6 @@
             switchChat(chatID, targetNick);
         }
 
-        /* --- СИСТЕМА ЧАТА --- */
         function switchChat(id, title) {
             if(inVoice) leaveVoiceChannel();
             curChat = id;
@@ -833,7 +797,8 @@
                 const sub = snap.val();
                 if(sub && sub.nick !== myData.nick && inVoice) {
                     const now = Date.now();
-                    if((now - sub.time) < 5000) {
+                    if(sub.text !== lastSubtitleFromFirebase && (now - sub.time) < 5000) {
+                        lastSubtitleFromFirebase = sub.text;
                         showSubtitles(sub.text, sub.nick, false);
                     }
                 }
@@ -922,7 +887,6 @@
             cancelAction();
         }
 
-        /* --- ОПРОСЫ (Polls) --- */
         function addPollOption() {
             const container = document.getElementById('poll-opts-container');
             const count = container.querySelectorAll('input').length + 1;
@@ -1001,7 +965,6 @@
             await db.ref(`messages/${curChat}/${mid}/options/${optKey}/votes/${myData.nick}`).set(true);
         }
 
-        /* --- ГОЛОСОВЫЕ КАНАЛЫ --- */
         async function toggleVoiceJoin() {
             if(!inVoice) {
                 try {
@@ -1049,19 +1012,24 @@
             
             recognition.onresult = (event) => {
                 if(!inVoice) return;
+                
                 for(let i = event.resultIndex; i < event.results.length; i++) {
                     if(event.results[i].isFinal) {
                         let text = event.results[i][0].transcript.trim();
-                        if(text && text.length > 0 && text.length < 200) {
+                        if(text && text.length > 0) {
                             const now = Date.now();
-                            
-                            showSubtitles(text, myData.nick, true);
-                            
-                            db.ref(`voice_subtitles/${curChat}`).set({
-                                nick: myData.nick,
-                                text: text,
-                                time: now
-                            });
+                            if(text !== lastProcessedText || (now - lastProcessedTime) > 3000) {
+                                lastProcessedText = text;
+                                lastProcessedTime = now;
+                                
+                                showSubtitles(text, myData.nick, true);
+                                
+                                db.ref(`voice_subtitles/${curChat}`).set({
+                                    nick: myData.nick,
+                                    text: text,
+                                    time: now
+                                });
+                            }
                         }
                     }
                 }
@@ -1079,7 +1047,7 @@
                                 recognition.start();
                             } catch(e) {}
                         }
-                    }, 200);
+                    }, 100);
                 }
             };
             
@@ -1139,6 +1107,7 @@
             }
             
             db.ref(`voice_rooms/${curChat}/${myData.nick}`).remove();
+            lastProcessedText = "";
             
             const btn = document.getElementById('v-join-btn');
             if(btn) {
@@ -1182,7 +1151,6 @@
             db.ref(`voice_rooms/${curChat}/${myData.nick}/muted`).set(micMuted);
         }
 
-        /* --- ЛИЧНЫЕ ЗВОНКИ --- */
         async function makePrivateCall() {
             const target = curPeer;
             const tSnap = await db.ref('users/'+target).get();
@@ -1232,7 +1200,6 @@
             hideModal('call-modal');
         }
 
-        /* --- УПРАВЛЕНИЕ ГРУППАМИ --- */
         async function openChatInfo() {
             const list = document.getElementById('mem-list');
             list.innerHTML = 'Загрузка...';
@@ -1343,7 +1310,6 @@
             alert("Группа создана!");
         }
 
-        /* --- ОБЩИЕ ФУНКЦИИ UI --- */
         function showContextMenu(e, mid, m) {
             selId = mid; selData = m;
             const menu = document.getElementById('ctx-menu');
