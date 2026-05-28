@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="data:,">
-    <title>DanChat Ultimate v7.7 - Fixed Voice & Reload</title>
+    <title>DanChat Ultimate v7.8 - No Voice Limits</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -409,7 +409,7 @@
     <div id="auth-screen" style="position:fixed; inset:0; background:var(--bg); z-index:20000; display:flex; align-items:center; justify-content:center;">
         <div class="win-frame">
             <h1 style="color:var(--accent); letter-spacing:5px; margin-bottom:5px;">DANCHAT</h1>
-            <p style="opacity:0.5; margin-bottom:30px;">ULTIMATE v7.7 - FIXED</p>
+            <p style="opacity:0.5; margin-bottom:30px;">ULTIMATE v7.8 - NO LIMITS</p>
             <input type="text" id="auth-n" class="inp" placeholder="ЛОГИН" style="margin-bottom:15px; width:100%">
             <input type="password" id="auth-p" class="inp" placeholder="ПАРОЛЬ" style="width:100%; margin-bottom:25px;">
             <button class="btn" style="background:var(--accent); color:#000; width:100%" onclick="auth()">ВХОД В СИСТЕМУ</button>
@@ -579,9 +579,6 @@
         let recognition = null;
         let subtitlesTimeout = null;
         let groupAvatarBase64 = null;
-        
-        /* --- ЗАЩИТА ОТ ЗАЦИКЛИВАНИЯ ОЗВУЧКИ (только полное совпадение с предыдущей фразой) --- */
-        let lastSpokenText = "";      // Последняя озвученная фраза (точное совпадение)
 
         /* --- АВТОРИЗАЦИЯ --- */
         async function auth() {
@@ -653,12 +650,6 @@
             cleanText = cleanText.trim();
             if(cleanText.length < 2) return;
             
-            // ПРОВЕРКА: если текст точно такой же, как предыдущая озвучка - НЕ ОЗВУЧИВАТЬ
-            if(cleanText === lastSpokenText) {
-                console.log("TTS blocked: exact same text - '" + cleanText + "'");
-                return;
-            }
-            
             try {
                 window.speechSynthesis.cancel();
                 
@@ -666,15 +657,6 @@
                 utterance.lang = 'ru-RU';
                 utterance.rate = 0.9;
                 utterance.pitch = 1;
-                
-                utterance.onstart = () => {
-                    lastSpokenText = cleanText;
-                    console.log("TTS started: " + cleanText);
-                };
-                
-                utterance.onend = () => {
-                    console.log("TTS finished");
-                };
                 
                 utterance.onerror = (e) => {
                     console.log("TTS error:", e);
@@ -733,7 +715,6 @@
             if(!myData.admin) return;
             if(confirm("ВНИМАНИЕ! Перезагрузить сайт для всех пользователей (включая вас)? Это может вызвать временные неудобства.")) {
                 try {
-                    // Отправляем команду на перезагрузку в Firebase
                     const reloadId = Date.now();
                     await db.ref('global_reload').set({
                         by: myData.nick,
@@ -743,12 +724,10 @@
                     
                     alert("Команда на перезагрузку отправлена всем! Страница перезагрузится...");
                     
-                    // Перезагружаем самого админа через 1 секунду
                     setTimeout(() => {
                         location.reload();
                     }, 1000);
                     
-                    // Удаляем через 10 секунд
                     setTimeout(() => {
                         db.ref('global_reload').remove();
                     }, 10000);
@@ -849,7 +828,6 @@
             });
             db.ref(`voice_rooms/${curChat}`).on('value', updateVoiceGrid);
             
-            // Слушаем субтитры от других
             db.ref(`voice_subtitles/${curChat}`).off();
             db.ref(`voice_subtitles/${curChat}`).on('value', (snap) => {
                 const sub = snap.val();
@@ -1077,10 +1055,8 @@
                         if(text && text.length > 0 && text.length < 200) {
                             const now = Date.now();
                             
-                            // Показываем субтитры БЕЗ озвучки (fromSelf = true)
                             showSubtitles(text, myData.nick, true);
                             
-                            // Отправляем в Firebase для других
                             db.ref(`voice_subtitles/${curChat}`).set({
                                 nick: myData.nick,
                                 text: text,
