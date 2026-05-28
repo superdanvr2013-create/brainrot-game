@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="data:,">
-    <title>DanChat Ultimate v7.6 - Full Version</title>
+    <title>DanChat Ultimate v7.7 - Fixed Voice & Reload</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -409,7 +409,7 @@
     <div id="auth-screen" style="position:fixed; inset:0; background:var(--bg); z-index:20000; display:flex; align-items:center; justify-content:center;">
         <div class="win-frame">
             <h1 style="color:var(--accent); letter-spacing:5px; margin-bottom:5px;">DANCHAT</h1>
-            <p style="opacity:0.5; margin-bottom:30px;">ULTIMATE v7.6 - FULL</p>
+            <p style="opacity:0.5; margin-bottom:30px;">ULTIMATE v7.7 - FIXED</p>
             <input type="text" id="auth-n" class="inp" placeholder="ЛОГИН" style="margin-bottom:15px; width:100%">
             <input type="password" id="auth-p" class="inp" placeholder="ПАРОЛЬ" style="width:100%; margin-bottom:25px;">
             <button class="btn" style="background:var(--accent); color:#000; width:100%" onclick="auth()">ВХОД В СИСТЕМУ</button>
@@ -580,11 +580,8 @@
         let subtitlesTimeout = null;
         let groupAvatarBase64 = null;
         
-        /* --- ЗАЩИТА ОТ ЗАЦИКЛИВАНИЯ ОЗВУЧКИ --- */
-        let lastSpokenText = "";      // Последний озвученный текст
-        let lastSpokenTime = 0;       // Время последней озвучки
-        let ttsCooldown = 3000;       // Задержка 3 секунды между озвучками
-        let currentTTSutterance = null;
+        /* --- ЗАЩИТА ОТ ЗАЦИКЛИВАНИЯ ОЗВУЧКИ (только полное совпадение с предыдущей фразой) --- */
+        let lastSpokenText = "";      // Последняя озвученная фраза (точное совпадение)
 
         /* --- АВТОРИЗАЦИЯ --- */
         async function auth() {
@@ -656,17 +653,9 @@
             cleanText = cleanText.trim();
             if(cleanText.length < 2) return;
             
-            const now = Date.now();
-            
-            // Проверка: не озвучиваем тот же самый текст, что и в прошлый раз
+            // ПРОВЕРКА: если текст точно такой же, как предыдущая озвучка - НЕ ОЗВУЧИВАТЬ
             if(cleanText === lastSpokenText) {
-                console.log("TTS blocked: same text as before - " + cleanText);
-                return;
-            }
-            
-            // Проверка: прошло ли достаточно времени с последней озвучки
-            if(now - lastSpokenTime < ttsCooldown) {
-                console.log("TTS blocked: cooldown");
+                console.log("TTS blocked: exact same text - '" + cleanText + "'");
                 return;
             }
             
@@ -680,7 +669,6 @@
                 
                 utterance.onstart = () => {
                     lastSpokenText = cleanText;
-                    lastSpokenTime = now;
                     console.log("TTS started: " + cleanText);
                 };
                 
@@ -693,7 +681,6 @@
                 };
                 
                 window.speechSynthesis.speak(utterance);
-                currentTTSutterance = utterance;
             } catch(e) { console.log("TTS error:", e); }
         }
 
@@ -744,7 +731,7 @@
 
         async function reloadForAll() {
             if(!myData.admin) return;
-            if(confirm("ВНИМАНИЕ! Перезагрузить сайт для всех пользователей? Это может вызвать временные неудобства.")) {
+            if(confirm("ВНИМАНИЕ! Перезагрузить сайт для всех пользователей (включая вас)? Это может вызвать временные неудобства.")) {
                 try {
                     // Отправляем команду на перезагрузку в Firebase
                     const reloadId = Date.now();
@@ -754,7 +741,12 @@
                         action: 'reload'
                     });
                     
-                    alert("Команда на перезагрузку отправлена всем пользователям!");
+                    alert("Команда на перезагрузку отправлена всем! Страница перезагрузится...");
+                    
+                    // Перезагружаем самого админа через 1 секунду
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
                     
                     // Удаляем через 10 секунд
                     setTimeout(() => {
