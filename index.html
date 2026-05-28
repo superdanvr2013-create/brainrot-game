@@ -3,979 +3,1018 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Фонк Студия — 10 пресетов + цифры</title>
+    <link rel="icon" href="data:,"> <title>DanChat Ultimate v6.3 Mega-Extreme Edition</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    
     <style>
-        * {
-            user-select: none;
+        /* Глобальные переменные темы */
+        :root { 
+            --bg: #0b0d0f;
+            --panel: #16191d; 
+            --accent: #00ff88; 
+            --text: #ffffff; 
+            --side-w: 320px; 
+            --error: #ff4444; 
+            --blue: #0078ff; 
+            --warn: #ffcc00;
+            --glass: rgba(255, 255, 255, 0.05);
         }
-        body {
-            background: #0a0a0a;
-            font-family: monospace;
-            color: #ff69b4;
-            text-align: center;
-            padding: 20px;
+
+        * { box-sizing: border-box; outline: none; }
+
+        body { 
             margin: 0;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; 
+            background: var(--bg); 
+            color: var(--text); 
+            height: 100vh; 
+            display: flex; 
+            overflow: hidden;
         }
-        h1 {
-            text-shadow: 0 0 5px #ff69b4;
-            font-size: 1.5em;
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #444; }
+
+        #sidebar { 
+            width: var(--side-w);
+            background: var(--panel); 
+            border-right: 1px solid #2d3239; 
+            display: flex; 
+            flex-direction: column; 
+            z-index: 100;
         }
-        .pad-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 90px);
-            gap: 10px;
-            justify-content: center;
-            margin: 20px auto;
+
+        .top-nav { 
+            padding: 20px;
+            display: flex; 
+            gap: 18px; 
+            border-bottom: 1px solid #2d3239; 
+            align-items: center; 
+            background: rgba(0,0,0,0.2);
         }
-        .pad {
-            background: #1f1f2f;
-            border: 2px solid #ff69b4;
-            border-radius: 12px;
-            padding: 12px 0;
-            font-size: 13px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.05s linear;
-            color: white;
-            box-shadow: 0 0 5px rgba(255,105,180,0.3);
+
+        .nav-icon { 
+            font-size: 20px;
+            cursor: pointer; 
+            opacity: 0.7; 
+            transition: all 0.3s ease; 
         }
-        .pad:active {
-            transform: scale(0.95);
-            background: #ff69b4;
-            color: black;
+
+        .nav-icon:hover { 
+            opacity: 1;
+            transform: scale(1.2) rotate(15deg); 
+            color: var(--accent);
         }
-        .custom-pad {
-            background: #2a2a4a;
-            border: 2px solid #44ff44;
+
+        #contact-list { flex: 1; overflow-y: auto; }
+
+        .contact-item { 
+            padding: 15px 20px;
+            border-bottom: 1px solid #1f2329; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            transition: 0.2s;
         }
-        .delete-btn {
-            background: red;
-            border: none;
-            color: white;
-            padding: 2px 6px;
-            font-size: 9px;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-top: 4px;
+
+        .contact-item:hover { background: #1c2127; border-left: 3px solid var(--accent); }
+
+        .contact-item img { 
+            width: 46px;
+            height: 46px; 
+            border-radius: 50%; 
+            object-fit: cover; 
+            border: 2px solid #2d3239; 
+            background: #000;
         }
-        .bpm-control {
-            margin: 20px;
-        }
-        input {
-            background: #1f1f2f;
-            border: 1px solid #ff69b4;
-            color: white;
-            padding: 5px;
-            text-align: center;
-        }
-        button {
-            background: #ff69b4;
-            border: none;
-            color: black;
-            padding: 6px 15px;
-            margin: 5px;
-            font-weight: bold;
-            cursor: pointer;
-            border-radius: 20px;
-        }
-        .step {
-            width: 26px;
-            height: 26px;
-            background: #2a2a3a;
-            border-radius: 4px;
-            cursor: pointer;
-            border: 1px solid #ff69b4;
-            margin: 2px;
-            position: relative;
-        }
-        .step.active {
-            background: #ff69b4;
-            box-shadow: 0 0 6px #ff69b4;
-        }
-        .step.current {
-            background: #ffff00;
-            border: 2px solid white;
-            box-shadow: 0 0 8px yellow;
-        }
-        /* Цифры над квадратами */
-        .step-number {
-            position: absolute;
-            top: -18px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 9px;
-            color: #888;
-            font-weight: bold;
-            background: #111;
-            padding: 0 3px;
-            border-radius: 4px;
-            pointer-events: none;
-        }
-        .track-label {
-            display: inline-block;
-            width: 70px;
-            text-align: right;
-            margin-right: 8px;
-            font-size: 11px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .track-row {
-            margin: 20px 0 15px 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-wrap: wrap;
-            position: relative;
-        }
-        .steps-container {
-            display: flex;
-            flex-wrap: wrap;
-            max-width: 940px;
-            position: relative;
-        }
-        footer {
-            margin-top: 30px;
+
+        .contact-info { flex: 1; min-width: 0; }
+        .contact-info b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; }
+
+        .status-dot { 
             font-size: 10px;
-            opacity: 0.7;
+            font-weight: bold; 
+            margin-top: 4px; 
+            display: flex; 
+            align-items: center; 
+            gap: 5px;
         }
-        .upload-area {
-            margin: 15px auto;
-            padding: 15px;
-            background: #1f1f2f;
-            border: 2px dashed #ff69b4;
-            border-radius: 20px;
-            width: 80%;
-            max-width: 500px;
+        .status-dot::before { content: '●'; }
+        .on { color: var(--accent); text-shadow: 0 0 5px var(--accent); } 
+        .off { color: #555; }
+
+        #main-content { 
+            flex: 1;
+            display: flex; 
+            flex-direction: column; 
+            background: #0f1216; 
+            position: relative; 
         }
-        .custom-sounds {
+
+        header { 
+            background: var(--panel);
+            padding: 15px 30px; 
+            border-bottom: 1px solid #2d3239; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            z-index: 50;
+        }
+
+        #chat-window { 
+            flex: 1;
+            overflow-y: auto; 
+            padding: 25px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px; 
+            scroll-behavior: smooth;
+        }
+
+        .msg-row { display: flex; gap: 12px; max-width: 80%; animation: msgSlide 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
+        .msg-row.me { flex-direction: row-reverse; align-self: flex-end; }
+        
+        .msg-av { 
+            width: 40px;
+            height: 40px; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            object-fit: cover; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .msg-content { 
+            padding: 12px 18px;
+            border-radius: 18px; 
+            background: #23282e; 
+            position: relative; 
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            font-size: 14.5px;
+            line-height: 1.5;
+        }
+
+        .me .msg-content { background: var(--blue); color: #fff; border-bottom-right-radius: 2px; }
+        .msg-row:not(.me) .msg-content { border-bottom-left-radius: 2px; }
+
+        .admin-msg { border: 2px solid var(--error) !important; animation: borderPulse 2s infinite; }
+        .admin-tag { background: var(--error); color: #fff; font-size: 9px; padding: 2px 6px; border-radius: 4px; margin-left: 8px; vertical-align: middle; }
+
+        /* Опросы */
+        .poll-box { background: #1c2127; border: 1px solid var(--accent); border-radius: 15px; padding: 15px; min-width: 250px; }
+        .poll-opt { background: #2d3239; padding: 10px; border-radius: 8px; margin-top: 8px; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; }
+        .poll-opt:hover { background: #3d4249; }
+        .poll-bar { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(0, 255, 136, 0.2); transition: 0.5s; z-index: 0; }
+        .poll-txt { position: relative; z-index: 1; display: flex; justify-content: space-between; font-size: 13px; }
+
+        #voice-grid { 
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); 
+            gap: 20px; 
+            padding: 20px; 
+            background: #12161b; 
+            border-bottom: 2px solid var(--accent);
+            max-height: 280px; 
+            overflow-y: auto;
+            box-shadow: inset 0 -10px 20px rgba(0,0,0,0.3);
+        }
+
+        .voice-card { 
             display: flex;
-            flex-wrap: wrap;
+            flex-direction: column; 
+            align-items: center; 
+            gap: 10px; 
+            position: relative; 
+            padding: 15px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .voice-av { 
+            width: 80px;
+            height: 80px; 
+            border-radius: 50%; 
+            object-fit: cover; 
+            border: 4px solid #2d3239; 
+            transition: 0.3s;
+            background: #000;
+        }
+
+        .speaking .voice-av { 
+            border-color: var(--accent);
+            box-shadow: 0 0 20px var(--accent); 
+            transform: scale(1.1); 
+        }
+
+        .mic-status-icon { 
+            position: absolute;
+            top: 10px; 
+            right: 15px; 
+            background: var(--error); 
+            border-radius: 50%; 
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
             justify-content: center;
-            gap: 8px;
-            margin: 15px;
+            font-size: 12px;
+            border: 2px solid var(--panel);
         }
-        .file-info {
-            font-size: 9px;
-            color: #aaa;
+
+        .voice-nick { font-size: 13px; font-weight: bold; color: #ccc; text-align: center; width: 100%; overflow: hidden; text-overflow: ellipsis; }
+
+        .custom-modal { 
+            position: fixed;
+            inset: 0; 
+            background: rgba(0,0,0,0.95); 
+            z-index: 5000; 
+            display: none; 
+            align-items: center; 
+            justify-content: center; 
+            backdrop-filter: blur(10px);
         }
-        .preset-btn {
-            background: #aa44ff;
-            color: white;
+
+        .win-frame { 
+            background: var(--panel);
+            padding: 40px; 
+            border-radius: 30px; 
+            border: 1px solid var(--accent); 
+            text-align: center; 
+            width: 420px; 
+            box-shadow: 0 0 60px rgba(0,255,136,0.1);
         }
-        @media (max-width: 700px) {
-            .step { width: 20px; height: 20px; }
-            .track-label { width: 55px; font-size: 9px; }
-            .pad-grid { grid-template-columns: repeat(4, 80px); }
-            .step-number { font-size: 7px; top: -14px; }
+
+        #input-area { 
+            padding: 20px;
+            background: var(--panel); 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            border-top: 1px solid #2d3239;
         }
+
+        .inp { 
+            flex: 1;
+            padding: 14px 20px; 
+            background: #0b0d0f; 
+            border: 1px solid #333; 
+            color: #fff; 
+            border-radius: 12px; 
+            font-size: 15px;
+            transition: 0.3s;
+        }
+
+        .inp:focus { border-color: var(--accent); box-shadow: 0 0 10px rgba(0,255,136,0.1); }
+
+        .btn { 
+            padding: 12px 25px;
+            border-radius: 10px; 
+            border: none; 
+            cursor: pointer; 
+            font-weight: 800; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: 0.2s;
+        }
+
+        .btn:active { transform: scale(0.95); }
+
+        #ctx-menu { 
+            position: fixed;
+            background: #1c2127; 
+            border: 1px solid #444; 
+            border-radius: 12px; 
+            z-index: 10000; 
+            display: none; 
+            min-width: 200px; 
+            box-shadow: 0 15px 50px rgba(0,0,0,0.7);
+            overflow: hidden;
+        }
+
+        .ctx-item { padding: 14px 20px; cursor: pointer; transition: 0.2s; border-bottom: 1px solid #2d3239; }
+        .ctx-item:hover { background: var(--accent); color: #000; font-weight: bold; }
+
+        @keyframes msgSlide { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes borderPulse { 0% { border-color: var(--error); } 50% { border-color: #500; } 100% { border-color: var(--error); } }
+        
+        .hidden { display: none !important; }
     </style>
 </head>
-<body>
-<h1>🔥 PHONK STUDIO — 10 ПРЕСЕТОВ 🔥</h1>
-<div style="background: #ff69b420; padding: 8px; border-radius: 20px; margin: 10px auto; width: 90%; max-width: 500px; font-size: 12px;">
-    ⚡ КЛИКНИ ЛЮБУЮ КНОПКУ — РАЗБЛОКИРОВКА ЗВУКА ⚡<br>
-    🎲 КНОПКА "10 ПРЕСЕТОВ" — ГЕНЕРИРУЕТ ГОТОВЫЙ ФОНК БИТ
-</div>
+<body onclick="closeCtx()" oncontextmenu="return false;">
 
-<div class="pad-grid" id="standardPads">
-    <div class="pad" data-sound="kick">🥁 KICK</div>
-    <div class="pad" data-sound="snare">💥 SNARE</div>
-    <div class="pad" data-sound="hat">🔘 HAT</div>
-    <div class="pad" data-sound="clap">👏 CLAP</div>
-    <div class="pad" data-sound="rim">🎯 RIM</div>
-    <div class="pad" data-sound="openhat">🎵 OPEN</div>
-    <div class="pad" data-sound="cowbell">🐮 COWBELL</div>
-    <div class="pad" data-sound="bass">🎛 808</div>
-    <div class="pad" data-sound="crash">💥 CRASH</div>
-    <div class="pad" data-sound="tom">🥁 TOM</div>
-    <div class="pad" data-sound="scratch">🎧 SCRATCH</div>
-    <div class="pad" data-sound="vocal">🗣 VOCAL</div>
-    <div class="pad" data-sound="fx">📀 FX</div>
-</div>
+    <div id="auth-screen" style="position:fixed; inset:0; background:var(--bg); z-index:20000; display:flex; align-items:center; justify-content:center;">
+        <div class="win-frame">
+            <h1 style="color:var(--accent); letter-spacing:5px; margin-bottom:5px;">DANCHAT</h1>
+            <p style="opacity:0.5; margin-bottom:30px;">ULTIMATE v6.3 EXTREME</p>
+            <input type="text" id="auth-n" class="inp" placeholder="ЛОГИН" style="margin-bottom:15px; width:100%">
+            <input type="password" id="auth-p" class="inp" placeholder="ПАРОЛЬ" style="width:100%; margin-bottom:25px;">
+            <button class="btn" style="background:var(--accent); color:#000; width:100%" onclick="auth()">ВХОД В СИСТЕМУ</button>
+        </div>
+    </div>
 
-<div class="upload-area">
-    <h3>📁 ЗАГРУЗИ АУДИО ИЛИ ВИДЕО</h3>
-    <input type="file" id="soundUpload" accept="audio/*,video/mp4,video/quicktime,video/x-msvideo,video/webm">
-    <p style="font-size:11px">MP3, WAV, OGG, MP4, MOV, AVI, WEBM — из видео берётся звук</p>
-</div>
-
-<div id="customSoundsContainer" class="custom-sounds"></div>
-
-<div class="bpm-control">
-    <label>BPM: </label>
-    <input type="number" id="bpm" value="145" step="2">
-    <button id="playBtn">▶ PLAY</button>
-    <button id="stopBtn">⏹ STOP</button>
-    <button id="clearPatternsBtn">🗑 ОЧИСТИТЬ ВСЕ</button>
-    <button id="presetBtn" class="preset-btn">🎲 10 ПРЕСЕТОВ ФОНКА</button>
-</div>
-
-<h2>⚡ Секвенсор 32 шага (цифры 0-31) ⚡</h2>
-<div id="sequencer-container"></div>
-
-<footer>
-    ★ 10 готовых фонк-пресетов ★ Цифры над квадратами для удобства ★<br>
-    ★ Нажми "10 ПРЕСЕТОВ ФОНКА" — каждый раз случайный классический бит ★
-</footer>
-
-<script>
-    // ======================= АУДИОКОНТЕКСТ =======================
-    let audioCtx = null;
-    let isUnlocked = false;
-    
-    function initAudio() {
-        if (audioCtx) return audioCtx;
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        return audioCtx;
-    }
-    
-    function unlockAudio() {
-        if (isUnlocked) return true;
-        const ctx = initAudio();
-        if (ctx && ctx.state === 'suspended') {
-            ctx.resume().then(() => {
-                isUnlocked = true;
-                console.log('🔊 Аудио разблокировано');
-            }).catch(e => console.log(e));
-        } else if (ctx) {
-            isUnlocked = true;
-        }
-        return isUnlocked;
-    }
-    
-    const STEPS_COUNT = 32;
-    
-    function getStepDurationMs() {
-        const bpm = parseInt(document.getElementById('bpm').value, 10);
-        return (60 / bpm) * 1000 / 4;
-    }
-    
-    // ======================= УПРАВЛЕНИЕ ЗВУКАМИ =======================
-    let activeSources = new Map();
-    let currentPlayingTrackStep = new Map();
-    
-    function stopTrackSound(trackId) {
-        if (activeSources.has(trackId)) {
-            const sourceData = activeSources.get(trackId);
-            try {
-                if (sourceData.source) sourceData.source.stop();
-                if (sourceData.gain) sourceData.gain.disconnect();
-            } catch(e) {}
-            activeSources.delete(trackId);
-        }
-    }
-    
-    function playCustomSoundContinuous(trackId, audioBuffer, stepIndex, isNextStepAlsoActive) {
-        if (!unlockAudio()) return;
-        
-        const ctx = initAudio();
-        
-        if (currentPlayingTrackStep.get(trackId) === stepIndex && activeSources.has(trackId)) {
-            return;
-        }
-        
-        const startPosition = (stepIndex / STEPS_COUNT) * audioBuffer.duration;
-        
-        if (activeSources.has(trackId) && isNextStepAlsoActive) {
-            const oldSource = activeSources.get(trackId);
-            try { if (oldSource.source) oldSource.source.stop(); } catch(e) {}
-            activeSources.delete(trackId);
-        } else if (activeSources.has(trackId) && !isNextStepAlsoActive) {
-            return;
-        }
-        
-        const source = ctx.createBufferSource();
-        source.buffer = audioBuffer;
-        const gain = ctx.createGain();
-        gain.gain.value = 0.7;
-        source.connect(gain);
-        gain.connect(ctx.destination);
-        source.start(0, startPosition);
-        
-        activeSources.set(trackId, { source: source, gain: gain, stepIndex: stepIndex });
-        currentPlayingTrackStep.set(trackId, stepIndex);
-        
-        if (!isNextStepAlsoActive) {
-            setTimeout(() => {
-                if (activeSources.get(trackId)?.source === source) {
-                    try { source.stop(); } catch(e) {}
-                    activeSources.delete(trackId);
-                    currentPlayingTrackStep.delete(trackId);
-                }
-            }, getStepDurationMs());
-        }
-    }
-    
-    function playSynthShort(soundFunc, trackId) {
-        if (!unlockAudio()) return;
-        soundFunc();
-    }
-    
-    // ======================= ЗВУКИ =======================
-    function playKick() {
-        const ctx = initAudio();
-        const now = ctx.currentTime;
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.value = 55;
-        osc.frequency.setTargetAtTime(38, now, 0.08);
-        gain.gain.value = 0.8;
-        gain.gain.setTargetAtTime(0, now, 0.15);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(now + 0.2);
-    }
-    
-    function playSnare() {
-        const ctx = initAudio();
-        const now = ctx.currentTime;
-        const bufferSize = 4096;
-        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-        const noise = ctx.createBufferSource();
-        noise.buffer = buffer;
-        const gainNoise = ctx.createGain();
-        gainNoise.gain.value = 0.5;
-        gainNoise.gain.setTargetAtTime(0, now, 0.1);
-        noise.connect(gainNoise);
-        gainNoise.connect(ctx.destination);
-        noise.start();
-        noise.stop(now + 0.15);
-        
-        const osc = ctx.createOscillator();
-        osc.type = 'triangle';
-        osc.frequency.value = 180;
-        osc.frequency.setTargetAtTime(100, now, 0.08);
-        const gainOsc = ctx.createGain();
-        gainOsc.gain.value = 0.25;
-        gainOsc.gain.setTargetAtTime(0, now, 0.12);
-        osc.connect(gainOsc);
-        gainOsc.connect(ctx.destination);
-        osc.start();
-        osc.stop(now + 0.18);
-    }
-    
-    function playHat() {
-        const ctx = initAudio();
-        const now = ctx.currentTime;
-        const osc = ctx.createOscillator();
-        osc.type = 'square';
-        osc.frequency.value = 8000;
-        const gain = ctx.createGain();
-        gain.gain.value = 0.25;
-        gain.gain.setTargetAtTime(0, now, 0.02);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(now + 0.05);
-    }
-    
-    function playClap() {
-        const ctx = initAudio();
-        const now = ctx.currentTime;
-        const bufferSize = 2048;
-        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-        const noise = ctx.createBufferSource();
-        noise.buffer = buffer;
-        const gain = ctx.createGain();
-        gain.gain.value = 0.5;
-        gain.gain.setTargetAtTime(0, now, 0.08);
-        noise.connect(gain);
-        gain.connect(ctx.destination);
-        noise.start();
-        noise.stop(now + 0.1);
-        
-        const osc = ctx.createOscillator();
-        osc.type = 'sine';
-        osc.frequency.value = 1200;
-        const gain2 = ctx.createGain();
-        gain2.gain.value = 0.2;
-        gain2.gain.setTargetAtTime(0, now, 0.08);
-        osc.connect(gain2);
-        gain2.connect(ctx.destination);
-        osc.start();
-        osc.stop(now + 0.08);
-    }
-    
-    function playRim() {
-        const ctx = initAudio();
-        const now = ctx.currentTime;
-        const osc = ctx.createOscillator();
-        osc.type = 'sine';
-        osc.frequency.value = 1800;
-        const gain = ctx.createGain();
-        gain.gain.value = 0.45;
-        gain.gain.setTargetAtTime(0, now, 0.05);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(now + 0.08);
-    }
-    
-    function playOpenHat() {
-        const ctx = initAudio();
-        const now = ctx.currentTime;
-        const osc = ctx.createOscillator();
-        osc.type = 'triangle';
-        osc.frequency.value = 1100;
-        const gain = ctx.createGain();
-        gain.gain.value = 0.35;
-        gain.gain.setTargetAtTime(0, now, 0.1);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(now + 0.15);
-    }
-    
-    function playCowbell() {
-        const ctx = initAudio();
-        const now = ctx.currentTime;
-        const osc = ctx.createOscillator();
-        osc.type = 'triangle';
-        osc.frequency.value = 880;
-        const gain = ctx.createGain();
-        gain.gain.value = 0.6;
-        gain.gain.setTargetAtTime(0, now, 0.12);
-        const filter = ctx.createBiquadFilter();
-        filter.type = 'bandpass';
-        filter.frequency.value = 1500;
-        osc.connect(filter);
-        filter.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(now + 0.2);
-    }
-    
-    function playBass() {
-        const ctx = initAudio();
-        const now = ctx.currentTime;
-        const osc = ctx.createOscillator();
-        osc.type = 'sawtooth';
-        osc.frequency.value = 50;
-        osc.frequency.setTargetAtTime(40, now, 0.2);
-        const gain = ctx.createGain();
-        gain.gain.value = 0.7;
-        gain.gain.setTargetAtTime(0, now, 0.3);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(now + 0.3);
-    }
-    
-    function playCrash() {
-        const ctx = initAudio();
-        const now = ctx.currentTime;
-        const bufferSize = 8192;
-        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-        const noise = ctx.createBufferSource();
-        noise.buffer = buffer;
-        const gain = ctx.createGain();
-        gain.gain.value = 0.4;
-        gain.gain.setTargetAtTime(0, now, 0.3);
-        noise.connect(gain);
-        gain.connect(ctx.destination);
-        noise.start();
-        noise.stop(now + 0.4);
-    }
-    
-    function playTom() {
-        const ctx = initAudio();
-        const now = ctx.currentTime;
-        const osc = ctx.createOscillator();
-        osc.type = 'sine';
-        osc.frequency.value = 130;
-        osc.frequency.setTargetAtTime(90, now, 0.12);
-        const gain = ctx.createGain();
-        gain.gain.value = 0.55;
-        gain.gain.setTargetAtTime(0, now, 0.2);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(now + 0.2);
-    }
-    
-    function playScratch() {
-        const ctx = initAudio();
-        const now = ctx.currentTime;
-        const osc = ctx.createOscillator();
-        osc.type = 'sawtooth';
-        osc.frequency.value = 400;
-        osc.frequency.setTargetAtTime(1000, now, 0.04);
-        osc.frequency.setTargetAtTime(300, now, 0.1);
-        const gain = ctx.createGain();
-        gain.gain.value = 0.35;
-        gain.gain.setTargetAtTime(0, now, 0.15);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(now + 0.2);
-    }
-    
-    function playVocal() {
-        const ctx = initAudio();
-        const now = ctx.currentTime;
-        const osc = ctx.createOscillator();
-        osc.type = 'sine';
-        osc.frequency.value = 440;
-        const gain = ctx.createGain();
-        gain.gain.value = 0.4;
-        gain.gain.setTargetAtTime(0, now, 0.25);
-        const filter = ctx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.value = 1000;
-        osc.connect(filter);
-        filter.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(now + 0.35);
-        
-        const osc2 = ctx.createOscillator();
-        osc2.type = 'triangle';
-        osc2.frequency.value = 880;
-        osc2.frequency.setTargetAtTime(660, now, 0.2);
-        const gain2 = ctx.createGain();
-        gain2.gain.value = 0.2;
-        gain2.gain.setTargetAtTime(0, now, 0.3);
-        osc2.connect(gain2);
-        gain2.connect(ctx.destination);
-        osc2.start();
-        osc2.stop(now + 0.35);
-    }
-    
-    function playFX() {
-        const ctx = initAudio();
-        const now = ctx.currentTime;
-        const osc = ctx.createOscillator();
-        osc.type = 'square';
-        osc.frequency.value = 200;
-        osc.frequency.setTargetAtTime(800, now, 0.05);
-        osc.frequency.setTargetAtTime(200, now, 0.12);
-        const gain = ctx.createGain();
-        gain.gain.value = 0.3;
-        gain.gain.setTargetAtTime(0, now, 0.2);
-        const filter = ctx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.value = 1500;
-        osc.connect(filter);
-        filter.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(now + 0.25);
-    }
-    
-    const baseSoundMap = {
-        kick: playKick, snare: playSnare, hat: playHat, clap: playClap, rim: playRim,
-        openhat: playOpenHat, cowbell: playCowbell, bass: playBass, crash: playCrash,
-        tom: playTom, scratch: playScratch, vocal: playVocal, fx: playFX
-    };
-    
-    // ======================= ЗАГРУЗКА ФАЙЛОВ =======================
-    let customSoundsList = [];
-    
-    async function loadCustomFile(file) {
-        const url = URL.createObjectURL(file);
-        
-        try {
-            const response = await fetch(url);
-            const arrayBuffer = await response.arrayBuffer();
-            const ctx = initAudio();
-            const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+    <div id="settings-modal" class="custom-modal">
+        <div class="win-frame">
+            <h3 style="margin-top:0">НАСТРОЙКИ ПРОФИЛЯ</h3>
+            <img id="set-pre" style="width:100px; height:100px; border-radius:50%; border:3px solid var(--accent); object-fit:cover; margin: 15px auto;">
+            <input type="file" id="f-set" class="hidden" onchange="preview(this, 'set-pre')">
+            <button class="btn" style="background:#333; color:#fff; font-size:11px; margin-bottom:20px;" onclick="document.getElementById('f-set').click()">ОБНОВИТЬ ФОТО</button>
             
-            const soundName = file.name.replace(/\.[^/.]+$/, "").substring(0, 14);
-            const uniqueId = 'custom_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+            <div style="text-align:left; margin-bottom:20px;">
+                <label style="font-size:12px; color:var(--accent)">ЦВЕТ НИКНЕЙМА:</label>
+                <input type="color" id="set-color" style="width:100%; height:40px; border:none; background:none; cursor:pointer; margin-top:5px;">
+            </div>
             
-            customSoundsList.push({
-                id: uniqueId,
-                name: soundName,
-                buffer: audioBuffer,
-                duration: audioBuffer.duration,
-                url: url
-            });
+            <div style="text-align:left; margin-bottom:25px;">
+                <label style="font-size:12px; color:var(--accent)">КЛЮЧ АДМИНИСТРАТОРА:</label>
+                <input type="password" id="admin-key" class="inp" placeholder="Admin Key" style="width:100%; margin-top:5px;">
+            </div>
             
-            addCustomPad(uniqueId, soundName, audioBuffer.duration);
-            addCustomTrack(uniqueId, soundName, audioBuffer);
-            
-        } catch(e) {
-            console.error('Ошибка загрузки:', e);
-            alert('Не удалось загрузить файл. Возможно, видео без звуковой дорожки или файл повреждён.');
-        }
-    }
-    
-    function addCustomPad(id, name, duration) {
-        const container = document.getElementById('customSoundsContainer');
-        const pad = document.createElement('div');
-        pad.className = 'pad custom-pad';
-        pad.innerHTML = `🎵 ${name}<br><span class="file-info">${duration.toFixed(1)}c</span><br><button class="delete-btn" data-id="${id}">✖</button>`;
-        
-        pad.addEventListener('click', (e) => {
-            if (e.target.classList.contains('delete-btn')) return;
-            const sound = customSoundsList.find(s => s.id === id);
-            if (sound && sound.buffer) {
-                const ctx = initAudio();
-                const source = ctx.createBufferSource();
-                source.buffer = sound.buffer;
-                const gain = ctx.createGain();
-                gain.gain.value = 0.7;
-                source.connect(gain);
-                gain.connect(ctx.destination);
-                source.start();
-                setTimeout(() => source.stop(), 200);
-            }
-        });
-        
-        const delBtn = pad.querySelector('.delete-btn');
-        delBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            deleteCustomSound(id);
-        });
-        
-        container.appendChild(pad);
-    }
-    
-    function addCustomTrack(id, name, audioBuffer) {
-        tracks.push({
-            id: id,
-            name: name,
-            steps: Array(STEPS_COUNT).fill(0),
-            sound: (stepIndex, isNextActive) => {
-                playCustomSoundContinuous(id, audioBuffer, stepIndex, isNextActive);
-            },
-            isCustom: true,
-            buffer: audioBuffer
-        });
-        renderSequencer();
-    }
-    
-    function deleteCustomSound(id) {
-        stopTrackSound(id);
-        const index = customSoundsList.findIndex(s => s.id === id);
-        if (index !== -1) {
-            URL.revokeObjectURL(customSoundsList[index].url);
-            customSoundsList.splice(index, 1);
-        }
-        const trackIndex = tracks.findIndex(t => t.id === id);
-        if (trackIndex !== -1) tracks.splice(trackIndex, 1);
-        renderSequencer();
-        refreshCustomPads();
-    }
-    
-    function refreshCustomPads() {
-        const container = document.getElementById('customSoundsContainer');
-        container.innerHTML = '';
-        customSoundsList.forEach(sound => {
-            addCustomPad(sound.id, sound.name, sound.duration);
-        });
-    }
-    
-    document.getElementById('soundUpload').addEventListener('change', (e) => {
-        if (e.target.files.length > 0) {
-            loadCustomFile(e.target.files[0]);
-        }
-        e.target.value = '';
-    });
-    
-    // ======================= 10 ФОНК ПРЕСЕТОВ =======================
-    const phonkPresets = [
-        { // 0: CLASSIC DRIFT
-            name: "CLASSIC DRIFT",
-            steps: {
-                kick: [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0],
-                snare: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
-                hat: Array(32).fill(1),
-                cowbell: [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0],
-                bass: [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0]
-            }
-        },
-        { // 1: MEMPHIS UNDERGROUND
-            name: "MEMPHIS UNDERGROUND",
-            steps: {
-                kick: [1,0,0,1,0,0,0,1,1,0,0,0,0,0,1,0,1,0,0,1,0,0,0,1,1,0,0,0,0,0,1,0],
-                snare: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
-                hat: Array(32).fill(1),
-                rim: [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0],
-                cowbell: [1,0,0,1,0,0,0,1,1,0,0,0,0,0,1,0,1,0,0,1,0,0,0,1,1,0,0,0,0,0,1,0]
-            }
-        },
-        { // 2: AGGRESSIVE DRIFT
-            name: "AGGRESSIVE DRIFT",
-            steps: {
-                kick: [1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0],
-                snare: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
-                hat: Array(32).fill(1),
-                openhat: [0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0],
-                cowbell: [1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0],
-                bass: [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0]
-            }
-        },
-        { // 3: DARK PHONK
-            name: "DARK PHONK",
-            steps: {
-                kick: [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
-                snare: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
-                hat: [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
-                cowbell: [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
-                bass: [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0]
-            }
-        },
-        { // 4: COWBELL HEAVY
-            name: "COWBELL HEAVY",
-            steps: {
-                kick: [1,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0],
-                snare: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
-                hat: Array(32).fill(1),
-                cowbell: [1,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0],
-                rim: [0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0]
-            }
-        },
-        { // 5: BRAZILIAN PHONK
-            name: "BRAZILIAN PHONK",
-            steps: {
-                kick: [1,0,0,0,1,0,0,1,1,0,0,0,1,0,0,1,1,0,0,0,1,0,0,1,1,0,0,0,1,0,0,1],
-                snare: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
-                hat: Array(32).fill(1),
-                clap: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
-                bass: [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0]
-            }
-        },
-        { // 6: SLOW MOB
-            name: "SLOW MOB",
-            steps: {
-                kick: [1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
-                snare: [0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],
-                hat: [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
-                cowbell: [1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
-                scratch: [0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0]
-            }
-        },
-        { // 7: PHONK HOUSE
-            name: "PHONK HOUSE",
-            steps: {
-                kick: [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0],
-                snare: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
-                hat: Array(32).fill(1),
-                clap: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
-                vocal: [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-            }
-        },
-        { // 8: TRAP PHONK
-            name: "TRAP PHONK",
-            steps: {
-                kick: [1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0],
-                snare: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
-                hat: [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-                bass: [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
-                rim: [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0]
-            }
-        },
-        { // 9: EXPERIMENTAL PHONK
-            name: "EXPERIMENTAL PHONK",
-            steps: {
-                kick: [1,0,1,0,0,0,1,0,1,0,0,0,0,0,1,0,1,0,1,0,0,0,1,0,1,0,0,0,0,0,1,0],
-                snare: [0,0,0,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,1,0,0,0],
-                hat: [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
-                cowbell: [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0],
-                fx: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
-                openhat: [0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0]
-            }
-        }
-    ];
-    
-    function applyRandomPreset() {
-        const randomIndex = Math.floor(Math.random() * phonkPresets.length);
-        const preset = phonkPresets[randomIndex];
-        
-        // Применяем паттерны к трекам
-        tracks.forEach(track => {
-            if (preset.steps[track.id]) {
-                track.steps = [...preset.steps[track.id]];
-            } else if (track.isCustom) {
-                // Пользовательские треки очищаем
-                track.steps = Array(STEPS_COUNT).fill(0);
+            <button class="btn" style="background:var(--accent); color:#000; width:100%" onclick="saveSettings()">СОХРАНИТЬ И ВЫЙТИ</button>
+            <button class="btn" style="background:transparent; color:#555; width:100%; margin-top:10px;" onclick="hideModal('settings-modal')">ЗАКРЫТЬ</button>
+        </div>
+    </div>
+
+    <div id="call-modal" class="custom-modal">
+        <div class="win-frame" id="p-call-frame">
+            <div style="position:relative; width:140px; height:140px; margin: 0 auto 20px;">
+                <img id="call-av" class="voice-av" style="width:100%; height:100%;">
+            </div>
+            <h2 id="call-nick" style="margin: 0 0 10px 0">Пользователь</h2>
+            <div id="call-status" style="color:var(--accent); font-weight:bold; letter-spacing:1px;">ИНИЦИАЛИЗАЦИЯ...</div>
+            <div id="p-call-actions" style="display:flex; gap:15px; justify-content:center; margin-top:30px;"></div>
+        </div>
+    </div>
+
+    <div id="group-modal" class="custom-modal">
+        <div class="win-frame">
+            <h3>СОЗДАНИЕ ГРУППЫ</h3>
+            <input type="text" id="g-name" class="inp" placeholder="Название беседы" style="width:100%; margin-bottom:20px;">
+            <button class="btn" style="background:var(--accent); color:#000; width:100%" onclick="createGroup()">СОЗДАТЬ</button>
+            <button class="btn" style="margin-top:10px; width:100%; background:transparent; color:#555" onclick="hideModal('group-modal')">ОТМЕНА</button>
+        </div>
+    </div>
+
+    <div id="members-modal" class="custom-modal">
+        <div class="win-frame" style="width:450px;">
+            <h3 id="mem-h" style="border-bottom:1px solid #333; padding-bottom:15px;">УЧАСТНИКИ</h3>
+            <div id="mem-list" style="max-height:380px; overflow-y:auto; text-align:left; padding:10px 0;"></div>
+            <button class="btn" style="margin-top:20px; width:100%; background:var(--error); color:#fff" onclick="hideModal('members-modal')">ЗАКРЫТЬ</button>
+        </div>
+    </div>
+
+    <div id="poll-modal" class="custom-modal">
+        <div class="win-frame">
+            <h3>НОВЫЙ ОПРОС</h3>
+            <input type="text" id="poll-q" class="inp" placeholder="Вопрос опроса" style="width:100%; margin-bottom:15px;">
+            <div id="poll-opts-container">
+                <input type="text" class="inp poll-opt-in" placeholder="Вариант 1" style="width:100%; margin-bottom:10px;">
+                <input type="text" class="inp poll-opt-in" placeholder="Вариант 2" style="width:100%; margin-bottom:10px;">
+            </div>
+            <button class="btn" style="background:#333; color:#fff; width:100%; font-size:10px; margin-bottom:15px;" onclick="addPollOption()">+ ДОБАВИТЬ ВАРИАНТ</button>
+            <button class="btn" style="background:var(--accent); color:#000; width:100%" onclick="publishPoll()">ОПУБЛИКОВАТЬ</button>
+            <button class="btn" style="margin-top:10px; width:100%; background:transparent; color:#555" onclick="hideModal('poll-modal')">ОТМЕНА</button>
+        </div>
+    </div>
+
+    <div id="sidebar" class="hidden">
+        <div class="top-nav">
+            <span class="nav-icon" title="Настройки" onclick="showModal('settings-modal')">⚙️</span>
+            <span class="nav-icon" title="Поиск людей" onclick="openSearch()">👤</span>
+            <span class="nav-icon" title="Новая группа" onclick="showModal('group-modal')">➕</span>
+            <div id="my-name-display" style="margin-left:auto; font-weight:bold; letter-spacing:0.5px;"></div>
+        </div>
+        <div id="contact-list"></div>
+    </div>
+
+    <div id="main-content" class="hidden">
+        <header onclick="openChatInfo()">
+            <div id="header-info">
+                <b id="chat-title" style="font-size:18px;">ЗАГРУЗКА...</b><br>
+                <small id="chat-stat" style="opacity:0.6"></small>
+            </div>
+            <div style="display:flex; gap:15px; align-items:center;">
+                <span id="admin-indicator" class="hidden" style="color:var(--error); font-weight:900; font-size:11px;">[SERVER ADMIN]</span>
+                <button id="v-join-btn" onclick="event.stopPropagation(); toggleVoiceJoin()" style="background:var(--blue); border:none; padding:10px 20px; border-radius:10px; color:#fff; font-weight:bold; cursor:pointer; transition:0.3s;">ВОЙТИ В ГОЛОС</button>
+                <button id="call-btn" class="hidden" onclick="event.stopPropagation(); makePrivateCall()" style="background:var(--accent); border:none; padding:10px 20px; border-radius:10px; font-weight:900; cursor:pointer; color:#000;">ЗВОНОК</button>
+            </div>
+        </header>
+
+        <div id="voice-grid" class="hidden"></div>
+        <div id="chat-window"></div>
+
+        <div id="action-bar" class="hidden" style="background:#1c2127; padding:12px 25px; border-top:3px solid var(--accent); display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; flex-direction:column; min-width:0;">
+                <b id="action-type" style="font-size:10px; color:var(--accent); text-transform:uppercase;">Действие</b>
+                <span id="action-text" style="font-size:13px; opacity:0.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></span>
+            </div>
+            <span onclick="cancelAction()" style="cursor:pointer; color:var(--error); font-weight:bold; font-size:22px; padding:0 10px;">✕</span>
+        </div>
+
+        <div id="input-area">
+            <span class="tool-btn" style="font-size:24px; cursor:pointer;" onclick="showModal('emoji-picker')">😊</span>
+            <input type="file" id="msg-img" class="hidden" onchange="uploadImage(this)">
+            <span class="tool-btn" style="font-size:24px; cursor:pointer;" onclick="document.getElementById('msg-img').click()">📷</span>
+            <span class="tool-btn" style="font-size:24px; cursor:pointer; font-weight:bold; color:var(--accent);" onclick="showModal('poll-modal')">＋</span>
+            <input type="text" id="msg-in" class="inp" placeholder="Написать сообщение..." onkeydown="if(event.key==='Enter') send()">
+            <button id="send-btn" class="btn" style="background:var(--accent); color:#000" onclick="send()">ОТПРАВИТЬ</button>
+        </div>
+    </div>
+
+    <div id="emoji-picker" class="custom-modal" onclick="this.style.display='none'">
+        <div class="win-frame" onclick="event.stopPropagation()" style="width:340px; display:grid; grid-template-columns:repeat(4,1fr); gap:15px; padding:25px;">
+            <span style="font-size:30px; cursor:pointer;" onclick="addEmoji('😊')">😊</span>
+            <span style="font-size:30px; cursor:pointer;" onclick="addEmoji('😂')">😂</span>
+            <span style="font-size:30px; cursor:pointer;" onclick="addEmoji('💀')">💀</span>
+            <span style="font-size:30px; cursor:pointer;" onclick="addEmoji('🔥')">🔥</span>
+            <span style="font-size:30px; cursor:pointer;" onclick="addEmoji('🤡')">🤡</span>
+            <span style="font-size:30px; cursor:pointer;" onclick="addEmoji('❤')">❤</span>
+            <span style="font-size:30px; cursor:pointer;" onclick="addEmoji('👍')">👍</span>
+            <span style="font-size:30px; cursor:pointer;" onclick="addEmoji('🤔')">🤔</span>
+            <span style="font-size:30px; cursor:pointer;" onclick="addEmoji('😈')">😈</span>
+            <span style="font-size:30px; cursor:pointer;" onclick="addEmoji('🍦')">🍦</span>
+            <span style="font-size:30px; cursor:pointer;" onclick="addEmoji('🌈')">🌈</span>
+            <span style="font-size:30px; cursor:pointer;" onclick="addEmoji('✅')">✅</span>
+        </div>
+    </div>
+
+    <div id="ctx-menu">
+        <div class="ctx-item" onclick="replyMessage()">Ответить</div>
+        <div id="owner-tools" class="hidden">
+            <div class="ctx-item" onclick="editMessage()">Изменить</div>
+            <div class="ctx-item" style="color:var(--error)" onclick="deleteMessage()">Удалить</div>
+        </div>
+    </div>
+
+    <script>
+        /* --- КОНФИГУРАЦИЯ БАЗЫ ДАННЫХ --- */
+        const firebaseConfig = { 
+            apiKey: "AIzaSyAocmcoBH2Q8_QENuE9AuaGwtDOSSg-WpE", 
+            authDomain: "danblox-e209f.firebaseapp.com", 
+            databaseURL: "https://danblox-e209f-default-rtdb.firebaseio.com", 
+            projectId: "danblox-e209f" 
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const defAv = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+
+        /* --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ --- */
+        let myData = null, curChat = 'global', curPeer = '', selId = null, selData = null;
+        let isEditing = false, replyData = null, lastSendTime = 0;
+        let myStream = null, audioCtx = null, analyser = null, micMuted = false, inVoice = false;
+
+        /* --- АВТОРИЗАЦИЯ --- */
+        async function auth() {
+            const n = document.getElementById('auth-n').value.trim();
+            const p = document.getElementById('auth-p').value.trim();
+            if(!n || !p) return;
+            const snap = await db.ref('users/'+n).get();
+            if(!snap.exists()) {
+                myData = { nick: n, pass: p, av: defAv, color: '#ffffff', admin: false };
+                await db.ref('users/'+n).set(myData);
             } else {
-                // Для треков без пресета (clap, rim, crash, tom, scratch, vocal, fx, openhat) — очищаем
-                track.steps = Array(STEPS_COUNT).fill(0);
+                if(snap.val().pass !== p) return alert("ОШИБКА: НЕВЕРНЫЙ ПАРОЛЬ");
+                myData = snap.val();
             }
-        });
-        
-        // Дополнительно проставляем нули для всех, кто не в пресете
-        const presetTrackIds = Object.keys(preset.steps);
-        tracks.forEach(track => {
-            if (!presetTrackIds.includes(track.id) && !track.isCustom) {
-                track.steps = Array(STEPS_COUNT).fill(0);
-            }
-        });
-        
-        renderSequencer();
-        
-        // Показываем название пресета в консоли
-        console.log(`🎲 Применён пресет: ${preset.name} (${randomIndex + 1}/10)`);
-        
-        // Визуальное оповещение
-        const presetBtn = document.getElementById('presetBtn');
-        const originalText = presetBtn.innerText;
-        presetBtn.innerText = `✅ ${preset.name}`;
-        presetBtn.style.background = '#44ff44';
-        presetBtn.style.color = 'black';
-        setTimeout(() => {
-            presetBtn.innerText = originalText;
-            presetBtn.style.background = '#aa44ff';
-            presetBtn.style.color = 'white';
-        }, 1500);
-    }
-    
-    // ======================= ТРЕКИ СЕКВЕНСОРА =======================
-    let tracks = [
-        { id: 'kick', name: 'KICK', steps: Array(STEPS_COUNT).fill(0).map((_,i) => i % 4 === 0 ? 1 : 0), sound: (step, next) => playSynthShort(playKick, 'kick') },
-        { id: 'snare', name: 'SNARE', steps: Array(STEPS_COUNT).fill(0).map((_,i) => i % 4 === 2 ? 1 : 0), sound: (step, next) => playSynthShort(playSnare, 'snare') },
-        { id: 'hat', name: 'HAT', steps: Array(STEPS_COUNT).fill(1), sound: (step, next) => playSynthShort(playHat, 'hat') },
-        { id: 'clap', name: 'CLAP', steps: Array(STEPS_COUNT).fill(0), sound: (step, next) => playSynthShort(playClap, 'clap') },
-        { id: 'rim', name: 'RIM', steps: Array(STEPS_COUNT).fill(0), sound: (step, next) => playSynthShort(playRim, 'rim') },
-        { id: 'openhat', name: 'OPEN', steps: Array(STEPS_COUNT).fill(0), sound: (step, next) => playSynthShort(playOpenHat, 'openhat') },
-        { id: 'cowbell', name: 'COWBELL', steps: Array(STEPS_COUNT).fill(0).map((_,i) => i % 2 === 0 ? 1 : 0), sound: (step, next) => playSynthShort(playCowbell, 'cowbell') },
-        { id: 'bass', name: '808', steps: Array(STEPS_COUNT).fill(0).map((_,i) => i === 0 || i === 16 ? 1 : 0), sound: (step, next) => playSynthShort(playBass, 'bass') },
-        { id: 'crash', name: 'CRASH', steps: Array(STEPS_COUNT).fill(0), sound: (step, next) => playSynthShort(playCrash, 'crash') },
-        { id: 'tom', name: 'TOM', steps: Array(STEPS_COUNT).fill(0), sound: (step, next) => playSynthShort(playTom, 'tom') },
-        { id: 'scratch', name: 'SCRATCH', steps: Array(STEPS_COUNT).fill(0), sound: (step, next) => playSynthShort(playScratch, 'scratch') },
-        { id: 'vocal', name: 'VOCAL', steps: Array(STEPS_COUNT).fill(0), sound: (step, next) => playSynthShort(playVocal, 'vocal') },
-        { id: 'fx', name: 'FX', steps: Array(STEPS_COUNT).fill(0), sound: (step, next) => playSynthShort(playFX, 'fx') }
-    ];
-    
-    let currentStep = 0;
-    let intervalId = null;
-    let isPlaying = false;
-    
-    function getNextActiveStep(track, startStep) {
-        for (let i = startStep + 1; i < STEPS_COUNT; i++) {
-            if (track.steps[i] === 1) return i;
+            startApplication();
         }
-        return -1;
-    }
-    
-    function renderSequencer() {
-        const container = document.getElementById('sequencer-container');
-        if (!container) return;
-        container.innerHTML = '';
-        
-        tracks.forEach((track, tIdx) => {
-            const row = document.createElement('div');
-            row.className = 'track-row';
-            const label = document.createElement('span');
-            label.className = 'track-label';
-            label.innerText = track.name;
-            label.title = 'Кликни чтобы очистить';
-            label.addEventListener('click', () => {
-                track.steps = Array(STEPS_COUNT).fill(0);
-                renderSequencer();
-            });
-            row.appendChild(label);
-            const stepsDiv = document.createElement('div');
-            stepsDiv.className = 'steps-container';
-            
-            for (let i = 0; i < STEPS_COUNT; i++) {
-                const stepDiv = document.createElement('div');
-                stepDiv.className = 'step';
-                if (track.steps[i] === 1) stepDiv.classList.add('active');
-                stepDiv.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    track.steps[i] = track.steps[i] === 1 ? 0 : 1;
-                    renderSequencer();
-                });
-                
-                // Добавляем цифру над каждым 4-м шагом (0,4,8,12,16,20,24,28)
-                if (i % 4 === 0) {
-                    const numberSpan = document.createElement('span');
-                    numberSpan.className = 'step-number';
-                    numberSpan.innerText = i;
-                    stepDiv.appendChild(numberSpan);
-                }
-                
-                stepsDiv.appendChild(stepDiv);
-            }
-            row.appendChild(stepsDiv);
-            container.appendChild(row);
-        });
-    }
-    
-    function playStep() {
-        if (!isPlaying) return;
-        
-        tracks.forEach(track => {
-            const nextActive = getNextActiveStep(track, currentStep);
-            if (nextActive === -1 || nextActive !== currentStep + 1) {
-                if (track.isCustom) {
-                    if (activeSources.has(track.id) && currentPlayingTrackStep.get(track.id) !== currentStep) {
-                        stopTrackSound(track.id);
+
+        function startApplication() {
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('sidebar').classList.remove('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
+            refreshProfileUI();
+            db.ref('presence/'+myData.nick).set(true);
+            db.ref('presence/'+myData.nick).onDisconnect().remove();
+            initContactListener();
+            initPrivateCallListener();
+            switchChat('global', 'Глобальный чат');
+        }
+
+        function refreshProfileUI() {
+            const display = document.getElementById('my-name-display');
+            display.innerText = myData.nick; 
+            display.style.color = myData.color;
+            document.getElementById('admin-indicator').classList.toggle('hidden', !myData.admin);
+        }
+
+        /* --- КОНТАКТЫ И ГРУППЫ --- */
+        function initContactListener() {
+            db.ref(`users/${myData.nick}/friends`).on('value', async snap => {
+                const list = document.getElementById('contact-list');
+                list.innerHTML = `<div class="contact-item" onclick="switchChat('global','Глобальный чат')">
+                    <div style="font-size:24px; width:46px; text-align:center;">🌍</div>
+                    <div class="contact-info"><b>Глобальный чат</b></div>
+                </div>`;
+                const friends = snap.val() || {};
+                for(let fid in friends) {
+                    const isGroup = friends[fid] === 'group';
+                    const infoSnap = await db.ref(isGroup ? 'groups/'+fid : 'users/'+fid).get();
+                    if(!infoSnap.exists()) continue;
+                    const info = infoSnap.val();
+                    const item = document.createElement('div');
+                    item.className = 'contact-item';
+                    item.onclick = () => isGroup ? switchChat(fid, info.name) : startPrivateChat(fid);
+                    item.innerHTML = `
+                        <img src="${isGroup ? (info.av || defAv) : (info.av || defAv)}">
+                        <div class="contact-info">
+                            <b style="color:${isGroup ? '#fff' : (info.color || '#fff')}">${isGroup ? info.name : info.nick}</b>
+                            <div class="status-dot" id="dot-${fid}">${isGroup ? 'GROUP' : '...'}</div>
+                        </div>
+                        <span onclick="event.stopPropagation(); removeFriend('${fid}')" style="color:var(--error); font-weight:bold; padding:10px;">🗑️</span>
+                    `;
+                    list.appendChild(item);
+                    if(!isGroup) {
+                        db.ref('presence/'+fid).on('value', p => {
+                            const d = document.getElementById('dot-'+fid);
+                            if(d) {
+                                d.innerText = p.exists() ? 'В СЕТИ' : 'ОФФЛАЙН';
+                                d.className = 'status-dot ' + (p.exists() ? 'on' : 'off');
+                            }
+                        });
                     }
                 }
+            });
+        }
+
+        async function removeFriend(id) {
+            if(confirm("Удалить из списка?")) {
+                await db.ref(`users/${myData.nick}/friends/${id}`).remove();
+                if(curChat === id || (curPeer === id)) switchChat('global', 'Глобальный чат');
             }
-        });
-        
-        const rows = document.querySelectorAll('.track-row');
-        rows.forEach((row, rIdx) => {
-            const steps = row.querySelectorAll('.step');
-            steps.forEach((step, sIdx) => { step.classList.remove('current'); });
-            if (steps[currentStep]) steps[currentStep].classList.add('current');
-        });
-        
-        tracks.forEach(track => {
-            if (track.steps[currentStep] === 1 && track.sound) {
-                const nextActive = getNextActiveStep(track, currentStep);
-                const isNextImmediately = (nextActive === currentStep + 1);
-                track.sound(currentStep, isNextImmediately);
+        }
+
+        async function startPrivateChat(targetNick) {
+            if(targetNick === myData.nick) return;
+            await db.ref(`users/${myData.nick}/friends/${targetNick}`).set('user');
+            await db.ref(`users/${targetNick}/friends/${myData.nick}`).set('user');
+            const chatID = myData.nick < targetNick ? myData.nick+'_'+targetNick : targetNick+'_'+myData.nick;
+            switchChat(chatID, targetNick);
+        }
+
+        /* --- СИСТЕМА ЧАТА --- */
+        function switchChat(id, title) {
+            if(inVoice) leaveVoiceChannel();
+            curChat = id;
+            const isBroad = id === 'global' || id.startsWith('group');
+            curPeer = isBroad ? '' : title;
+            document.getElementById('chat-title').innerText = title;
+            document.getElementById('chat-window').innerHTML = '';
+            document.getElementById('call-btn').classList.toggle('hidden', isBroad);
+            db.ref('messages/'+id).off();
+            db.ref('messages/'+id).on('child_added', s => renderMessage(s.key, s.val()));
+            db.ref('messages/'+id).on('child_changed', s => {
+                const el = document.getElementById('m-'+s.key);
+                if(el && s.val().type === 'text') el.querySelector('.txt-node-body').innerText = s.val().txt;
+                if(el && s.val().type === 'poll') updatePollUI(s.key, s.val());
+            });
+            db.ref('messages/'+id).on('child_removed', s => {
+                const el = document.getElementById('m-'+s.key);
+                if(el) el.remove();
+            });
+            db.ref(`voice_rooms/${curChat}`).on('value', updateVoiceGrid);
+            updateHeaderStatus();
+        }
+
+        function updateHeaderStatus() {
+            const stat = document.getElementById('chat-stat');
+            db.ref('presence').off();
+            if(curPeer) {
+                db.ref('presence/'+curPeer).on('value', p => {
+                    stat.innerText = p.exists() ? "В СЕТИ" : "ОФФЛАЙН";
+                    stat.style.color = p.exists() ? "var(--accent)" : "#555";
+                });
+            } else {
+                db.ref('presence').on('value', s => {
+                    let count = 0; s.forEach(() => count++);
+                    stat.innerText = "УЧАСТНИКОВ ОНЛАЙН: " + count;
+                    stat.style.color = "var(--accent)";
+                });
             }
-        });
-        
-        currentStep = (currentStep + 1) % STEPS_COUNT;
-    }
-    
-    function startSequencer() {
-        if (isPlaying) stopSequencer();
-        unlockAudio();
-        const bpm = parseInt(document.getElementById('bpm').value, 10);
-        const intervalMs = (60 / bpm) * 1000 / 4;
-        intervalId = setInterval(playStep, intervalMs);
-        isPlaying = true;
-    }
-    
-    function stopSequencer() {
-        if (intervalId) { clearInterval(intervalId); intervalId = null; }
-        isPlaying = false;
-        currentStep = 0;
-        document.querySelectorAll('.step').forEach(s => s.classList.remove('current'));
-        tracks.forEach(track => { stopTrackSound(track.id); currentPlayingTrackStep.delete(track.id); });
-    }
-    
-    function clearAllPatterns() {
-        tracks.forEach(track => { track.steps = Array(STEPS_COUNT).fill(0); });
-        renderSequencer();
-    }
-    
-    document.getElementById('playBtn').addEventListener('click', startSequencer);
-    document.getElementById('stopBtn').addEventListener('click', stopSequencer);
-    document.getElementById('clearPatternsBtn').addEventListener('click', clearAllPatterns);
-    document.getElementById('presetBtn').addEventListener('click', applyRandomPreset);
-    document.getElementById('bpm').addEventListener('change', () => {
-        if (isPlaying) { stopSequencer(); startSequencer(); }
-    });
-    
-    document.querySelectorAll('#standardPads .pad').forEach(pad => {
-        pad.addEventListener('click', () => {
-            const sound = pad.getAttribute('data-sound');
-            if (baseSoundMap[sound]) baseSoundMap[sound]();
-        });
-    });
-    
-    document.body.addEventListener('click', () => unlockAudio());
-    renderSequencer();
-    console.log('Готово! 10 пресетов, цифры над квадратами!');
-</script>
+        }
+
+        async function renderMessage(mid, m) {
+            const win = document.getElementById('chat-window');
+            const row = document.createElement('div');
+            row.id = 'm-'+mid;
+            row.className = `msg-row ${m.sn === myData.nick ? 'me' : ''}`;
+            const uSnap = await db.ref('users/'+m.sn).get();
+            const u = uSnap.val() || { av: defAv, color: '#fff' };
+            row.oncontextmenu = (e) => {
+                e.preventDefault(); e.stopPropagation();
+                showContextMenu(e, mid, m);
+            };
+
+            let contentHTML = '';
+            if(m.type === 'img') {
+                contentHTML = `<img src="${m.txt}" style="max-width:300px; border-radius:10px; cursor:zoom-in;" onclick="window.open(this.src)">`;
+            } else if(m.type === 'poll') {
+                contentHTML = `<div class="poll-box" id="poll-box-${mid}"></div>`;
+            } else {
+                contentHTML = `<div class="txt-node-body">${m.txt}</div>`;
+            }
+
+            row.innerHTML = `
+                <img src="${u.av || defAv}" class="msg-av" onclick="startPrivateChat('${m.sn}')">
+                <div class="msg-content ${u.admin ? 'admin-msg' : ''}">
+                    <b style="color:${u.color}; font-size:12px;">${m.sn} ${u.admin ? '<span class="admin-tag">ADMIN</span>' : ''}</b>
+                    ${m.rp ? `<div style="font-size:11px; opacity:0.6; border-left:2px solid var(--accent); padding-left:8px; margin: 4px 0;">↪ ${m.rp}</div>` : ''}
+                    <div style="margin-top:4px;">${contentHTML}</div>
+                </div>
+            `;
+            win.appendChild(row);
+            if(m.type === 'poll') updatePollUI(mid, m);
+            win.scrollTop = win.scrollHeight;
+        }
+
+        function send() {
+            const now = Date.now();
+            if(now - lastSendTime < 3000) return alert("ПОДОЖДИТЕ 3 СЕКУНДЫ ПЕРЕД ОТПРАВКОЙ!");
+            
+            const input = document.getElementById('msg-in');
+            const val = input.value.trim();
+            if(!val && !isEditing) return;
+
+            if(isEditing) {
+                db.ref(`messages/${curChat}/${selId}`).update({ txt: val });
+            } else {
+                let replyPreview = null;
+                if(replyData && replyData.txt) {
+                    replyPreview = replyData.txt.substring(0, 30) + '...';
+                }
+
+                db.ref('messages/'+curChat).push({
+                    sn: myData.nick,
+                    txt: val,
+                    type: 'text',
+                    rp: replyPreview,
+                    ts: Date.now()
+                });
+                lastSendTime = now;
+            }
+            input.value = '';
+            cancelAction();
+        }
+
+        /* --- ОПРОСЫ (Polls) --- */
+        function addPollOption() {
+            const container = document.getElementById('poll-opts-container');
+            const count = container.querySelectorAll('input').length + 1;
+            const inp = document.createElement('input');
+            inp.type = "text";
+            inp.className = "inp poll-opt-in";
+            inp.placeholder = "Вариант " + count;
+            inp.style.width = "100%";
+            inp.style.marginBottom = "10px";
+            container.appendChild(inp);
+        }
+
+        function publishPoll() {
+            const q = document.getElementById('poll-q').value.trim();
+            const optInps = document.querySelectorAll('.poll-opt-in');
+            let options = {};
+            optInps.forEach((inp, i) => {
+                if(inp.value.trim()) options['opt' + i] = { text: inp.value.trim(), votes: {} };
+            });
+            if(!q || Object.keys(options).length < 2) return alert("Введите вопрос и минимум 2 варианта!");
+            
+            db.ref('messages/'+curChat).push({
+                sn: myData.nick,
+                question: q,
+                options: options,
+                type: 'poll',
+                ts: Date.now()
+            });
+            hideModal('poll-modal');
+            document.getElementById('poll-q').value = '';
+            document.getElementById('poll-opts-container').innerHTML = `
+                <input type="text" class="inp poll-opt-in" placeholder="Вариант 1" style="width:100%; margin-bottom:10px;">
+                <input type="text" class="inp poll-opt-in" placeholder="Вариант 2" style="width:100%; margin-bottom:10px;">
+            `;
+        }
+
+        function updatePollUI(mid, m) {
+            const box = document.getElementById('poll-box-'+mid);
+            if(!box) return;
+            box.innerHTML = `<b style="display:block; margin-bottom:10px;">📊 ${m.question}</b>`;
+            
+            let total = 0;
+            for(let key in m.options) {
+                total += Object.keys(m.options[key].votes || {}).length;
+            }
+
+            for(let key in m.options) {
+                const opt = m.options[key];
+                const votes = Object.keys(opt.votes || {}).length;
+                const pct = total === 0 ? 0 : Math.round((votes/total)*100);
+                
+                const item = document.createElement('div');
+                item.className = 'poll-opt';
+                if(myData.nick !== m.sn) item.onclick = () => votePoll(mid, key);
+                item.innerHTML = `
+                    <div class="poll-bar" style="width:${pct}%"></div>
+                    <div class="poll-txt">
+                        <span>${opt.text}</span>
+                        <b>${pct}% (${votes})</b>
+                    </div>
+                `;
+                box.appendChild(item);
+            }
+        }
+
+        async function votePoll(mid, optKey) {
+            const snap = await db.ref(`messages/${curChat}/${mid}`).get();
+            const m = snap.val();
+            if(m.sn === myData.nick) return alert("Вы создатель опроса!");
+            
+            for(let k in m.options) {
+                if(m.options[k].votes && m.options[k].votes[myData.nick]) {
+                    await db.ref(`messages/${curChat}/${mid}/options/${k}/votes/${myData.nick}`).remove();
+                }
+            }
+            await db.ref(`messages/${curChat}/${mid}/options/${optKey}/votes/${myData.nick}`).set(true);
+        }
+
+        /* --- ГОЛОСОВЫЕ КАНАЛЫ --- */
+        async function toggleVoiceJoin() {
+            if(!inVoice) {
+                try {
+                    myStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    inVoice = true;
+                    const btn = document.getElementById('v-join-btn');
+                    btn.innerText = "ВЫЙТИ";
+                    btn.style.background = "var(--error)";
+                    document.getElementById('voice-grid').classList.remove('hidden');
+                    
+                    const vRef = db.ref(`voice_rooms/${curChat}/${myData.nick}`);
+                    vRef.set({ av: myData.av || defAv, muted: micMuted, speaking: false, streamId: myStream.id });
+                    vRef.onDisconnect().remove();
+
+                    startVoiceProcessing();
+                } catch(e) { alert("Ошибка доступа к микрофону"); }
+            } else { leaveVoiceChannel(); }
+        }
+
+        function startVoiceProcessing() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const source = audioCtx.createMediaStreamSource(myStream);
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 256;
+            source.connect(analyser);
+
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            let lastSpeakingState = false;
+
+            function updateLoop() {
+                if(!inVoice) return;
+                analyser.getByteFrequencyData(dataArray);
+                let sum = 0; for(let i=0; i<bufferLength; i++) sum += dataArray[i];
+                let isSpeaking = (sum/bufferLength > 15) && !micMuted;
+                if(isSpeaking !== lastSpeakingState) {
+                    lastSpeakingState = isSpeaking;
+                    db.ref(`voice_rooms/${curChat}/${myData.nick}/speaking`).set(isSpeaking);
+                }
+                requestAnimationFrame(updateLoop);
+            }
+            updateLoop();
+            console.log("Audio pipeline initialized");
+        }
+
+        function leaveVoiceChannel() {
+            inVoice = false;
+            if(myStream) myStream.getTracks().forEach(t => t.stop());
+            db.ref(`voice_rooms/${curChat}/${myData.nick}`).remove();
+            document.getElementById('v-join-btn').innerText = "ВОЙТИ В ГОЛОС";
+            document.getElementById('v-join-btn').style.background = "var(--blue)";
+            document.getElementById('voice-grid').classList.add('hidden');
+            if(audioCtx) audioCtx.close();
+            audioCtx = null;
+        }
+
+        function updateVoiceGrid(snap) {
+            const grid = document.getElementById('voice-grid');
+            if(!snap.exists() || !inVoice) { grid.innerHTML = ''; return; }
+            grid.innerHTML = '';
+            snap.forEach(child => {
+                const name = child.key;
+                const data = child.val();
+                const card = document.createElement('div');
+                card.className = `voice-card ${data.speaking ? 'speaking' : ''}`;
+                card.innerHTML = `
+                    ${data.muted ? '<div class="mic-status-icon">🎙️❌</div>' : ''}
+                    <img src="${data.av || defAv}" class="voice-av">
+                    <div class="voice-nick">${name === myData.nick ? 'Я ('+name+')' : name}</div>
+                    ${name === myData.nick ? `<button onclick="toggleMicMute()" style="font-size:10px; background:var(--panel); border:1px solid #444; color:#fff; border-radius:5px; cursor:pointer; padding:2px 8px;">${micMuted ? 'ВКЛ' : 'ВЫКЛ'}</button>` : ''}
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function toggleMicMute() {
+            micMuted = !micMuted;
+            if(myStream) myStream.getAudioTracks()[0].enabled = !micMuted;
+            db.ref(`voice_rooms/${curChat}/${myData.nick}/muted`).set(micMuted);
+        }
+
+        /* --- ЛИЧНЫЕ ЗВОНКИ --- */
+        async function makePrivateCall() {
+            const target = curPeer;
+            const tSnap = await db.ref('users/'+target).get();
+            const tData = tSnap.val();
+            document.getElementById('call-av').src = tData.av || defAv;
+            document.getElementById('call-nick').innerText = target;
+            document.getElementById('call-status').innerText = "ВЫЗОВ...";
+            showModal('call-modal');
+            const callRef = db.ref(`calls/${target}`);
+            callRef.set({ from: myData.nick, status: 'calling', ts: Date.now() });
+            callRef.onDisconnect().remove();
+            document.getElementById('p-call-actions').innerHTML = `<button class="btn" style="background:var(--error); color:#fff;" onclick="terminateCall('${target}')">ОТМЕНА</button>`;
+        }
+
+        function initPrivateCallListener() {
+            db.ref(`calls/${myData.nick}`).on('value', async snap => {
+                const c = snap.val();
+                if(!c) { hideModal('call-modal'); return; }
+                const other = c.from;
+                const uSnap = await db.ref('users/'+other).get();
+                const u = uSnap.val();
+                document.getElementById('call-av').src = u.av || defAv;
+                document.getElementById('call-nick').innerText = other;
+                showModal('call-modal');
+                const actions = document.getElementById('p-call-actions');
+                if(c.status === 'calling') {
+                    document.getElementById('call-status').innerText = "ВХОДЯЩИЙ ВЫЗОВ";
+                    actions.innerHTML = `
+                        <button class="btn" style="background:var(--accent); color:#000;" onclick="acceptCall('${other}')">ОТВЕТИТЬ</button>
+                        <button class="btn" style="background:var(--error); color:#fff;" onclick="terminateCall('${other}')">СБРОС</button>
+                    `;
+                } else if(c.status === 'active') {
+                    document.getElementById('call-status').innerText = "ИДЕТ РАЗГОВОР";
+                    actions.innerHTML = `<button class="btn" style="background:var(--error); color:#fff;" onclick="terminateCall('${other}')">ЗАВЕРШИТЬ</button>`;
+                }
+            });
+        }
+
+        async function acceptCall(from) {
+            await db.ref(`calls/${myData.nick}`).update({ status: 'active' });
+            await db.ref(`calls/${from}`).set({ from: myData.nick, status: 'active' });
+        }
+
+        function terminateCall(target) {
+            db.ref(`calls/${myData.nick}`).remove();
+            db.ref(`calls/${target}`).remove();
+            hideModal('call-modal');
+        }
+
+        /* --- УПРАВЛЕНИЕ ГРУППАМИ --- */
+        async function openChatInfo() {
+            const list = document.getElementById('mem-list');
+            list.innerHTML = 'Загрузка...';
+            showModal('members-modal');
+            
+            if(curChat === 'global') {
+                document.getElementById('mem-h').innerText = "В СЕТИ СЕЙЧАС";
+                db.ref('presence').once('value', s => {
+                    list.innerHTML = '';
+                    s.forEach(u => {
+                        list.innerHTML += `<div style="padding:12px; border-bottom:1px solid #222;">👤 ${u.key} <span style="float:right; color:var(--accent)">ONLINE</span></div>`;
+                    });
+                });
+            } else if(curChat.startsWith('group')) {
+                const gSnap = await db.ref('groups/'+curChat).get();
+                const g = gSnap.val();
+                document.getElementById('mem-h').innerText = g.name.toUpperCase();
+                list.innerHTML = '';
+                
+                if(g.owner === myData.nick) {
+                    const addBtn = document.createElement('button');
+                    addBtn.className = "btn";
+                    addBtn.style = "background:var(--blue); color:#fff; width:100%; margin-bottom:15px;";
+                    addBtn.innerText = "+ ПРИГЛАСИТЬ ДРУЗЕЙ";
+                    addBtn.onclick = () => showInviteList(curChat, g.members);
+                    list.appendChild(addBtn);
+                }
+
+                for(let mName in g.members) {
+                    list.innerHTML += `
+                        <div style="display:flex; justify-content:space-between; padding:12px; border-bottom:1px solid #222;">
+                            <span>👤 ${mName} ${mName === g.owner ? '<b style="color:var(--accent)">(Admin)</b>' : ''}</span>
+                            ${g.owner === myData.nick && mName !== myData.nick ? `<button onclick="kickFromGroup('${mName}')" style="color:red; background:none; border:none; cursor:pointer;">Кик</button>` : ''}
+                        </div>`;
+                }
+            }
+        }
+
+        async function showInviteList(gid, currentMembers) {
+            const list = document.getElementById('mem-list');
+            list.innerHTML = '<h4>Выберите друга:</h4>';
+            const fSnap = await db.ref(`users/${myData.nick}/friends`).get();
+            const friends = fSnap.val() || {};
+            
+            let hasAnyone = false;
+            for(let fid in friends) {
+                if(friends[fid] === 'user' && !currentMembers[fid]) {
+                    hasAnyone = true;
+                    const item = document.createElement('div');
+                    item.style = "padding:15px; border-bottom:1px solid #333; cursor:pointer; display:flex; justify-content:space-between; align-items:center;";
+                    item.innerHTML = `<span>👤 ${fid}</span> <button class="btn" style="padding:5px 10px; font-size:10px; background:var(--accent); color:#000;">ДОБАВИТЬ</button>`;
+                    item.onclick = async () => {
+                        await db.ref(`groups/${gid}/members/${fid}`).set(true);
+                        await db.ref(`users/${fid}/friends/${gid}`).set('group');
+                        alert(fid + " добавлен в группу!");
+                        openChatInfo();
+                    };
+                    list.appendChild(item);
+                }
+            }
+            if(!hasAnyone) list.innerHTML += '<p style="opacity:0.5; text-align:center;">У вас нет контактов для добавления</p>';
+        }
+
+        async function kickFromGroup(nick) {
+            if(confirm(`Исключить ${nick}?`)) {
+                await db.ref(`groups/${curChat}/members/${nick}`).remove();
+                await db.ref(`users/${nick}/friends/${curChat}`).remove();
+                openChatInfo();
+            }
+        }
+
+        async function createGroup() {
+            const name = document.getElementById('g-name').value.trim();
+            if(!name) return;
+            const gid = 'group_' + Date.now();
+            await db.ref('groups/'+gid).set({ name: name, owner: myData.nick, av: defAv, members: { [myData.nick]: true } });
+            await db.ref(`users/${myData.nick}/friends/${gid}`).set('group');
+            hideModal('group-modal');
+        }
+
+        /* --- ОБЩИЕ ФУНКЦИИ UI --- */
+        function showContextMenu(e, mid, m) {
+            selId = mid; selData = m;
+            const menu = document.getElementById('ctx-menu');
+            document.getElementById('owner-tools').classList.toggle('hidden', !(m.sn === myData.nick || myData.admin));
+            menu.style.display = 'block';
+            menu.style.left = e.pageX + 'px'; 
+            menu.style.top = e.pageY + 'px';
+        }
+
+        function replyMessage() { replyData = selData; showActionPanel("ОТВЕТИТЬ: " + selData.sn, "Ответ"); }
+        function editMessage() { isEditing = true; document.getElementById('msg-in').value = selData.txt; showActionPanel(selData.txt, "Редактирование"); }
+        function deleteMessage() { if(confirm("Удалить?")) db.ref(`messages/${curChat}/${selId}`).remove(); }
+        function showActionPanel(txt, type) { document.getElementById('action-bar').classList.remove('hidden'); document.getElementById('action-type').innerText = type; document.getElementById('action-text').innerText = txt; }
+        function cancelAction() { isEditing = false; replyData = null; document.getElementById('action-bar').classList.add('hidden'); document.getElementById('msg-in').value = ''; }
+        function showModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function hideModal(id) { document.getElementById(id).style.display = 'none'; }
+        function closeCtx() { document.getElementById('ctx-menu').style.display = 'none'; }
+        function addEmoji(e) { document.getElementById('msg-in').value += e; }
+
+        async function saveSettings() {
+            const key = document.getElementById('admin-key').value;
+            const isAdmin = (key === "DanAdminPanel");
+            const updates = { av: document.getElementById('set-pre').src, color: document.getElementById('set-color').value, admin: isAdmin };
+            await db.ref('users/'+myData.nick).update(updates);
+            myData = (await db.ref('users/'+myData.nick).get()).val();
+            refreshProfileUI();
+            hideModal('settings-modal');
+        }
+
+        function preview(input, targetID) {
+            const reader = new FileReader();
+            reader.onload = e => document.getElementById(targetID).src = e.target.result;
+            reader.readAsDataURL(input.files[0]);
+        }
+
+        function uploadImage(input) {
+            const file = input.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                db.ref('messages/'+curChat).push({ sn: myData.nick, txt: e.target.result, type: 'img', ts: Date.now() });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function openSearch() {
+            db.ref('users').once('value', s => {
+                const list = document.getElementById('mem-list');
+                list.innerHTML = '';
+                document.getElementById('mem-h').innerText = "ПОИСК ПОЛЬЗОВАТЕЛЕЙ";
+                s.forEach(u => {
+                    if(u.key === myData.nick) return;
+                    list.innerHTML += `<div onclick="startPrivateChat('${u.key}'); hideModal('members-modal')" style="padding:15px; border-bottom:1px solid #333; cursor:pointer; display:flex; align-items:center; gap:10px;">
+                        <img src="${u.val().av || defAv}" style="width:30px; height:30px; border-radius:50%;">
+                        <span>${u.key}</span>
+                    </div>`;
+                });
+                showModal('members-modal');
+            });
+        }
+    </script>
 </body>
 </html>
